@@ -1,0 +1,21 @@
+/* 
+ * Copyright (c) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
+ * LGPL version 2.1 or later (see http://www.gnu.org/copyleft/lesser.html)
+ */
+
+/* symbols that must be assigned to variables in Haskell code */
+
+/* NOTE: this is not the same as symbols needed for cpp of .hs code */
+
+/* path to ghc */
+#define GHC             "@GHC@"
+
+/* path to GHC libraries */
+#define GHC_LIB_PATH    "@GHC_LIB_PATH@"
+
+#define TOP             "@TOP@"
+
+#define LEADING_UNDERSCORE @LEADING_UNDERSCORE@
+
+#define CABAL 		@CABAL@
+

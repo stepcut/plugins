@@ -1,0 +1,9 @@
+42
+0x2A
+42.123400
+a:b:c
+haskell
+42        
+00042.1234
+a.out: Type error in dynamic application.
+Can't apply function <[Char] -> [Char]> to argument <Int>

@@ -1,0 +1,57 @@
+#
+# Copyright (c) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
+# LGPL version 2.1 or later (see http://www.gnu.org/copyleft/lesser.html)
+#
+ 
+#
+# config.mk.in :
+# variables that need to be visible in Makefiles
+#
+
+# all is the default rule for everyone
+default: all
+
+PACKAGE		= plugins
+UPACKAGE	= Plugins
+
+TOP		= @TOP@
+
+PREFIX          = @PREFIX@
+LIBDIR		= $(PREFIX)/lib/hs-$(PACKAGE)
+BINDIR		= $(PREFIX)/bin
+
+WHOLE_ARCHIVE_FLAG = @WHOLE_ARCHIVE_FLAG@
+
+# Are we using the new Cabal packages?
+CABAL           = @CABAL@
+
+
+GHC             = @GHC@
+GHC_LIB_PATH    = @GHC_LIB_PATH@
+GHC_VERSION     = @GHC_VERSION@
+GLASGOW_HASKELL = @GLASGOW_HASKELL@
+GHC_EXTRA_OPTS  = @SYMS@ @DEBUG_OPTS@
+GHC_LD_OPTS	=
+
+GHC_PKG         = @GHCPKG@-@GHC_VERSION@
+
+LD              = @LD@
+LD_X            = -x
+
+HAPPY           = @HAPPY@
+HAPPY_OPTS      = -a -g -c
+ALEX		= @ALEX@
+ALEX_OPTS	= --ghc
+HADDOCK         = @HADDOCK@
+
+AR              = @AR@
+RANLIB          = @RANLIB@
+
+RM              = @RM@
+
+INSTALL		= @INSTALL@
+
+# A few aliases
+INSTALL_PROGRAM	= ${INSTALL} -s -m 755
+INSTALL_DATA	= ${INSTALL}    -m 644
+INSTALL_DATA_DIR= ${INSTALL} -d -m 755

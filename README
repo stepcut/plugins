@@ -1,0 +1,97 @@
+
+------------------------------------------------------------------------
+                            hs-plugins
+------------------------------------------------------------------------
+
+Compiler and tool support for compiling and loading, and evaluating
+Haskell at runtime. 
+
+The library provides a convenient interface to GHC's runtime loader
+and linker, letting you load compiled Haskell code. 
+
+It also provides a `make' system for compiling plugin source
+automagically and for combining the user's .hs file with a stub of
+standard declarations and syntax, saving the user from having to write
+standard code themselves.
+
+It provides an eval() function, for generating new, well-typed,
+compiled code from a Haskell source string.
+
+It also provides a new variation of printf for Haskell-- a runtime
+generated, dynamically-typed printf.
+
+Read the documentation in doc/ for more.
+
+------------------------------------------------------------------------
+DEPENDENCIES:
+
+* Requires GNU make or BSD make to build
+* Requires GHC > 6.2 (for Typeable.h)
+* 'plugs' requires a working readline library.
+
+* If you wish to use TH in plugins, or to run load()-programs in GHCi,
+  you require a patch to GHC's linker, that was committed into ghc
+  6.3, and ghc 6.2 -stable branch, and is available from 6.2.2 onwards.
+
+* If you need to regenerate ./configure you need >= autoconf-2.53
+
+------------------------------------------------------------------------
+BUILDING:
+        $ ./configure --prefix=/usr/local
+        $ make
+        $ make install
+
+If you wish to register the libraries as official ghc pkg (probably as
+root):
+	$ make register
+
+And to unregister (maybe as root). Note that the unistall order
+matters:
+
+        $ ghc-pkg -r printf
+        $ ghc-pkg -r eval
+        $ ghc-pkg -r plugins
+        $ ghc-pkg -r hi
+        $ ghc-pkg -r altdata
+
+Once it is registered, you can link against the library by just adding
+-package plugins or, e.g. -package eval, to your command line.
+
+The documentation relies on latex, dvips, tex2page:
+
+        $ cd doc && make
+
+EXAMPLES:
+
+Have a look in the examples/ directory for many examples of how to
+arrange your code.
+
+LICENSE:
+
+This library is distributed under the terms of the LGPL. The runtime
+loader code is based on code written by André Pang, and others, and is
+distributed under the BSD-style Glasgow University license.
+
+PORTABILITY:
+
+Requires GHC 6.2 or greater, though most testing has be done on 6.3.
+They dynamic loader requires a functional GHCi implementation.
+
+---------------------+--------------------------------------------------
+  Platform           |  Works   Should work*    Unknown    Won't work
+---------------------+--------------------------------------------------
+i386-*-linux         |    X
+i386-*-freebsd       |    X
+i386-*-openbsd       |    X           
+powerpc-apple-darwin |    X            
+sparc-*-solaris2     |    X            
+ia64-*-linux         |    #
+i386-*-solaris2      |                X
+sparc-*-linux        |                X
+sparc-*-openbsd      |                X
+i386-*-netbsd        |                              X 
+amd64-*-openbsd      |                              X
+mips64-sgi-irix      |                                         X
+---------------------+--------------------------------------------------
+
+# .hi file parsing is currently broken

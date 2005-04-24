@@ -1,0 +1,25 @@
+CVS BUILDING INSTRUCTIONS
+=========================
+
+These are build instructions if you've checked out hs-plugins
+from CVS (instead of downloading a source distribution tarball).
+
+1.  Execute autogen.sh to generate the GNU ./configure script:
+
+    ./autogen.sh
+
+2.  Build hs-plugins as usual with ./configure && make
+
+
+cvsps
+=====
+
+For people who are used to more modern revision control systems
+(such as Darcs, Subversion and Arch) and miss working with
+'patchsets' instead of the disjoint per-file patches that CVS
+uses, take a look at cvsps <http://www.cobite.com/cvsps/>,
+a patchset manager for CVS.  While it doesn't, by any means, give
+you the many advantages that more modern source control systems
+offer you, it certainly makes using CVS and managing patches far
+easier!
+

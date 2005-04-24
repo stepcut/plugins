@@ -1,0 +1,23 @@
+Don's Haskell Libraries
+-----------------------
+
+* altdata
+An alternative implementation of Typeable and Dynamic that
+works in the presence of (completely) separate compilation
+
+* hi
+A parser for .hi files
+
+* plugins
+A dynamic loader for GHC-produce object files. Also provides type
+checking of object interfaces via dynamic typing.
+
+* eval
+A system for reflecting strings of Haskell source into native code at
+runtime, via runtime compilation and dynamic linking. 
+Also implements a staged computation doo-hickey.
+
+* printf
+An implementation of printf(3) that uses eval to generate new Haskell
+functions from format strings, at runtime, and dynamic typing to
+retain type safety.

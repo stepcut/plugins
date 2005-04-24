@@ -1,0 +1,5 @@
+interface "unknown" Main
+module dependencies: A, B
+package dependencies: base-1.0, haskell98-1.0, hi-1.0
+import B
+import A
