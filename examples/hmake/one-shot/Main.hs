@@ -3,6 +3,10 @@
 -- GPL version 2 or later (see http://www.gnu.org/copyleft/gpl.html)
 --
 
+--
+-- | Runplugs: use hs-plugins to run a Haskell expression under
+-- controlled conditions.
+--
 import Eval.Haskell             (unsafeEval)
 
 import Data.Maybe               (isJust, fromJust)
@@ -23,8 +27,8 @@ prehier = ["Char", "List", "Maybe", "Numeric", "Random" ]
 
 datas   = map ("Data." ++) [
                 "Bits", "Bool", "Char", "Dynamic", "Either", 
-                "FiniteMap", "Graph", "Int", "Ix", "List", 
-                "Maybe", "Ratio", "Set", "Tree", "Tuple", "Typeable", "Word" 
+                "Map", "Graph", "Int", "Ix", "List", "Maybe", 
+                "Ratio", "Set", "Tree", "Tuple", "Typeable", "Word" 
               ]
 
 controls = map ("Control." ++) ["Monad", "Arrow"]
