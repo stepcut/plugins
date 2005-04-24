@@ -6,5 +6,5 @@
 --
 import Eval.Haskell
 
-main = do fn <- unsafeEval "(\\(x::Int) -> (x,x))" [] :: IO (Maybe (Int -> (Int,Int)))
+main = do fn <- unsafeEval "(\\x -> (x,x::Int))" [] :: IO (Maybe (Int -> (Int,Int)))
           when (isJust fn) $ putStrLn $ show $ (fromJust fn) 7
