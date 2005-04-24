@@ -3,20 +3,15 @@
 
 # cut down reimplementation of $fptools/mk directory
 
+MAKEFLAGS += --no-builtin-rules
+.SUFFIXES:
+
 .PHONY: build all
 
-all: headers runplugs plugs
+all: build headers
 
 build:
 	cd src && $(MAKE)
-
-plugs: build
-	( cd examples/hmake/lib-plugs ; $(MAKE) build ) 
-	cp examples/hmake/lib-plugs/plugs ./
-
-runplugs: build
-	( cd examples/hmake/one-shot ; $(MAKE) build ) 
-	cp examples/hmake/one-shot/runplugs ./
 
 headers: build
 	cp src/eval/Eval/Haskell_stub.h EvalHaskell.h
@@ -31,8 +26,6 @@ install:
 	$(INSTALL_DATA) EvalHaskell.h $(LIBDIR)/include
 	@(cd src && $(MAKE) install)
 	$(INSTALL_DATA_DIR) $(PREFIX)/bin
-	$(INSTALL_PROGRAM) plugs $(PREFIX)/bin/
-	$(INSTALL_PROGRAM) runplugs $(PREFIX)/bin/
 
 #
 # and register the library with ghc package system
@@ -92,8 +85,6 @@ clean:
 	find examples -name '*.o' -exec rm {} \;
 	find examples -name '*.core' -exec rm {} \;
 	find examples -name 'package.conf' -exec rm {} \;
-	rm -rf plugs
-	rm -rf runplugs
 	rm -rf examples/hmake/lib-plugs/plugs
 	rm -rf examples/hmake/one-shot/runplugs
 	rm -f EvalHaskell.h
