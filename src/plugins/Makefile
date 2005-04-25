@@ -19,4 +19,8 @@ HC_OPTS         += -package altdata -package hi
 HC_OPTS         += -O -funbox-strict-fields 
 HC_OPTS         += -Wall -fno-warn-missing-signatures
 
+ifeq ($(GLASGOW_HASKELL),602)
+HC_OPTS         += -package posix
+endif
+
 install: install-me
