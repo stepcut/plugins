@@ -1,6 +1,6 @@
 {-# OPTIONS -fglasgow-exts -fffi #-}
 -- 
--- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
+-- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 
 -- This library is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU Lesser General Public
@@ -115,16 +115,16 @@ eval_ src mods args ldflags incs = do
 --
 unsafeEval :: String -> [Import] -> IO (Maybe a)
 unsafeEval src mods = do
-    pwd  <- getCurrentDirectory
-    tmpf <- mkUniqueWith wrap src mods
-    status <- make tmpf ["-Onot"]
+    pwd    <- getCurrentDirectory
+    tmpf   <- mkUniqueWith wrap src mods
+    status <- make tmpf []
     m_rsrc <- case status of
         MakeSuccess _ obj  -> do 
            m_v <- load obj [pwd] [] symbol
            case m_v of LoadFailure _      -> return Nothing
                        LoadSuccess _ rsrc -> return $ Just rsrc
         MakeFailure err -> mapM_ putStrLn err >> return Nothing
---  makeCleaner tmpf
+    makeCleaner tmpf
     return m_rsrc
 
 --
@@ -143,7 +143,7 @@ unsafeEval_ :: String           -- ^ code to compile
 unsafeEval_ src mods args ldflags incs = do 
     pwd  <- getCurrentDirectory
     tmpf <- mkUniqueWith wrap src mods
-    status <- make tmpf $ ["-Onot"] ++ args
+    status <- make tmpf args
     e_rsrc <- case status of
         MakeSuccess _ obj  -> do 
            m_v <- load obj (pwd:incs) ldflags symbol
