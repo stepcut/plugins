@@ -1,6 +1,8 @@
 {-# OPTIONS -cpp -fffi -fglasgow-exts #-}
+--
+-- glaexts for I# ops
 -- 
--- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
+-- Copyright (c) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 
 -- This library is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU Lesser General Public
@@ -21,52 +23,45 @@
 --
 -- A Haskell reimplementation of the C mktemp/mkstemp/mkstemps library
 -- based on the algorithms in:
---      "$ OpenBSD: mktemp.c,v 1.17 2003/06/02 20:18:37 millert Exp $"
+-- >    $ OpenBSD: mktemp.c,v 1.17 2003/06/02 20:18:37 millert Exp $
 -- which are available under the BSD license.
 --
 
 module Plugins.MkTemp ( 
 
-     mktemp,    -- :: FilePath -> FilePath
-     mkstemp,   -- :: FilePath -> (FilePath, Handle)
-     mkstemps,  -- :: FilePath -> Int -> (FilePath,Handle)
-     mkdtemp,   -- :: FilePath -> FilePath
+     mktemp,    -- :: FilePath -> IO Maybe FilePath
+     mkstemp,   -- :: FilePath -> IO Maybe (FilePath, Handle)
+     mkstemps,  -- :: FilePath -> Int -> IO Maybe (FilePath,Handle)
+     mkdtemp,   -- :: FilePath -> IO Maybe FilePath
 
   ) where
+    
+#include "config.h"
 
 import Data.List
-import Data.Char
-
+import Data.Char                ( chr, ord, isDigit )
 import Control.Monad            ( liftM )
 import Control.Exception        ( handleJust )
-
-#if __GLASGOW_HASKELL__ < 604
-import System.IO                ( isAlreadyExistsError, Handle )
-#else
-import System.IO                ( Handle )
+import System.Directory         ( doesDirectoryExist, doesFileExist, createDirectory )
+import System.IO
 import System.IO.Error          ( isAlreadyExistsError )
-#endif
 
-import System.Directory         ( doesDirectoryExist, doesFileExist )
+import GHC.IOBase               ( IOException(IOError), 
+                                  Exception(IOException), 
+                                  IOErrorType(AlreadyExists) )
 
-import GHC.IOBase               ( Exception(IOException) )
-
--- Fix this.
 #ifndef __MINGW32__
-import System.Posix.IO
-import System.Posix.Files
-import qualified System.Posix.Directory ( createDirectory )
 import qualified System.Posix.Internals ( c_getpid )
 #endif
 
-#ifndef HAVE_ARC4RANDOM
-import System.Random            ( getStdRandom, Random(randomR) )
-#else
-import GHC.Base
+#ifdef HAVE_ARC4RANDOM
+import GHC.Base hiding ( ord, chr )
 import GHC.Int
+#else
+import System.Random            ( getStdRandom, Random(randomR) )
 #endif
 
--- ---------------------------------------------------------------------
+------------------------------------------------------------------------
 
 mkstemps :: FilePath -> Int -> IO (Maybe (FilePath,Handle))
 mkstemp  :: FilePath        -> IO (Maybe (FilePath,Handle))
@@ -83,7 +78,7 @@ mktemp  path = do v <- gettemp path False False 0
 mkdtemp path = do v <- gettemp path False True 0
                   return $ case v of Just (path',_) -> Just path'; _ -> Nothing
 
--- ---------------------------------------------------------------------
+------------------------------------------------------------------------
 
 gettemp :: FilePath -> Bool -> Bool -> Int -> IO (Maybe (FilePath, Handle))
 
@@ -188,11 +183,13 @@ tweak i s
 
 -- ---------------------------------------------------------------------
 
+alreadyExists :: Exception -> Maybe Exception
 alreadyExists e@(IOException ioe) 
         | isAlreadyExistsError ioe = Just e
         | otherwise                = Nothing
 alreadyExists _ = Nothing
 
+isInUse :: Exception -> Maybe ()
 #ifndef __MINGW32__
 isInUse (IOException ioe) 
         | isAlreadyExistsError ioe = Just ()
@@ -210,51 +207,43 @@ isInUse _ = Nothing
 -- ---------------------------------------------------------------------
 -- Create a file mode 0600 if possible
 --
+-- N.B. race condition between testing existence and opening
+-- But we can live with that to avoid a posix dependency, right?
+--
 open0600 :: FilePath -> IO Handle
+open0600 f = do
+        b <- doesFileExist f
+        if b then ioError err   -- race
+             else openFile f ReadWriteMode
+    where
+        err = IOError Nothing AlreadyExists "open0600" "already exists" Nothing
 
-#ifndef __MINGW32__
-
+{-
 -- open(path, O_CREAT|O_EXCL|O_RDWR, 0600)
-
+--
 open0600 f = do
         openFd f ReadWrite (Just o600) excl >>= fdToHandle
    where 
         o600 = ownerReadMode `unionFileModes` ownerWriteMode
         excl = defaultFileFlags { exclusive = True }
-#else
-
--- N.B. race condition between testing existence and opening
-
-open0600 f = do
-        b <- doesFileExist f
-        if b then ioException err   -- race
-             else openFile f ReadWriteMode
-    where
-        err = IOError Nothing AlreadyExists "open0600" "already exists" Nothing
-#endif
+-}
 
 --
 -- create a directory mode 0700 if possible
 --
 mkdir0700 :: FilePath -> IO ()
-mkdir0700 dir =
-#ifndef __MINGW32__
+mkdir0700 dir = createDirectory dir
+{-
         System.Posix.Directory.createDirectory dir ownerModes
-#else
-        createDirectory dir
-#endif
+-}
 
--- ---------------------------------------------------------------------
 -- | getProcessId, stolen from GHC
-
+--
 #ifdef __MINGW32__
 foreign import ccall unsafe "_getpid" getProcessID :: IO Int
-#elif __GLASGOW_HASKELL__ > 504
-getProcessID :: IO Int
-getProcessID = System.Posix.Internals.c_getpid >>= return . fromIntegral
 #else
 getProcessID :: IO Int
-getProcessID = Posix.getProcessID
+getProcessID = System.Posix.Internals.c_getpid >>= return . fromIntegral
 #endif
 
 -- ---------------------------------------------------------------------
@@ -266,16 +255,15 @@ getRandom :: () -> IO Int
 getRandom _ = getStdRandom (randomR (0,51))
 #else
 --
---
 -- OpenBSD: "The arc4random() function provides a high quality 32-bit
 -- pseudo-random number very quickly.  arc4random() seeds itself on a
 -- regular basis from the kernel strong random number subsystem
 -- described in random(4)." Also, it is a bit faster than getStdRandom
 --
 getRandom _ = do 
-        (I32# i) <- c_arc4random
-        return (I# (word2Int# 
-             ((int2Word# i `and#` int2Word# 0xffff#) `remWord#` int2Word# 52#)))
+    (I32# i) <- c_arc4random
+    return (I# (word2Int# ((int2Word# i `and#` int2Word# 0xffff#) 
+                    `remWord#` int2Word# 52#)))
 
-foreign import ccall unsafe "arc4random" c_arc4random :: IO Int32
+foreign import ccall unsafe "stdlib.h arc4random" c_arc4random :: IO Int32
 #endif
