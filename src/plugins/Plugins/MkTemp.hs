@@ -35,8 +35,6 @@ module Plugins.MkTemp (
      mkdtemp,   -- :: FilePath -> IO Maybe FilePath
 
   ) where
-    
-#include "config.h"
 
 import Data.List
 import Data.Char                ( chr, ord, isDigit )
