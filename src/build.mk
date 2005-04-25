@@ -12,6 +12,7 @@ OBJS		= $(UPKG).o $(UPKG)/*.o
 
 HC_OPTS		= -package-name $(PKG)
 HC_OPTS		+= -O -Wall -Werror -fno-warn-missing-signatures $(GHC_EXTRA_OPTS)
+HC_OPTS     += -threaded
 
 CLEANS 		+= $(LIBRARY) $(GHCI_LIBRARY)
 CLEAN_FILES     += *.conf.inplace* *.conf.*.old *.conf.in *.h *.in
