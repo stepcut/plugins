@@ -1,5 +1,6 @@
+{-# OPTIONS -cpp #-}
 --
--- Copyright (c) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
+-- Copyright (c) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- GPL version 2 or later (see http://www.gnu.org/copyleft/gpl.html)
 --
 
@@ -27,7 +28,12 @@ prehier = ["Char", "List", "Maybe", "Numeric", "Random" ]
 
 datas   = map ("Data." ++) [
                 "Bits", "Bool", "Char", "Dynamic", "Either", 
-                "Map", "Graph", "Int", "Ix", "List", "Maybe", 
+                "Graph", "Int", "Ix", "List", "Maybe", 
+#if __GLASGOW_HASKELL__ >= 604
+                "Map",
+#else
+                "FiniteMap",
+#endif
                 "Ratio", "Set", "Tree", "Tuple", "Typeable", "Word" 
               ]
 
