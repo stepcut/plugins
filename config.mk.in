@@ -11,14 +11,14 @@
 # all is the default rule for everyone
 default: all
 
-PACKAGE		= plugins
-UPACKAGE	= Plugins
+PACKAGE         = plugins
+UPACKAGE        = Plugins
 
-TOP		= @TOP@
+TOP             = @TOP@
 
 PREFIX          = @PREFIX@
-LIBDIR		= $(PREFIX)/lib/hs-$(PACKAGE)
-BINDIR		= $(PREFIX)/bin
+LIBDIR          = $(PREFIX)/lib/hs-$(PACKAGE)
+BINDIR          = $(PREFIX)/bin
 
 WHOLE_ARCHIVE_FLAG = @WHOLE_ARCHIVE_FLAG@
 
@@ -31,7 +31,7 @@ GHC_LIB_PATH    = @GHC_LIB_PATH@
 GHC_VERSION     = @GHC_VERSION@
 GLASGOW_HASKELL = @GLASGOW_HASKELL@
 GHC_EXTRA_OPTS  = @SYMS@ @DEBUG_OPTS@
-GHC_LD_OPTS	=
+GHC_LD_OPTS     =
 
 GHC_PKG         = @GHCPKG@-@GHC_VERSION@
 
@@ -40,8 +40,8 @@ LD_X            = -x
 
 HAPPY           = @HAPPY@
 HAPPY_OPTS      = -a -g -c
-ALEX		= @ALEX@
-ALEX_OPTS	= --ghc
+ALEX            = @ALEX@
+ALEX_OPTS       = --ghc
 HADDOCK         = @HADDOCK@
 
 AR              = @AR@
@@ -49,9 +49,9 @@ RANLIB          = @RANLIB@
 
 RM              = @RM@
 
-INSTALL		= @INSTALL@
+INSTALL         = @INSTALL@
 
 # A few aliases
-INSTALL_PROGRAM	= ${INSTALL} -s -m 755
-INSTALL_DATA	= ${INSTALL}    -m 644
+INSTALL_PROGRAM = ${INSTALL} -s -m 755
+INSTALL_DATA    = ${INSTALL}    -m 644
 INSTALL_DATA_DIR= ${INSTALL} -d -m 755
