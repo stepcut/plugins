@@ -51,7 +51,7 @@ hs-libraries:         HSplugins
 extra-libraries:
 include-dirs:
 includes:	      Linker.h
-depends:	      altdata, hi, unix, haskell-src, posix, Cabal
+depends:	      altdata, hi, haskell-src, Cabal
 hugs-options:
 cc-options:
 ld-options:
