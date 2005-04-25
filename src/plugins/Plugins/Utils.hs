@@ -63,17 +63,19 @@ import Data.Char
 import Data.List
 
 import System.IO
-import System.Environment       ( getEnv )
+import System.Environment           ( getEnv )
 import System.Directory
 
 --
 -- The fork library
 --
 #if CABAL == 0 && __GLASGOW_HASKELL__ < 604
-import POpen                    ( popen )
-import System.Posix.Process     ( getProcessStatus )
+import POpen                        ( popen )
+import System.Posix.Process         ( getProcessStatus )
 #else
 import System.Process
+import Control.Concurrent           ( forkIO )
+import qualified Control.Exception  ( evaluate )
 #endif
 
 -- ---------------------------------------------------------------------
@@ -175,15 +177,17 @@ exec :: String -> [String] -> IO ([String],[String])
 
 #if CABAL == 1 || __GLASGOW_HASKELL__ >= 604
 --
--- Use the forkProcess library
+-- Use the forkProcess library, adapted from lambdabot's PosixCompat
+-- Needs to be compiled with -threaded for waitForProcess not to block
 --
 exec prog args = do
-    (_,outh,errh,proc_hdl) <- runInteractiveProcess prog args Nothing Nothing   
-    b <- waitForProcess proc_hdl    -- wait
-    out <- hGetContents outh
-    err <- hGetContents errh
-    case b of
-        _exit_status -> return ( lines $ out, lines $ err )
+    (_,outh,errh,proc_hdl) <- runInteractiveProcess prog args Nothing Nothing
+    output <- hGetContents outh
+    errput <- hGetContents errh
+    forkIO (Control.Exception.evaluate (length output) >> return ())
+    forkIO (Control.Exception.evaluate (length errput) >> return ())
+    waitForProcess proc_hdl
+    return ( lines $ output, lines $ errput )
 
 #else 
 --
