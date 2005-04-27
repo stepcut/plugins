@@ -14,7 +14,7 @@ Package {
         include_dirs    = [],
         source_dirs     = [],
         extra_libraries = [],
-        package_deps    = [ "altdata", "hi", "unix", "haskell-src", "posix" ],
+        package_deps    = [ "altdata", "hi", "unix", "haskell-src-exts", "posix" ],
         extra_ghc_opts  = [],
         extra_cc_opts   = [],
         extra_ld_opts   = []
@@ -51,7 +51,7 @@ hs-libraries:         HSplugins
 extra-libraries:
 include-dirs:
 includes:	      Linker.h
-depends:	      altdata, hi, haskell-src, Cabal
+depends:	      altdata, hi, haskell-src-exts, Cabal
 hugs-options:
 cc-options:
 ld-options:
