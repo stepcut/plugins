@@ -22,7 +22,6 @@ install:
 	$(INSTALL_DATA_DIR) $(LIBDIR)/include
 	$(INSTALL_DATA) EvalHaskell.h $(LIBDIR)/include
 	@(cd src && $(MAKE) install)
-	$(INSTALL_DATA_DIR) $(PREFIX)/bin
 
 #
 # and register the library with ghc package system
