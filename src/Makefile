@@ -11,11 +11,11 @@ altdata:
 	@cd altdata && $(MAKE)
 hi:
 	@cd hi && $(MAKE)
-plugins:
+plugins: altdata hi
 	@cd plugins && $(MAKE)
-eval:
+eval: plugins
 	@cd eval && $(MAKE)
-printf:
+printf: plugins
 	@cd printf && $(MAKE)
 
 install: i_altdata i_hi i_plugins i_eval i_printf

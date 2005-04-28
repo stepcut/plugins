@@ -3,18 +3,15 @@
 
 # cut down reimplementation of $fptools/mk directory
 
-MAKEFLAGS += --no-builtin-rules
-.SUFFIXES:
-
 .PHONY: build all
 
-all: build headers
+all: build EvalHaskell.h
 
-build:
+build::
 	cd src && $(MAKE)
 
-headers: build
-	cp src/eval/Eval/Haskell_stub.h EvalHaskell.h
+EvalHaskell.h: build
+	cp src/eval/Eval/Haskell_stub.h $@
 
 #
 # installing
@@ -25,6 +22,7 @@ install:
 	$(INSTALL_DATA_DIR) $(LIBDIR)/include
 	$(INSTALL_DATA) EvalHaskell.h $(LIBDIR)/include
 	@(cd src && $(MAKE) install)
+	$(INSTALL_DATA_DIR) $(PREFIX)/bin
 
 #
 # and register the library with ghc package system

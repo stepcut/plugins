@@ -36,7 +36,7 @@ GHC_LD_OPTS     =
 GHC_PKG         = @GHCPKG@-@GHC_VERSION@
 
 LD              = @LD@
-LD_X            = -x
+LD_X            = @LD@ -x
 
 HAPPY           = @HAPPY@
 HAPPY_OPTS      = -a -g -c

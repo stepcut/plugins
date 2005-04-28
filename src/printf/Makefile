@@ -7,6 +7,8 @@ YSRC	= $(UPKG)/Parser.y
 XOBJ	= $(UPKG)/Lexer.hs
 XSRC	= $(UPKG)/Lexer.x
 
+ALL_SRCS=$(wildcard $(patsubst ./%, %, $(patsubst %, %/*.hs, . $(UPKG))))
+
 TOP=../..
 include ../build.mk
 
@@ -14,3 +16,5 @@ HC_OPTS		+= -package-conf $(TOP)/plugins.conf.inplace
 HC_OPTS		+= -package eval
 
 install: install-me
+
+-include depend

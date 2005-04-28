@@ -12,6 +12,8 @@ YOBJ    = $(UPKG)/ParsePkgConfLite.hs
 YSRC    = $(UPKG)/ParsePkgConfLite.y
 endif
 
+ALL_SRCS=$(wildcard $(patsubst ./%, %, $(patsubst %, %/*.hs, . $(UPKG))))
+
 include ../build.mk
 
 HC_OPTS         += -package-conf $(TOP)/plugins.conf.inplace 
@@ -24,3 +26,5 @@ HC_OPTS         += -package posix
 endif
 
 install: install-me
+
+-include depend
