@@ -7,12 +7,16 @@ include $(TOP)/config.mk
 ifeq ($(CABAL),1)
 YOBJ    = $(UPKG)/ParsePkgConfCabal.hs
 YSRC    = $(UPKG)/ParsePkgConfCabal.y
+OTHER   = $(UPKG)/ParsePkgConfLite.hs
 else
 YOBJ    = $(UPKG)/ParsePkgConfLite.hs
 YSRC    = $(UPKG)/ParsePkgConfLite.y
+OTHER   = $(UPKG)/ParsePkgConfCabal.hs
 endif
 
-ALL_SRCS=$(wildcard $(patsubst ./%, %, $(patsubst %, %/*.hs, . $(UPKG))))
+ALL_SRCS= $(filter-out $(OTHER), \
+                $(wildcard $(patsubst ./%, %, \
+                        $(patsubst %, %/*.hs, . $(UPKG)))))
 
 include ../build.mk
 
