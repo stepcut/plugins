@@ -9,6 +9,8 @@ all: build EvalHaskell.h
 
 build::
 	cd src && $(MAKE)
+	@find src -name depend -exec rm {} \;
+	cd src && $(MAKE) way=p
 
 EvalHaskell.h: build
 	cp src/eval/Eval/Haskell_stub.h $@
@@ -21,7 +23,7 @@ EvalHaskell.h: build
 install:
 	$(INSTALL_DATA_DIR) $(LIBDIR)/include
 	$(INSTALL_DATA) EvalHaskell.h $(LIBDIR)/include
-	@(cd src && $(MAKE) install)
+	@(cd src && $(MAKE) install && $(MAKE) install way=p)
 
 #
 # and register the library with ghc package system

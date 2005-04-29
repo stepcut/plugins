@@ -3,7 +3,7 @@ UPKG	= Eval
 
 ALL_SRCS=$(wildcard $(patsubst ./%, %, $(patsubst %, %/*.hs, . $(UPKG))))
 
-STUBOBJS   =Eval/Haskell_stub.o
+STUBOBJS   =Eval/Haskell_stub.$(way_)o
 
 TOP=../..
 include ../build.mk
