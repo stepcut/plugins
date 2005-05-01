@@ -41,8 +41,9 @@ fi
 AC_SUBST(WHOLE_ARCHIVE_FLAG)
 AC_SUBST(LEADING_UNDERSCORE)
 
-
-TOP=`pwd`
+# Find pwd, in a cygwin friendly way. 
+# Suggested by: http://www.haskell.org/ghc/docs/latest/html/users_guide/ch11s04.html
+TOP=`echo "Directory.getCurrentDirectory >>= putStrLn.init.tail.show " | ghci -ignore-dot-ghci -v0`
 AC_SUBST(TOP)
 
 # necessary tools
@@ -83,7 +84,7 @@ AC_SUBST(GHC_VERSION)
 if test -n "$GHC" ; then
  AC_MSG_CHECKING([for value of __GLASGOW_HASKELL__])
  echo "main = print __GLASGOW_HASKELL__" > t.hs
- GLASGOW_HASKELL=`echo 'main' | "$GHC" --interactive -v0 -cpp t.hs`
+ GLASGOW_HASKELL=`echo 'main' | "$GHC" --interactive -ignore-dot-ghci -v0 -cpp t.hs`
  rm t.hs
  AC_MSG_RESULT([$GLASGOW_HASKELL])
 fi
