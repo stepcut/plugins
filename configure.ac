@@ -126,25 +126,23 @@ AC_ARG_ENABLE(debug,
 
 AC_SUBST(DEBUG_OPTS)
 
-# allow user supplied haskell package manager
-AC_ARG_WITH(ghc-pkg,
-  AC_HELP_STRING([--with-ghc-pkg=<ghc-pkg>],[use a specific ghc-pkg]),
-  [ GHCPKG="$withval" 
-    if test ! -f "$GHCPKG" ; then
-       AC_MSG_ERROR([$GHCPKG not found. You need ghc-pkg])
+# Search for ghc-pkg
+AC_MSG_CHECKING([for ghc-pkg])
+ghc_pkg_guess=`echo $GHC | sed 's,ghc\(@<:@^/\\@:>@*\)$,ghc-pkg\1,'`
+if "$ghc_pkg_guess" -l > /dev/null 2>&1; then
+      matching_ghc_pkg=$ghc_pkg_guess
+else
+      matching_ghc_pkg=no
+fi
+if test x"$matching_ghc_pkg" = xno; then
+    AC_CHECK_PROG([GHCPKG], [ghc-pkg])
+    if test -z "$GHCPKG" ; then
+       AC_MSG_ERROR([ghc-pkg not found.])
     fi
-  ],
-  [ AC_MSG_CHECKING([for ghc-pkg])
-    if ghc-pkg-$GHC_VERSION -V > /dev/null 2>&1 ; then
-        GHCPKG=ghc-pkg-$GHC_VERSION
-    elif test ghc-pkg -V > /dev/null 2>&1 ; then
-        GHCPKG=ghc-pkg
-    else
-        AC_MSG_ERROR(You need ghc-pkg)
-    fi
-    AC_MSG_RESULT([$GHCPKG])
-  ]
-  )
+else
+    GHCPKG=$matching_ghc_pkg
+fi
+AC_MSG_RESULT([$GHCPKG])
 AC_SUBST(GHCPKG)
 
 AC_CHECK_PROG(HADDOCK,haddock,haddock)
