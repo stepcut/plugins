@@ -12,6 +12,7 @@ AC_PREREQ(2.53)
 # Find out what type of system we're running on
 AC_CANONICAL_BUILD
 
+# This isn't right for cygwin.
 PREFIX="$prefix"
 if test "$prefix" = "NONE"
 then
