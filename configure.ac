@@ -133,13 +133,17 @@ AC_ARG_WITH(ghc-pkg,
        AC_MSG_ERROR([$GHCPKG not found. You need ghc-pkg])
     fi
   ],
-  [ AC_CHECK_PROG(GHCPKG,ghc-pkg,ghc-pkg)
-    if test -z "$GHCPKG" ; then
-       AC_MSG_ERROR([You need ghc-pkg])
-    fi 
+  [ AC_MSG_CHECKING([for ghc-pkg])
+    if ghc-pkg-$GHC_VERSION -V > /dev/null ; then
+        GHCPKG=ghc-pkg-$GHC_VERSION
+    elif test ghc-pkg -V > /dev/null ; then
+        GHCPKG=ghc-pkg
+    else
+        AC_MSG_ERROR(You need ghc-pkg)
+    fi
+    AC_MSG_RESULT([$GHCPKG])
   ]
   )
-
 AC_SUBST(GHCPKG)
 
 AC_CHECK_PROG(HADDOCK,haddock,haddock)

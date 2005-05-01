@@ -33,7 +33,7 @@ GLASGOW_HASKELL = @GLASGOW_HASKELL@
 GHC_EXTRA_OPTS  = @SYMS@ @DEBUG_OPTS@
 GHC_LD_OPTS     =
 
-GHC_PKG         = @GHCPKG@-@GHC_VERSION@
+GHC_PKG         = @GHCPKG@
 
 LD              = @LD@
 LD_X            = @LD@ -x
