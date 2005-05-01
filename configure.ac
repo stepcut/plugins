@@ -135,9 +135,9 @@ AC_ARG_WITH(ghc-pkg,
     fi
   ],
   [ AC_MSG_CHECKING([for ghc-pkg])
-    if ghc-pkg-$GHC_VERSION -V > /dev/null ; then
+    if ghc-pkg-$GHC_VERSION -V > /dev/null 2>&1 ; then
         GHCPKG=ghc-pkg-$GHC_VERSION
-    elif test ghc-pkg -V > /dev/null ; then
+    elif test ghc-pkg -V > /dev/null 2>&1 ; then
         GHCPKG=ghc-pkg
     else
         AC_MSG_ERROR(You need ghc-pkg)
