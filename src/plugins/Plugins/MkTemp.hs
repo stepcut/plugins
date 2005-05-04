@@ -237,10 +237,11 @@ mkdir0700 dir = createDirectory dir
         System.Posix.Directory.createDirectory dir ownerModes
 -}
 
--- | getProcessId, stolen from GHC
+-- | getProcessId, stolen from GHC (main/SysTools.lhs)
 --
 #ifdef __MINGW32__
-foreign import ccall unsafe "_getpid" getProcessID :: IO Int
+-- relies on Int == Int32 on Windows
+foreign import ccall unsafe "_getpid" getProcessID :: IO Int  
 #else
 getProcessID :: IO Int
 getProcessID = System.Posix.Internals.c_getpid >>= return . fromIntegral
