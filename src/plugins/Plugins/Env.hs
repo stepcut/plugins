@@ -309,7 +309,8 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                        hslibs  = hsLibraries package
                        extras  = extraLibraries package
                        deppkgs = packageDeps package
-                libs <- mapM (findHSlib libdirs) (hslibs ++ extras)
+                libs <- mapM (findHSlib $ fix_topdir libdirs) (hslibs ++ extras)
+		libs' <- mapM (findDLL $ "C:/WINDOWS/SYSTEM") extras
 
                 -- don't care if there are 'Nothings', that usually
                 -- means that they refer to system libraries. Can't do

@@ -476,7 +476,8 @@ unloadObj (Module { path = p, kind = k, key = ky }) = case k of
 --
 loadShared :: FilePath -> IO Module
 loadShared str = do
-    maybe_errmsg <- withCString str $ \dll -> c_addDLL dll
+    str' <- return $ (reverse . drop 1 . dropWhile (/= '.') . reverse) str
+    maybe_errmsg <- withCString str' $ \dll -> c_addDLL dll
     if maybe_errmsg == nullPtr  
         then return (Module str (mkModid str) Shared emptyIface (Package (mkModid str)))
         else do e <- peekCString maybe_errmsg
@@ -496,7 +497,7 @@ loadPackage p = do
 #if DEBUG
         putStr (' ':p) >> hFlush stdout
 #endif
-        libs <- lookupPkg p
+        (libs,dlls) <- lookupPkg p
         mapM_ (\l -> loadObject l (Package (mkModid l))) libs
 	mapM_ loadShared dlls
 --
