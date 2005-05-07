@@ -42,6 +42,12 @@ fi
 AC_SUBST(WHOLE_ARCHIVE_FLAG)
 AC_SUBST(LEADING_UNDERSCORE)
 
+if test "$build-os" = "cygwin"
+then
+  LEADING_UNDERSCORE=1
+fi
+AC_SUBST(LEADING_UNDERSCORE)
+
 # Find pwd, in a cygwin friendly way. 
 # Suggested by: http://www.haskell.org/ghc/docs/latest/html/users_guide/ch11s04.html
 TOP=`echo "Directory.getCurrentDirectory >>= putStrLn.init.tail.show " | ghci -ignore-dot-ghci -v0`
