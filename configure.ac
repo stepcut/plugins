@@ -42,11 +42,13 @@ fi
 AC_SUBST(WHOLE_ARCHIVE_FLAG)
 AC_SUBST(LEADING_UNDERSCORE)
 
-if test "$build-os" = "cygwin"
+if test "$build_os" = "cygwin"
 then
   LEADING_UNDERSCORE=1
+  SYMS="$SYMS -DCYGWIN"
 fi
 AC_SUBST(LEADING_UNDERSCORE)
+AC_SUBST(SYMS)
 
 # Find pwd, in a cygwin friendly way. 
 # Suggested by: http://www.haskell.org/ghc/docs/latest/html/users_guide/ch11s04.html

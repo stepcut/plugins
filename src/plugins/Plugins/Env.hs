@@ -49,7 +49,7 @@ import Plugins.ParsePkgConfCabal( parsePkgConf )
 #else
 import Plugins.ParsePkgConfLite ( parsePkgConf )
 #endif
-import Plugins.Consts           ( ghcLibraryPath, sysPkgConf, sysPkgSuffix )
+import Plugins.Consts           ( ghcLibraryPath, sysPkgConf, sysPkgSuffix, dllSuf )
 
 import Data.IORef               ( writeIORef, readIORef, newIORef, IORef() )
 import Data.Maybe               ( isJust )
@@ -57,6 +57,11 @@ import Data.List                ( isPrefixOf, nub )
 
 import System.IO.Unsafe         ( unsafePerformIO )
 import System.Directory         ( doesFileExist )
+#ifdef CYGWIN
+import System.Environment       ( getEnv )
+
+import Control.Monad            ( liftM )
+#endif
 
 import Control.Concurrent.MVar  ( MVar(), newMVar, withMVar )
 
@@ -305,18 +310,27 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
             Nothing -> go fms q     -- look in other pkgs
 
             Just package -> do
+#ifdef CYGWIN
+                let    libdirs = fix_topdir $ libraryDirs package
+#else
                 let    libdirs = libraryDirs package
+#endif
                        hslibs  = hsLibraries package
                        extras  = extraLibraries package
                        deppkgs = packageDeps package
-                libs <- mapM (findHSlib $ fix_topdir libdirs) (hslibs ++ extras)
-		libs' <- mapM (findDLL $ "C:/WINDOWS/SYSTEM") extras
-
+                libs <- mapM (findHSlib libdirs) (hslibs ++ extras)
+#ifdef CYGWIN
+		syslibdir <- liftM ( \x -> x ++ "/SYSTEM") (getEnv "SYSTEMROOT")
+		libs' <- mapM (findDLL $ syslibdir : libdirs) extras
+#else
+		libs' <- mapM (findDLL libdirs) extras
+#endif
                 -- don't care if there are 'Nothings', that usually
                 -- means that they refer to system libraries. Can't do
                 -- anything about that.
                 return (deppkgs, (filterJust libs,filterJust libs') )
 
+#ifdef CYGWIN
         -- replace $topdir
 	fix_topdir []        = []
 	fix_topdir (x:xs)    = replace_topdir x : fix_topdir xs
@@ -326,7 +340,7 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 	    | take 6 xs == "topdir" = ghcLibraryPath ++ (drop 6 xs)
 	    | otherwise             = '$' : replace_topdir xs
 	replace_topdir (x:xs)       = x : replace_topdir xs
-
+#endif
         -- a list elimination form for the Maybe type
         filterJust :: [Maybe a] -> [a]
         filterJust []           = []
@@ -346,12 +360,13 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                   if b then return $ Just l     -- found it!
                        else findHSlib dirs lib
 
-        findDLL :: FilePath -> String -> IO (Maybe FilePath)
-	findDLL dir lib = do
-		 let l = dir ++ "/" ++ lib ++ ".dll"
+        findDLL :: [FilePath] -> String -> IO (Maybe FilePath)
+	findDLL [] _           = return Nothing
+	findDLL (dir:dirs) lib = do
+		 let l = dir </> lib ++ dllSuf
 		 b <- doesFileExist l
 		 if b then return $ Just l
-		      else return $ Nothing
+		      else findDLL dirs lib
 
 ------------------------------------------------------------------------
 -- do we have a Module name for this merge?

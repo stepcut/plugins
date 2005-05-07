@@ -97,9 +97,8 @@ gettemp path doopen domkdir slen = do
     --
     -- replace end of template with process id, and rest with randomness
     --
-    ;pid <- liftM show $ abs `fmap` getProcessID 
-    -- getProcessID returns a negative number? why, dunno, but the minus
-    -- sign screws up Module header names, illegal char.
+    ;pid <- liftM show $ do {v <- getProcessID ; return $ abs v} -- getProcessID returns a negative number? why, dunno, but the minus sign screws up Module header names, illegal char.
+--    ;pid <- liftM show $ getProcessID
     ;let (rest, xs) = merge tmpl pid
     ;as <- randomise rest
     ;let tmpl' = as ++ xs
@@ -244,7 +243,11 @@ mkdir0700 dir = createDirectory dir
 foreign import ccall unsafe "_getpid" getProcessID :: IO Int  
 #else
 getProcessID :: IO Int
+#ifdef CYGWIN
+getProcessID = System.Posix.Internals.c_getpid >>= return . abs . fromIntegral
+#else
 getProcessID = System.Posix.Internals.c_getpid >>= return . fromIntegral
+#endif
 #endif
 
 -- ---------------------------------------------------------------------

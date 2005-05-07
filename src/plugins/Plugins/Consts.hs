@@ -40,6 +40,11 @@ sysPkgSuffix = ".o"
 objSuf       = sysPkgSuffix
 hiSuf        = ".hi"
 hsSuf        = ".hs"
+#ifdef CYGWIN
+dllSuf       = ".dll"
+#else
+dllSuf       = ".so"
+#endif
 
 -- | The prefix used by system modules.  This, in conjunction with
 --  'systemModuleExtension', will result in a module filename that looks
