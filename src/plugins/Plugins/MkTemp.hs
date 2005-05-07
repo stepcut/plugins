@@ -97,8 +97,7 @@ gettemp path doopen domkdir slen = do
     --
     -- replace end of template with process id, and rest with randomness
     --
-    ;pid <- liftM show $ do {v <- getProcessID ; return $ abs v} -- getProcessID returns a negative number? why, dunno, but the minus sign screws up Module header names, illegal char.
---    ;pid <- liftM show $ getProcessID
+    ;pid <- liftM show $ getProcessID
     ;let (rest, xs) = merge tmpl pid
     ;as <- randomise rest
     ;let tmpl' = as ++ xs
