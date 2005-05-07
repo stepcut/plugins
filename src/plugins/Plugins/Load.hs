@@ -453,7 +453,7 @@ loadRawObject obj = loadObject obj (Object k)
 -- | Resolve (link) the modules loaded by the 'loadObject' function.
 --
 resolveObjs :: IO ()
-resolveObjs = do 
+resolveObjs = do
     r <- c_resolveObjs
     when (not r) $
         panic $ "resolveObjs failed with <<" ++ show r ++ ">>"
@@ -480,7 +480,7 @@ loadShared str = do
     if maybe_errmsg == nullPtr  
         then return (Module str (mkModid str) Shared emptyIface (Package (mkModid str)))
         else do e <- peekCString maybe_errmsg
-                panic $ "loadShared: couldn't load `"++str++"\' because "++e
+                panic $ "loadShared: couldn't load `"++str'++"\' because "++e
 
 --
 -- Load a -package that we might need, implicitly loading the cbits too
@@ -498,7 +498,7 @@ loadPackage p = do
 #endif
         libs <- lookupPkg p
         mapM_ (\l -> loadObject l (Package (mkModid l))) libs
-
+	mapM_ loadShared dlls
 --
 -- Unload a -package, that has already been loaded. Unload the cbits
 -- too. The argument is the name of the package.
@@ -513,7 +513,7 @@ loadPackage p = do
 unloadPackage :: String -> IO ()
 unloadPackage pkg = do
     let pkg' = takeWhile (/= '-') pkg   -- in case of *-0.1
-    libs <- liftM (filter (isSublistOf pkg')) (lookupPkg pkg)
+    libs <- liftM (\(a,_) -> (filter (isSublistOf pkg') ) a) (lookupPkg pkg)
     flip mapM_ libs $ \p -> withCString p $ \c_p -> do
                         r <- c_unloadObj c_p 
                         when (not r) (panic "unloadObj: failed")
@@ -568,7 +568,7 @@ loadDepends obj incpaths = do
 
         else do hiface <- readIface hifile
                 let ds = mi_deps hiface
-
+    
                 -- remove ones that we've already loaded
                 ds' <- filterM loaded (dep_mods ds)
 

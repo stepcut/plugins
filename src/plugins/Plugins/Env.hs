@@ -284,22 +284,23 @@ readPackageConf f = do
 -- We return all the package paths that possibly exist, and the leave it
 -- up to loadObject not to load the same ones twice...
 --
-lookupPkg :: PackageName -> IO [FilePath]
+lookupPkg :: PackageName -> IO ([FilePath],[FilePath])
 lookupPkg p = do 
         t <- lookupPkg' p
-        case t of ([],f) -> return f
-                  (ps,f) -> do gss <- mapM lookupPkg ps
-                               return $ nub $ (concat gss) ++ f
+        case t of ([],(f,g)) -> return (f,g)
+                  (ps,(f,g)) -> do gss <- mapM lookupPkg ps
+				   let (f',g') = unzip gss
+				   return $ (nub $ (concat f') ++ f,nub $ (concat g') ++ g)
 
 --
 -- return any stuff to load for this package, plus the list of packages
 -- this package depends on. which includes stuff we have to then load
 -- too.
 --
-lookupPkg' :: PackageName -> IO ([PackageName],[FilePath])
+lookupPkg' :: PackageName -> IO ([PackageName],([FilePath],[FilePath]))
 lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
     where
-        go [] _       = return ([],[])
+        go [] _       = return ([],([],[]))
         go (fm:fms) q = case lookupFM fm q of
             Nothing -> go fms q     -- look in other pkgs
 
@@ -313,7 +314,17 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                 -- don't care if there are 'Nothings', that usually
                 -- means that they refer to system libraries. Can't do
                 -- anything about that.
-                return (deppkgs, filterJust libs )
+                return (deppkgs, (filterJust libs,filterJust libs') )
+
+        -- replace $topdir
+	fix_topdir []        = []
+	fix_topdir (x:xs)    = replace_topdir x : fix_topdir xs
+
+        replace_topdir []           = []
+	replace_topdir ('$':xs) 
+	    | take 6 xs == "topdir" = ghcLibraryPath ++ (drop 6 xs)
+	    | otherwise             = '$' : replace_topdir xs
+	replace_topdir (x:xs)       = x : replace_topdir xs
 
         -- a list elimination form for the Maybe type
         filterJust :: [Maybe a] -> [a]
@@ -333,6 +344,13 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                   b <- doesFileExist l
                   if b then return $ Just l     -- found it!
                        else findHSlib dirs lib
+
+        findDLL :: FilePath -> String -> IO (Maybe FilePath)
+	findDLL dir lib = do
+		 let l = dir ++ "/" ++ lib ++ ".dll"
+		 b <- doesFileExist l
+		 if b then return $ Just l
+		      else return $ Nothing
 
 ------------------------------------------------------------------------
 -- do we have a Module name for this merge?
