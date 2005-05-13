@@ -1,4 +1,4 @@
-{-# GLOBALOPTIONS -package posix #-}
+{-# GLOBALOPTIONS -package mtl #-}
 
 module M ( resource ) where
 

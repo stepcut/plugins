@@ -12,15 +12,20 @@ AC_PREREQ(2.53)
 # Find out what type of system we're running on
 AC_CANONICAL_BUILD
 
-# This isn't right for cygwin.
+Platform="$build_cpu-$build_vendor-$build_os"
+
+# This isn't right for msys mingw.
 PREFIX="$prefix"
 if test "$prefix" = "NONE"
 then
-	PREFIX="$ac_default_prefix"
+  if test "$build_os" = "cygwin"
+  then
+    PREFIX="c:/cygwin$ac_default_prefix"
+  else
+    PREFIX="$ac_default_prefix"
+  fi
 fi
 AC_SUBST(PREFIX)
-
-Platform="$build_cpu-$build_vendor-$build_os"
 
 case $Platform in
 powerpc-apple-darwin*)
@@ -41,6 +46,14 @@ fi
 
 AC_SUBST(WHOLE_ARCHIVE_FLAG)
 AC_SUBST(LEADING_UNDERSCORE)
+
+if test "$build_os" = "mingw32"
+then
+  LEADING_UNDERSCORE=1
+  SYMS="$SYMS -D__MINGW32__"
+fi
+AC_SUBST(LEADING_UNDERSCORE)
+AC_SUBST(SYMS)
 
 if test "$build_os" = "cygwin"
 then

@@ -57,7 +57,7 @@ import Data.List                ( isPrefixOf, nub )
 
 import System.IO.Unsafe         ( unsafePerformIO )
 import System.Directory         ( doesFileExist )
-#ifdef CYGWIN
+#if defined(CYGWIN) || defined(__MINGW32__)
 import System.Environment       ( getEnv )
 
 import Control.Monad            ( liftM )
@@ -310,7 +310,7 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
             Nothing -> go fms q     -- look in other pkgs
 
             Just package -> do
-#ifdef CYGWIN
+#if defined(CYGWIN) || defined(__MINGW32__)
                 let    libdirs = fix_topdir $ libraryDirs package
 #else
                 let    libdirs = libraryDirs package
@@ -319,7 +319,7 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                        extras  = extraLibraries package
                        deppkgs = packageDeps package
                 libs <- mapM (findHSlib libdirs) (hslibs ++ extras)
-#ifdef CYGWIN
+#if defined(CYGWIN) || defined(__MINGW32__)
 		syslibdir <- liftM ( \x -> x ++ "/SYSTEM") (getEnv "SYSTEMROOT")
 		libs' <- mapM (findDLL $ syslibdir : libdirs) extras
 #else
@@ -330,7 +330,7 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                 -- anything about that.
                 return (deppkgs, (filterJust libs,filterJust libs') )
 
-#ifdef CYGWIN
+#if defined(CYGWIN) || defined(__MINGW32__)
         -- replace $topdir
 	fix_topdir []        = []
 	fix_topdir (x:xs)    = replace_topdir x : fix_topdir xs

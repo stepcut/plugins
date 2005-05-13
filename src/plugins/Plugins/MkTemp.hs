@@ -42,7 +42,11 @@ import Control.Monad            ( liftM )
 import Control.Exception        ( handleJust )
 import System.Directory         ( doesDirectoryExist, doesFileExist, createDirectory )
 import System.IO
+#ifndef __MINGW32__
 import System.IO.Error          ( isAlreadyExistsError )
+#else
+import System.IO.Error          ( isAlreadyExistsError, isAlreadyInUseError, isPermissionError )
+#endif
 
 import GHC.IOBase               ( IOException(IOError), 
                                   Exception(IOException), 
