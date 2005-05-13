@@ -10,7 +10,7 @@ all: build EvalHaskell.h
 build::
 	cd src && $(MAKE)
 	@find src -name depend -exec rm {} \;
-	cd src && $(MAKE) way=p
+	@#cd src && $(MAKE) way=p
 
 EvalHaskell.h: build
 	cp src/eval/Eval/Haskell_stub.h $@
