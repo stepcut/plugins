@@ -13,11 +13,16 @@ import System.Directory
 -- this should go away once we can read .hi files.
 
 main = do
-        make "../Plugin.hs" [ "-i../api", "-o", "/tmp/Plugin.o" ]
-        m_v   <- load "/tmp/Plugin.o" ["../api"] [] "resource"
+#if __GLASGOW_HASKELL__ >= 604
+        tmpDir <- getTemporaryDirectory
+#else
+        let tmpDir = "/tmp"
+#endif
+        make "../Plugin.hs" [ "-i../api", "-o", (tmpDir ++ "/Plugin.o") ]
+        m_v   <- load (tmpDir ++ "/Plugin.o") ["../api"] [] "resource"
         v <- case m_v of
             LoadSuccess _ v -> return v
             _               -> error "load failed"
         putStrLn $ field v 
 
-        mapM_ removeFile [ "/tmp/Plugin.o" , "/tmp/Plugin.hi" ]
+        mapM_ removeFile [ (tmpDir ++ "/Plugin.hi"), (tmpDir ++ "/Plugin.o") ]

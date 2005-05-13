@@ -22,6 +22,13 @@ module Plugins.Consts where
 
 #include "../../../config.h"
 
+
+#if __GLASGOW_HASKELL__ >= 604
+import System.Directory          ( getTemporaryDirectory )
+import System.IO.Unsafe          ( unsafePerformIO )
+#endif
+
+
 -- | path to *build* dir, used by eval() for testing the examples
 top             = TOP
 
@@ -40,7 +47,7 @@ sysPkgSuffix = ".o"
 objSuf       = sysPkgSuffix
 hiSuf        = ".hi"
 hsSuf        = ".hs"
-#ifdef CYGWIN
+#if defined(CYGWIN) || defined(__MINGW32__)
 dllSuf       = ".dll"
 #else
 dllSuf       = ".so"
@@ -59,9 +66,14 @@ prefixUnderscore        = ""
 #endif
 
 -- | Define tmpDir to where tmp files should be created on your platform
+
+#if __GLASGOW_HASKELL__ >= 604
+tmpDir = unsafePerformIO getTemporaryDirectory
+{-# NOINLINE tmpDir #-}
+#else
 #if !defined(__MINGW32__)
 tmpDir  = "/tmp"
 #else
 tmpDir  = error "tmpDir not defined for this platform. Try setting the TMPDIR env var"
 #endif
-
+#endif

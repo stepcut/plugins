@@ -3,7 +3,12 @@ import API
 import System.Directory
 
 main = do
-        status <- make "../Plugin.hs" [ "-i../api", "-odir", "/tmp" ]
+#if __GLASGOW_HASKELL__ >= 604
+        tmpDir <- getTemporaryDirectory
+#else
+        let tmpDir = "/tmp"
+#endif
+        status <- make "../Plugin.hs" [ "-i../api", "-odir", tmpDir ]
         o <- case status of
                 MakeSuccess _ o -> return o
                 MakeFailure e -> mapM_ putStrLn e >> error "didn't compile"
@@ -12,5 +17,5 @@ main = do
             LoadSuccess _ v -> return v
             _               -> error "load failed"
         putStrLn $ field v 
-        mapM_ removeFile ["/tmp/Plugin.hi", "/tmp/Plugin.o" ]
+        mapM_ removeFile [(tmpDir ++ "/Plugin.hi"), (tmpDir ++ "/Plugin.o") ]
 

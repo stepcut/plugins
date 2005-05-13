@@ -243,7 +243,11 @@ unify obj incs args ty sym = do
             i   = "-i" ++ dirname obj           -- plugin
 
         hWrite hdl src
+#if defined(CYGWIN) || defined(__MINGW32__)
+        e <- build tmpf "nul" (i:is++args++["-fno-code","-ohi nul"])
+#else
         e <- build tmpf "/dev/null" (i:is++args++["-fno-code","-ohi/dev/null"])
+#endif
         removeFile tmpf 
         return e
 
