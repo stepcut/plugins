@@ -25,12 +25,14 @@ Read the documentation in doc/ for more.
 ------------------------------------------------------------------------
 DEPENDENCIES:
 
+* Requires GHC > 6.2 (for Typeable.h)
+* Requires GNU make or BSD make to build
 * Requires HSX, Niklas Broberg's Haskell parser library, available at:
-    http://www.cs.chalmers.se/~d00nibro/haskell-src-exts
+    darcs get http://www.cs.chalmers.se/~d00nibro/haskell-src-exts
   Read the README with this package for how to install it (quite simple)
 
-* Requires GNU make or BSD make to build
-* Requires GHC > 6.2 (for Typeable.h)
+------------------------------------------------------------------------
+
 * 'plugs' requires a working readline library.
 
 * If you wish to use TH in plugins, or to run load()-programs in GHCi,
