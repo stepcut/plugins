@@ -23,7 +23,7 @@ EvalHaskell.h: build
 install:
 	$(INSTALL_DATA_DIR) $(LIBDIR)/include
 	$(INSTALL_DATA) EvalHaskell.h $(LIBDIR)/include
-	@(cd src && $(MAKE) install && $(MAKE) install way=p)
+	@(cd src && $(MAKE) install)
 
 #
 # and register the library with ghc package system
