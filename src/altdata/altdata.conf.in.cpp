@@ -27,8 +27,7 @@ maintainer:	dons@cse.unsw.edu.au
 exposed:	True
 exposed-modules:
 	AltData.Dynamic,
-	AltData.Typeable,
-	AltData
+	AltData.Typeable
 
 hidden-modules:
 #ifdef INSTALLING
