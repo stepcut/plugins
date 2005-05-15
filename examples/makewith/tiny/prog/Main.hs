@@ -1,5 +1,5 @@
 
-import Plugins
+import System.Plugins
 import API
 import Data.Either
 

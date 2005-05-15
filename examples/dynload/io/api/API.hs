@@ -2,7 +2,7 @@
 
 module API where
 
-import AltData
+import AltData.Typeable
 
 data TestIO = TestIO { 
                 field :: IO String 

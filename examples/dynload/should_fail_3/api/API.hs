@@ -2,7 +2,7 @@
 
 module API where
 
-import AltData
+import AltData.Typeable
 import GHC.Base
 
 data Interface = Interface { 

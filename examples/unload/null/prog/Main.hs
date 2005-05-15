@@ -1,5 +1,5 @@
 
-import Plugins
+import System.Plugins
 import API
 
 -- an example where we just want to load an object and run it

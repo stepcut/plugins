@@ -2,9 +2,9 @@
 
 module PluginEvalAux where
 
-import Plugins.Make
-import Plugins.Load
-import Plugins.Utils
+import System.Plugins.Make
+import System.Plugins.Load
+import System.Plugins.Utils
 
 import Foreign.C
 import Control.Exception        ( evaluate )

@@ -3,8 +3,8 @@
 -- GPL version 2 or later (see http://www.gnu.org/copyleft/gpl.html)
 --
 
-import Eval.Haskell
-import Plugins.Load
+import System.Eval.Haskell
+import System.Plugins.Load
 
 import System.Exit              ( ExitCode(..), exitWith )
 import System.IO

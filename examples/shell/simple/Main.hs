@@ -1,4 +1,4 @@
-import Plugins
+import System.Plugins
 import StringProcessorAPI
 import System.Console.Readline
 import System.Exit

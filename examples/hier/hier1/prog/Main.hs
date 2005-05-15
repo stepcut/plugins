@@ -5,7 +5,7 @@
 
 module Main where
 
-import Plugins
+import System.Plugins
 import API
 import Modules.Flags as Flags
 

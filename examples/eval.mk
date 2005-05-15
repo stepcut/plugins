@@ -1,7 +1,7 @@
 include $(TOP)/config.mk
 include $(TOP)/examples/check.mk
 
-PKGFLAGS=	-package-conf $(TOP)/plugins.conf.inplace -package eval -package plugins  -package printf
+PKGFLAGS=	-package-conf $(TOP)/plugins.conf.inplace -package plugins
 
 BIN=a.out
 SRC=Main.hs
@@ -24,4 +24,4 @@ $(BIN): $(SRC) $(OBJS)
 	@$(GHC) $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) -c $<
 
 clean: 
-	rm -rf *.hi *.o *~ $(BIN)
+	@rm -rf *.hi *.o *~ $(BIN)

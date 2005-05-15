@@ -1,5 +1,5 @@
  
-import Plugins.MkTemp
+import System.MkTemp
 
 import Data.Maybe
 

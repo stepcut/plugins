@@ -1,5 +1,5 @@
 
-import Plugins
+import System.Plugins
 import API
 
 src     = "../Plugin.hs"

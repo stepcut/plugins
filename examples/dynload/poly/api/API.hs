@@ -2,7 +2,7 @@
 
 module API where
 
-import AltData
+import AltData.Typeable
 
 data Interface = Interface { 
         equals :: forall t. Eq t => t -> t -> Bool

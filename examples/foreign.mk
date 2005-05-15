@@ -3,7 +3,7 @@ include $(TOP)/examples/check.mk
 
 
 INCLUDES=   -I$(TOP)
-PKGFLAGS=   -package-conf $(TOP)/plugins.conf.inplace -package eval
+PKGFLAGS=   -package-conf $(TOP)/plugins.conf.inplace -package plugins
 
 # compile with GHC to save us setting all the necessary include and
 # lib flags. use ghc -v to find out what these are if you wish to go

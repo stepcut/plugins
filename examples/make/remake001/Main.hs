@@ -7,7 +7,7 @@
 -- False
 --
 
-import Plugins
+import System.Plugins
 import System.Directory
    
 main = do

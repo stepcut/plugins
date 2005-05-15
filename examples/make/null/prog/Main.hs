@@ -1,7 +1,7 @@
 
 -- an example where we want to compile and load a file
 
-import Plugins
+import System.Plugins
 import API
 
 main = do 

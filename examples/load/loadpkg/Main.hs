@@ -1,4 +1,4 @@
 
-import Plugins
+import System.Plugins
 
 main = loadPackageWith "posix" []

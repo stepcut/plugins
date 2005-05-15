@@ -1,6 +1,6 @@
 
-import Plugins.Make
-import Eval.Haskell
+import System.Plugins.Make
+import System.Eval.Haskell
 
 main = do make "a/Extra.hs" []
         

@@ -6,7 +6,7 @@
 module Main where
 
 import Poly
-import Eval.Haskell
+import System.Eval.Haskell
 
 main = do m_f <- eval "Fn (\\x y -> x == y)" ["Poly"]
           when (isJust m_f) $ do

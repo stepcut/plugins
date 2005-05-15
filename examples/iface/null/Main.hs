@@ -1,6 +1,6 @@
 module Main ( main ) where
 
-import Hi.Parser
+import Language.Hi.Parser
 
 import A
 import B

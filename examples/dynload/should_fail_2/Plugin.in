@@ -9,7 +9,7 @@
 module Plugin where
 
 import API
-import AltData
+import AltData.Typeable
 import GHC.Base
 
 v :: Int

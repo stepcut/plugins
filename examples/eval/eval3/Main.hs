@@ -10,7 +10,7 @@
 
 #include "../../../config.h"
 
-import Eval.Haskell
+import System.Eval.Haskell
 import AltData.Dynamic
 
 -- import Data.Dynamic

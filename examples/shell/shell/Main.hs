@@ -2,7 +2,7 @@
 -- a simple shell for loading plugins and evaluating their functions
 -- 
 
-import Plugins
+import System.Plugins
 import API
 
 import Data.Either

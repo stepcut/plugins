@@ -3,7 +3,7 @@
 module Plugin ( resource_dyn )  where
 
 import API
-import AltData
+import AltData.Dynamic
 
 resource = plugin
 

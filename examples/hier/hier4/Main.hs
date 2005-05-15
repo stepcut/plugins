@@ -1,6 +1,6 @@
 module Main where
 
-import Plugins
+import System.Plugins
 
 main = do
 

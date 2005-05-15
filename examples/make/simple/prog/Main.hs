@@ -2,7 +2,7 @@
 -- little more complex. use the path to the obj file we get back from
 -- 'make'. load() uses this to find the .hi file
 
-import Plugins
+import System.Plugins
 import API
 
 main = do

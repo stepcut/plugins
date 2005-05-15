@@ -1,5 +1,5 @@
 
-import Eval.Haskell
+import System.Eval.Haskell
 
 main = do i <- eval_ "Just (7 :: Int)" 
                      ["Maybe"] 

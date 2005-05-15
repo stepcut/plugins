@@ -2,7 +2,7 @@
 
 #include "../../../../config.h"
 
-import Plugins
+import System.Plugins
 import API
 
 main :: IO ()

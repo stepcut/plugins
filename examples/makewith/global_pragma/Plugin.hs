@@ -2,8 +2,8 @@
 
 module M ( resource ) where
 
-import System.IO.Unsafe
 import API
+import System.IO.Unsafe
 import System.Process
 import System.IO
 

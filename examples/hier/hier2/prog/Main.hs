@@ -6,7 +6,7 @@
 
 module Main where
 
-import Plugins
+import System.Plugins
 
 main = do
         status <- load "../A/B/C/Module.o" [".."] [] "symbol"

@@ -1,4 +1,4 @@
-import AltData
+import AltData.Dynamic
 import Data.Char
 
 main = putStrLn f
