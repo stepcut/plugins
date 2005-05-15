@@ -13,7 +13,7 @@ build::
 	@#cd src && $(MAKE) way=p
 
 EvalHaskell.h: build
-	cp src/eval/Eval/Haskell_stub.h $@
+	cp src/plugins/System/Eval/Haskell_stub.h $@
 
 #
 # installing
@@ -33,13 +33,9 @@ register:
 	env LIBDIR=${LIBDIR} $(GHC_PKG) -u < src/altdata/altdata.conf.in
 	env LIBDIR=${LIBDIR} $(GHC_PKG) -u < src/hi/hi.conf.in
 	env LIBDIR=${LIBDIR} $(GHC_PKG) -u < src/plugins/plugins.conf.in
-	env LIBDIR=${LIBDIR} $(GHC_PKG) -u < src/eval/eval.conf.in
-	env LIBDIR=${LIBDIR} $(GHC_PKG) -u < src/printf/printf.conf.in
 
 # and unregister the packages
 unregister:
-	$(GHC_PKG) -r printf
-	$(GHC_PKG) -r eval
 	$(GHC_PKG) -r plugins
 	$(GHC_PKG) -r hi
 	$(GHC_PKG) -r altdata
