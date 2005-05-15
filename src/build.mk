@@ -95,15 +95,13 @@ $(PKG).conf.in : $(PKG).conf.in.cpp
 #
 .PHONY: install install-me
 install-me:
-	$(INSTALL_DATA_DIR) $(LIBDIR)/imports/$(UPKG)
-	@for i in $(TOP)/src/$(PKG)/*.$(way_)hi ; do \
-		echo $(INSTALL_DATA) $$i $(LIBDIR)/imports/ ; \
-		$(INSTALL_DATA) $$i $(LIBDIR)/imports/ ; \
-	done
-	@for i in $(TOP)/src/$(PKG)/$(UPKG)/*.$(way_)hi ; do \
-		echo $(INSTALL_DATA) $$i $(LIBDIR)/imports/$(UPKG)/ ; \
-		$(INSTALL_DATA) $$i $(LIBDIR)/imports/$(UPKG)/ ; \
-	done
+	@for i in $(PATHS) ; do \
+	        $(INSTALL_DATA_DIR) $(LIBDIR)/imports/$$i ;\
+                for j in $(TOP)/src/$(PKG)/$$i/*.$(way_)hi ; do \
+                        echo $(INSTALL_DATA) $$j $(LIBDIR)/imports/$$i/ ; \
+                        $(INSTALL_DATA) $$j $(LIBDIR)/imports/$$i/ ; \
+                done ;\
+        done
 	$(INSTALL_DATA) $(TOP)/src/$(PKG)/libHS$(PKG)$(_way).a  $(LIBDIR)
 	$(RANLIB) $(LIBDIR)/libHS$(PKG).a
 	$(INSTALL_DATA) $(TOP)/src/$(PKG)/HS$(PKG).o     $(LIBDIR)

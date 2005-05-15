@@ -1,5 +1,6 @@
 PKG			= altdata
 UPKG			= AltData
+PATHS                   = AltData
 
 ALL_SRCS=$(wildcard $(patsubst ./%, %, $(patsubst %, %/*.hs, . $(UPKG))))
 

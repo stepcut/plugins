@@ -4,6 +4,8 @@ UPKG	= Hi
 CSRC  = Language/$(UPKG)/hschooks.c
 COBJ  = Language/$(UPKG)/hschooks.o
 
+PATHS = Language Language/$(UPKG)
+
 ALL_SRCS=$(wildcard $(patsubst ./%, %, $(patsubst %, %/*.hs, Language Language/$(UPKG))))
 
 TOP=../..

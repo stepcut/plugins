@@ -1,6 +1,8 @@
 PKG         = plugins
 UPKG        = Plugins
 
+PATHS       = System System/Eval System/Plugins
+
 TOP=../..
 include $(TOP)/config.mk
 
