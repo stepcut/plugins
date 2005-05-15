@@ -18,7 +18,7 @@ STUBOBJS   =System/Eval/Haskell_stub.$(way_)o
 
 ALL_SRCS= $(filter-out $(OTHER), \
                 $(wildcard $(patsubst ./%, %, \
-                        $(patsubst %, %/*.hs, System System/$(UPKG)))))
+                        $(patsubst %, %/*.hs, System System/$(UPKG) System/Eval))))
 
 include ../build.mk
 

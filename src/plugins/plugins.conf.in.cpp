@@ -32,8 +32,8 @@ exposed-modules:
 	System.Plugins.Make,
 	System.Plugins,
 	System.MkTemp,
-	System.Eval.Haskell,
-	System.Eval
+	System.Eval,
+	System.Eval.Haskell
 
 hidden-modules:
         System.Plugins.Consts,
