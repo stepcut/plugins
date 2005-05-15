@@ -1,15 +1,15 @@
 PKG	= hi
 UPKG	= Hi
 
-CSRC  = $(UPKG)/hschooks.c
-COBJ  = $(UPKG)/hschooks.o
+CSRC  = Language/$(UPKG)/hschooks.c
+COBJ  = Language/$(UPKG)/hschooks.o
 
-ALL_SRCS=$(wildcard $(patsubst ./%, %, $(patsubst %, %/*.hs, . $(UPKG))))
+ALL_SRCS=$(wildcard $(patsubst ./%, %, $(patsubst %, %/*.hs, Language Language/$(UPKG))))
 
 TOP=../..
 include ../build.mk
 
-HC_OPTS	+= -I$(UPKG)
+HC_OPTS	+= -ILanguage/$(UPKG)
 
 install: install-me
 

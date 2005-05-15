@@ -5,18 +5,20 @@ TOP=../..
 include $(TOP)/config.mk
 
 ifeq ($(CABAL),1)
-YOBJ    = $(UPKG)/ParsePkgConfCabal.hs
-YSRC    = $(UPKG)/ParsePkgConfCabal.y
-OTHER   = $(UPKG)/ParsePkgConfLite.hs
+YOBJ    = System/$(UPKG)/ParsePkgConfCabal.hs
+YSRC    = System/$(UPKG)/ParsePkgConfCabal.y
+OTHER   = System/$(UPKG)/ParsePkgConfLite.hs
 else
-YOBJ    = $(UPKG)/ParsePkgConfLite.hs
-YSRC    = $(UPKG)/ParsePkgConfLite.y
-OTHER   = $(UPKG)/ParsePkgConfCabal.hs
+YOBJ    = System/$(UPKG)/ParsePkgConfLite.hs
+YSRC    = System/$(UPKG)/ParsePkgConfLite.y
+OTHER   = System/$(UPKG)/ParsePkgConfCabal.hs
 endif
+
+STUBOBJS   =System/Eval/Haskell_stub.$(way_)o
 
 ALL_SRCS= $(filter-out $(OTHER), \
                 $(wildcard $(patsubst ./%, %, \
-                        $(patsubst %, %/*.hs, . $(UPKG)))))
+                        $(patsubst %, %/*.hs, System System/$(UPKG)))))
 
 include ../build.mk
 

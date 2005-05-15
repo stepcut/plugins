@@ -28,18 +28,24 @@ license:	LGPL
 maintainer:	dons@cse.unsw.edu.au
 exposed:	True
 exposed-modules:
-	Plugins.Consts,
-	Plugins.Env,
-	Plugins.Load,
-	Plugins.Make,
-	Plugins.MkTemp,
-	Plugins.PackageAPI,
-	Plugins.ParsePkgConfCabal,
-	Plugins.Parser,
-	Plugins.Utils,
-	Plugins
+	System.Plugins.Load,
+	System.Plugins.Make,
+	System.Plugins,
+	System.MkTemp,
+	System.Eval.Haskell,
+	System.Eval
 
 hidden-modules:
+        System.Plugins.Consts,
+        System.Plugins.Env,
+        System.Plugins.Package,
+        System.Plugins.PackageAPI,
+        System.Plugins.ParsePkgConfCabal,
+        System.Plugins.ParsePkgConfLite,
+        System.Plugins.Parser,
+        System.Plugins.Utils,
+        System.Eval.Utils
+
 #ifdef INSTALLING
 import-dirs:          LIBDIR/imports
 library-dirs:         LIBDIR

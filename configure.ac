@@ -4,7 +4,7 @@
 #
 
 # sanity test
-AC_INIT(src/plugins/Plugins.hs)
+AC_INIT(src/plugins/System/Plugins.hs)
 
 # untested on earlier than 2.52, but it won't work anyway
 AC_PREREQ(2.53)

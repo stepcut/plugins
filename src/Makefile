@@ -2,10 +2,10 @@
 # Copyright (c) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
 # GPL version 2 or later (see http://www.gnu.org/copyleft/gpl.html)
 
-.PHONY: all build altdata hi plugins eval  printf
-.PHONY:	install i_altdata i_hi i_plugins i_eval i_printf
+.PHONY: all build altdata hi plugins
+.PHONY:	install i_altdata i_hi i_plugins
 
-build: altdata hi plugins eval printf
+build: altdata hi plugins
 	 
 altdata:
 	@cd altdata && $(MAKE)
@@ -13,12 +13,8 @@ hi:
 	@cd hi && $(MAKE)
 plugins: altdata hi
 	@cd plugins && $(MAKE)
-eval: plugins
-	@cd eval && $(MAKE)
-printf: plugins
-	@cd printf && $(MAKE)
 
-install: i_altdata i_hi i_plugins i_eval i_printf
+install: i_altdata i_hi i_plugins
 	@true
 
 i_altdata:
@@ -27,10 +23,6 @@ i_hi:
 	@cd hi      && $(MAKE) install
 i_plugins:
 	@cd plugins && $(MAKE) install
-i_eval:
-	@cd eval    && $(MAKE) install
-i_printf:
-	@cd printf  && $(MAKE) install
 
 all: build
 

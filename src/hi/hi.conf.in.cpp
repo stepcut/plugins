@@ -26,15 +26,15 @@ license:	BSD3
 maintainer:	libraries@haskell.org
 exposed:	True
 exposed-modules:
-        Hi.Binary,    
-	Hi.FastMutInt,
-	Hi.FastString,
-	Hi.Parser,    
-	Hi.PrimPacked,
-	Hi.Syntax,    
-	Hi            
+	Language.Hi.Parser
 
 hidden-modules:
+        Language.Hi.Binary,
+        Language.Hi.FastString,
+	Language.Hi.Syntax,    
+        Language.Hi.FastMutInt,
+        Language.Hi.PrimPacked
+
 #ifdef INSTALLING
 import-dirs:          LIBDIR/imports
 library-dirs:         LIBDIR
