@@ -332,22 +332,13 @@ parsePkgConf = parse . lexer
 parseOnePkgConf :: String -> PackageConfig
 parseOnePkgConf = parseOne . lexer
 {-# LINE 1 "GenericTemplate.hs" #-}
--- $Id: ParsePkgConfLite.hs,v 1.3 2004/06/19 01:28:56 dons Exp $
+{-# LINE 1 "<built-in>" #-}
+{-# LINE 1 "<command line>" #-}
+{-# LINE 1 "GenericTemplate.hs" #-}
+-- $Id$
 
 
-
-
-
-
-
-
-
-
-
-
-
-{-# LINE 27 "GenericTemplate.hs" #-}
-
+{-# LINE 28 "GenericTemplate.hs" #-}
 
 
 data Happy_IntList = HappyCons Int# Happy_IntList
@@ -357,28 +348,10 @@ data Happy_IntList = HappyCons Int# Happy_IntList
 
 
 
+{-# LINE 49 "GenericTemplate.hs" #-}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+{-# LINE 59 "GenericTemplate.hs" #-}
 
 
 
@@ -400,8 +373,8 @@ happyParse start_state = happyNewToken start_state notHappyAtAll notHappyAtAll
 -----------------------------------------------------------------------------
 -- Accepting the parse
 
-happyAccept j tk st sts (HappyStk ans _) = (happyTcHack j 
-				                  (happyTcHack st))
+happyAccept j tk st sts (HappyStk ans _) = (happyTcHack j  				                  (happyTcHack st))
+
 					   (happyReturn1 ans)
 
 -----------------------------------------------------------------------------
@@ -475,8 +448,7 @@ data HappyAddr = HappyA# Addr#
 -----------------------------------------------------------------------------
 -- HappyState data type (not arrays)
 
-{-# LINE 165 "GenericTemplate.hs" #-}
-
+{-# LINE 166 "GenericTemplate.hs" #-}
 
 -----------------------------------------------------------------------------
 -- Shifting a token
