@@ -1,3 +1,0 @@
-
-Fail: Type error in dynamic application.
-Can't apply function <Int -> [Char]> to argument <[Char]>
