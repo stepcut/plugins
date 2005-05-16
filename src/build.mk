@@ -93,15 +93,17 @@ $(PKG).conf.in : $(PKG).conf.in.cpp
 #
 # todo. need to re-ranlib the library
 #
+HS_IFACES   = $(addsuffix .$(way_)hi,$(basename $(ALL_SRCS)))
+
 .PHONY: install install-me
 install-me:
 	@for i in $(PATHS) ; do \
 	        $(INSTALL_DATA_DIR) $(LIBDIR)/imports/$$i ;\
-                for j in $(TOP)/src/$(PKG)/$$i/*.$(way_)hi ; do \
-                        echo $(INSTALL_DATA) $$j $(LIBDIR)/imports/$$i/ ; \
-                        $(INSTALL_DATA) $$j $(LIBDIR)/imports/$$i/ ; \
-                done ;\
-        done
+	done
+	@for j in $(HS_IFACES) ; do \
+			echo $(INSTALL_DATA) $(TOP)/src/$(PKG)/$$j $(LIBDIR)/imports/$$j ; \
+			$(INSTALL_DATA) $(TOP)/src/$(PKG)/$$j $(LIBDIR)/imports/$$j ; \
+	done
 	$(INSTALL_DATA) $(TOP)/src/$(PKG)/libHS$(PKG)$(_way).a  $(LIBDIR)
 	$(RANLIB) $(LIBDIR)/libHS$(PKG).a
 	$(INSTALL_DATA) $(TOP)/src/$(PKG)/HS$(PKG).o     $(LIBDIR)
