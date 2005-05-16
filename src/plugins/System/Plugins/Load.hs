@@ -69,6 +69,7 @@ import GHC.Prim                 ( unsafeCoerce# )
 #if DEBUG
 import System.IO                ( hFlush, stdout )
 #endif
+import System.IO                ( hClose )
 
 -- TODO need a loadPackage p package.conf :: IO () primitive
 
@@ -221,10 +222,6 @@ pdynload_ object incpaths pkgconfs args ty sym = do
 ------------------------------------------------------------------------
 -- run the typechecker over the constraint file
 --
--- .hc into /dev/null, .hi into /dev/null
---
--- NON_PORTABLE == /dev/null
---
 -- Problem: if the user depends on a non-auto package to build the
 -- module, then that package will not be in scope when we try to build
 -- the module, when performing `unify'. Normally make() will handle this
@@ -235,7 +232,9 @@ pdynload_ object incpaths pkgconfs args ty sym = do
 -- Maybe other stuff we want to hack in here.
 --
 unify obj incs args ty sym = do
-        (tmpf,hdl) <- mkTemp
+        (tmpf,hdl)   <- mkTemp
+        (tmpf1,hdl1) <- mkTemp  -- and send .hi file here.
+        hClose hdl1
 
         let nm  = mkModid (basename tmpf) 
             src = mkTest nm (mkModid obj) (fst $ break (=='.') ty) ty sym
@@ -243,12 +242,12 @@ unify obj incs args ty sym = do
             i   = "-i" ++ dirname obj           -- plugin
 
         hWrite hdl src
-#if defined(CYGWIN) || defined(__MINGW32__)
-        e <- build tmpf "nul" (i:is++args++["-fno-code","-ohi nul"])
-#else
-        e <- build tmpf "/dev/null" (i:is++args++["-fno-code","-ohi/dev/null"])
-#endif
+--  was need for cygwin, should be ok now:
+--         e <- build tmpf "nul" (i:is++args++["-fno-code","-ohi nul"])
+
+        e <- build tmpf tmpf1 (i:is++args++["-fno-code","-ohi "++tmpf1])
         removeFile tmpf 
+        removeFile tmpf1
         return e
 
 mkTest modnm plugin api ty sym = 
