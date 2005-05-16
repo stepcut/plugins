@@ -66,7 +66,7 @@ check:
 
 CLEAN_FILES += *.conf.*.old *~
 EXTRA_CLEANS+=*.conf.inplace* *.conf.in *.h autom4te.cache \
-	      config.h config.mk config.log config.status configure
+	      config.h config.mk config.log config.status
 
 clean:
 	cd docs && $(MAKE) clean
