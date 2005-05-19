@@ -52,6 +52,7 @@ import System.Plugins.Make             ( build )
 import System.Plugins.Env
 import System.Plugins.Utils
 import System.Plugins.Consts           ( sysPkgSuffix, hiSuf, prefixUnderscore )
+import System.Plugins.LoadTypes
 
 import Language.Hi.Parser
 
@@ -74,10 +75,6 @@ import System.IO                ( hFlush, stdout )
 import System.IO                ( hClose )
 
 -- TODO need a loadPackage p package.conf :: IO () primitive
-
--- ---------------------------------------------------------------------
-
-import System.Plugins.LoadTypes
 
 -- ---------------------------------------------------------------------
 -- return status of all *load functions:
