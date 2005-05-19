@@ -1,6 +1,8 @@
 For 0.1
 ----------
 
++ Cascading unload/reload
+
 + have eval, printf return errors as arguments, not to stdout
 
 + nice functions for cleaning up /tmp files, given a module name

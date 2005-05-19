@@ -42,7 +42,7 @@ import System.Eval.Utils
 import System.Plugins.Make
 import System.Plugins.Load
 
-import AltData.Dynamic
+import AltData.Dynamic             ( Dynamic )
 import AltData.Typeable            ( Typeable )
 
 import Data.Either

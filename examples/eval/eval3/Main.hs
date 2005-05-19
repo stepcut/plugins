@@ -10,25 +10,26 @@
 
 #include "../../../config.h"
 
-import System.Eval.Haskell
+import System.Eval
 import AltData.Dynamic
-
--- import Data.Dynamic
 
 pkgconf = TOP ++ "/plugins.conf.inplace"
 
 main = do
-    a <- return $ toDyn (3::Int)
+    a <- return $ toDyn (3::Integer)
 
-    m_b <- unsafeEval_ "\\dyn -> fromMaybe (7 :: Int) (fromDyn dyn)"
-                ["AltData.Dynamic","Data.Maybe"]  -- imports
-
+    -- so, we try to compile a function that takes a dyn.
+    -- looks like with GHC 6.4, we need to make sure the package.confs work:
+    m_b <- unsafeEval_ "\\dyn -> fromDyn dyn (7 :: Integer)"
+                ["AltData.Dynamic"]
                 [ "-package-conf "++pkgconf , "-package altdata" ]
-
                 [ pkgconf ]
                 []
-                
 
+    case m_b of 
+        Left s   -> mapM_ putStrLn s
+        Right b  -> putStrLn $ show (b a :: Integer) -- now apply it
+                
 {-
 -- should work, but doesn't. type check fails 
 -- (due to static vs dynamic typing issue)
@@ -37,6 +38,3 @@ main = do
                                 ["Data.Dynamic","Data.Maybe"] [] []
 -}
 
-    case m_b of 
-        Left s   -> mapM_ putStrLn s
-        Right b  -> putStrLn $ show (b a :: Int)

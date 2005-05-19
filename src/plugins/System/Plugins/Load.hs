@@ -54,7 +54,7 @@ import System.Plugins.Consts           ( sysPkgSuffix, hiSuf, prefixUnderscore )
 
 import Language.Hi.Parser
 
-import AltData.Dynamic          ( fromDyn, Dynamic )
+import AltData.Dynamic          ( fromDynamic, Dynamic )
 import AltData.Typeable         ( Typeable )
 
 import Data.List                ( isSuffixOf, nub, nubBy )
@@ -161,7 +161,7 @@ dynload obj incpaths pkgconfs sym = do
     s <- load obj incpaths pkgconfs sym
     case s of e@(LoadFailure _)   -> return e
               LoadSuccess m dyn_v -> return $
-                    case fromDyn (unsafeCoerce# dyn_v :: Dynamic) of
+                    case fromDynamic (unsafeCoerce# dyn_v :: Dynamic) of
                         Just v' -> LoadSuccess m v'
                         Nothing -> LoadFailure ["Mismatched types in interface"]
 

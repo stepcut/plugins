@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fno-implicit-prelude #-}
+{-# OPTIONS -fglasgow-exts -cpp #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Dynamic
@@ -18,11 +18,10 @@
 -- 
 -----------------------------------------------------------------------------
 
-module Data.Dynamic
-  (
+module AltData.Dynamic (
 
 	-- Module Data.Typeable re-exported for convenience
-	module Data.Typeable,
+	module AltData.Typeable,
 
 	-- * The @Dynamic@ type
 	Dynamic,	-- abstract, instance of: Show, Typeable
@@ -39,35 +38,17 @@ module Data.Dynamic
 
   ) where
 
-
 import AltData.Typeable
 import Data.Maybe
 
-#ifdef __GLASGOW_HASKELL__
+import System.IO.Unsafe    (unsafePerformIO)
+
 import GHC.Base
 import GHC.Show
 import GHC.Err
-import GHC.Num
-#endif
 
-#ifdef __HUGS__
-import Hugs.Prelude
-import Hugs.IO
-import Hugs.IORef
-import Hugs.IOExts
-#endif
-
-#ifdef __GLASGOW_HASKELL__
 unsafeCoerce :: a -> b
 unsafeCoerce = unsafeCoerce#
-#endif
-
-#ifdef __NHC__
-import NonStdUnsafeCoerce (unsafeCoerce)
-import NHC.IOExtras (IORef,newIORef,readIORef,writeIORef,unsafePerformIO)
-#endif
-
-#include "Typeable.h"
 
 -------------------------------------------------------------
 --
@@ -85,11 +66,14 @@ import NHC.IOExtras (IORef,newIORef,readIORef,writeIORef,unsafePerformIO)
   'Show'ing a value of type 'Dynamic' returns a pretty-printed representation
   of the object\'s type; useful for debugging.
 -}
-#ifndef __HUGS__
 data Dynamic = Dynamic TypeRep Obj
-#endif
 
-INSTANCE_TYPEABLE0(Dynamic,dynamicTc,"Dynamic")
+instance Typeable Dynamic where
+#if __GLASGOW_HASKELL__ >= 603
+    typeOf _ = mkTyConApp (mkTyCon "AltData.Dynamic") []
+#else
+    typeOf _ = mkAppTy    (mkTyCon "AltData.Dynamic") []
+#endif
 
 instance Show Dynamic where
    -- the instance just prints the type representation.
@@ -98,7 +82,6 @@ instance Show Dynamic where
 	  showsPrec 0 t   . 
 	  showString ">>"
 
-#ifdef __GLASGOW_HASKELL__
 type Obj = forall a . a
  -- Dummy type to hold the dynamically typed value.
  --
@@ -109,9 +92,6 @@ type Obj = forall a . a
  -- the other hand, if we use a polymorphic type, GHC will use
  -- a fallback convention for evaluating it that works for all types.
  -- (using a function type here would also work).
-#elif !defined(__HUGS__)
-data Obj = Obj
-#endif
 
 -- | Converts an arbitrary value into an object of type 'Dynamic'.  
 --
@@ -148,7 +128,12 @@ fromDynamic
 fromDynamic (Dynamic t v) =
   case unsafeCoerce v of 
     r | t == typeOf r -> Just r
-      | otherwise     -> Nothing
+      | otherwise     -> unsafePerformIO (putStrLn $
+                                "Couldn't match `"    ++show(typeOf r) ++
+                                        "' against `" ++show t         ++"'"++
+                                "\n\tExpected type: " ++show(typeOf r) ++
+                                "\n\tInferred type: " ++show t
+                        ) `seq` Nothing
 
 -- (f::(a->b)) `dynApply` (x::a) = (f a)::b
 dynApply :: Dynamic -> Dynamic -> Maybe Dynamic

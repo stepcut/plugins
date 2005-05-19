@@ -67,6 +67,10 @@ depend: $(ALL_SRCS)
 %.$(way_)o: %.hs
 	$(GHC) $(HC_OPTS) -c $< -o $@ -ohi $(basename $@).$(way_)hi
 
+# Now a rule for hs-boot files. 
+%.$(way_)o-boot : %.hs-boot
+	$(GHC) $(HC_OPTS) $(PKG_OPTS) -c $< -o $@  -ohi $(basename $@).$(way_)hi-boot
+
 # happy files
 $(YOBJ): $(YSRC)
 	$(HAPPY) $(HAPPY_OPTS) -o $@ $(YSRC)
