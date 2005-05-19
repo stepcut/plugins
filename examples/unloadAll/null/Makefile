@@ -1,4 +1,4 @@
 TEST=   unloadAll/null
-EXTRA_OBJS=Null.o Dep.o
+EXTRA_OBJS=Dep.o Null.o
 TOP=../../..
 include ../../build.mk
