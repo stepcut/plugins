@@ -20,9 +20,11 @@
 
 module System.Plugins.Env (
         withModEnv,
+        withDepEnv,
         withPkgEnvs,
         withMerged,
         modifyModEnv,
+        modifyDepEnv,
         modifyPkgEnv,
         modifyMerged,
         addModule,
@@ -30,6 +32,9 @@ module System.Plugins.Env (
         addModules,
         isLoaded,
         loaded,
+        addModuleDeps,
+        getModuleDeps,
+        rmModuleDeps,
         isMerged,
         lookupMerged,
         addMerge,
@@ -43,6 +48,7 @@ module System.Plugins.Env (
 
 #include "../../../../config.h"
 
+import System.Plugins.LoadTypes
 import System.Plugins.PackageAPI  {- everything -}
 #if CABAL == 1 || __GLASGOW_HASKELL__ >= 604
 import System.Plugins.ParsePkgConfCabal( parsePkgConf )
@@ -52,7 +58,7 @@ import System.Plugins.ParsePkgConfLite ( parsePkgConf )
 import System.Plugins.Consts           ( ghcLibraryPath, sysPkgConf, sysPkgSuffix, dllSuf )
 
 import Data.IORef               ( writeIORef, readIORef, newIORef, IORef() )
-import Data.Maybe               ( isJust )
+import Data.Maybe               ( isJust, isNothing )
 import Data.List                ( isPrefixOf, nub )
 
 import System.IO.Unsafe         ( unsafePerformIO )
@@ -118,7 +124,9 @@ lookupFM  = flip M.lookup
 -- unlike in hram's loader.
 --
 
-type ModEnv = FiniteMap String Bool
+type ModEnv = FiniteMap String (Module,Int)
+
+type DepEnv = FiniteMap Module [Module]
 
 -- represents a package.conf file
 type PkgEnv  = FiniteMap PackageName PackageConfig
@@ -130,7 +138,8 @@ type MergeEnv = FiniteMap (FilePath,FilePath) FilePath
 type PkgEnvs = [PkgEnv]
 
 type Env = (MVar (), 
-            IORef ModEnv,  
+            IORef ModEnv,
+            IORef DepEnv,  
             IORef PkgEnvs,
             IORef MergeEnv)
 
@@ -142,10 +151,11 @@ type Env = (MVar (),
 env = unsafePerformIO $ do 
                 mvar  <- newMVar ()
                 ref1  <- newIORef emptyFM         -- loaded objects
+                ref2  <- newIORef emptyFM
                 p     <- grabDefaultPkgConf
-                ref2  <- newIORef p               -- package.conf info
-                ref3  <- newIORef emptyFM         -- merged files
-                return (mvar, ref1, ref2, ref3)
+                ref3  <- newIORef p               -- package.conf info
+                ref4  <- newIORef emptyFM         -- merged files
+                return (mvar, ref1, ref2, ref3, ref4)
 {-# NOINLINE env #-}
 
 -- -----------------------------------------------------------
@@ -156,12 +166,14 @@ env = unsafePerformIO $ do
 -- with*Env function. Nice and threadsafe
 --
 withModEnv  :: Env -> (ModEnv   -> IO a) -> IO a
+withDepEnv  :: Env -> (DepEnv   -> IO a) -> IO a
 withPkgEnvs :: Env -> (PkgEnvs  -> IO a) -> IO a
 withMerged  :: Env -> (MergeEnv -> IO a) -> IO a
 
-withModEnv  (mvar,ref,_,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
-withPkgEnvs (mvar,_,ref,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
-withMerged  (mvar,_,_,ref) f = withMVar mvar (\_ -> readIORef ref >>= f)
+withModEnv  (mvar,ref,_,_,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
+withDepEnv  (mvar,_,ref,_,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
+withPkgEnvs (mvar,_,_,ref,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
+withMerged  (mvar,_,_,_,ref) f = withMVar mvar (\_ -> readIORef ref >>= f)
 
 -- -----------------------------------------------------------
 --
@@ -169,12 +181,14 @@ withMerged  (mvar,_,_,ref) f = withMVar mvar (\_ -> readIORef ref >>= f)
 -- write a new PackageConfig
 --
 modifyModEnv :: Env -> (ModEnv   -> IO ModEnv)  -> IO ()
+modifyDepEnv :: Env -> (DepEnv   -> IO DepEnv)  -> IO ()
 modifyPkgEnv :: Env -> (PkgEnvs  -> IO PkgEnvs) -> IO ()
 modifyMerged :: Env -> (MergeEnv -> IO MergeEnv)-> IO ()
 
-modifyModEnv (mvar,ref,_,_) f = lockAndWrite mvar ref f 
-modifyPkgEnv (mvar,_,ref,_) f = lockAndWrite mvar ref f 
-modifyMerged (mvar,_,_,ref) f = lockAndWrite mvar ref f
+modifyModEnv (mvar,ref,_,_,_) f = lockAndWrite mvar ref f 
+modifyDepEnv (mvar,_,ref,_,_) f = lockAndWrite mvar ref f 
+modifyPkgEnv (mvar,_,_,ref,_) f = lockAndWrite mvar ref f 
+modifyMerged (mvar,_,_,_,ref) f = lockAndWrite mvar ref f
 
 -- private
 lockAndWrite mvar ref f = withMVar mvar (\_->readIORef ref>>=f>>=writeIORef ref)
@@ -183,23 +197,29 @@ lockAndWrite mvar ref f = withMVar mvar (\_->readIORef ref>>=f>>=writeIORef ref)
 --
 -- insert a loaded module name into the environment
 --
-addModule :: String -> IO ()
-addModule s = modifyModEnv env $ \fm -> return $ addToFM fm s True
+addModule :: String -> Module -> IO ()
+addModule s m = modifyModEnv env $ \fm -> let c = maybe 0 snd (lookupFM fm s)
+                                          in return $ addToFM fm s (m,c+1)
+
+--getModule :: String -> IO (Maybe Module)
+--getModule s = withModEnv env $ \fm -> return (lookupFM fm s)
 
 --
--- remove a module name from the environment
+-- remove a module name from the environment. Returns True if the module was actually removed.
 --
-rmModule :: String -> IO ()
-rmModule s = modifyModEnv env $ \fm -> return $ delFromFM fm s
+rmModule :: String -> IO Bool
+rmModule s = do modifyModEnv env $ \fm -> let c = maybe 1 snd (lookupFM fm s)
+                                              fm' = delFromFM fm s
+                                          in if c-1 <= 0
+                                                then return fm'
+                                                else return fm
+                withModEnv env $ \fm -> return (isNothing  (lookupFM fm s))
 
 --
 -- insert a list of module names all in one go
 --
-addModules :: [String] -> IO ()
-addModules ns = modifyModEnv env $ \fm -> return $ unionL fm ns 
-    where
-        unionL :: ModEnv -> [String] -> ModEnv 
-        unionL fm ss = foldr (\s fm' -> addToFM fm' s True) fm ss
+addModules :: [(String,Module)] -> IO ()
+addModules ns = mapM_ (uncurry addModule) ns
 
 --
 -- is a module/package already loaded?
@@ -212,6 +232,30 @@ isLoaded s = withModEnv env $ \fm -> return $ isJust (lookupFM fm s)
 --
 loaded :: String -> IO Bool
 loaded m = do t <- isLoaded m ; return (not t)
+
+-- -----------------------------------------------------------
+--
+-- module dependency stuff
+--
+
+--
+-- set the dependencies of a Module.
+--
+addModuleDeps :: Module -> [Module] -> IO ()
+addModuleDeps m deps = modifyDepEnv env $ \fm -> return $ addToFM fm m deps
+
+--
+-- Get module dependencies. Nothing if none have been recored.
+--
+getModuleDeps :: Module -> IO (Maybe [Module])
+getModuleDeps m = withDepEnv env $ \fm -> return $ lookupFM fm m
+
+
+--
+-- Unrecord a module from the environment.
+--
+rmModuleDeps :: Module -> IO ()
+rmModuleDeps m = modifyDepEnv env $ \fm -> return $ delFromFM fm m
 
 -- -----------------------------------------------------------
 -- Package management stuff

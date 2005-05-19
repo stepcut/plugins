@@ -29,6 +29,7 @@ maintainer:	dons@cse.unsw.edu.au
 exposed:	True
 exposed-modules:
 	System.Plugins.Load,
+	System.Plugins.LoadTypes,
 	System.Plugins.Make,
 	System.Plugins,
 	System.MkTemp,

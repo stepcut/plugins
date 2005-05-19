@@ -26,6 +26,7 @@ module System.Plugins.Load (
       , dynload
       , pdynload , pdynload_
       , unload
+      , unloadAll
       , reload
       , Module(..)
 
@@ -58,6 +59,7 @@ import AltData.Dynamic          ( fromDynamic, Dynamic )
 import AltData.Typeable         ( Typeable )
 
 import Data.List                ( isSuffixOf, nub, nubBy )
+import Data.Maybe               ( fromMaybe )
 import Control.Monad            ( when, filterM, liftM )
 import System.Directory         ( doesFileExist, removeFile )
 import Foreign.C.String         ( CString, withCString, peekCString )
@@ -75,19 +77,7 @@ import System.IO                ( hClose )
 
 -- ---------------------------------------------------------------------
 
-type Symbol      = String
-type Type        = String
-type Errors      = [String]
-type PackageConf = FilePath
-
-data Module = Module { path  :: !FilePath 
-                     , mname :: !String 
-                     , kind  :: !ObjType 
-                     , iface :: Iface    -- cache the iface
-                     , key   :: Key
-                     }          
-
-data ObjType = Vanilla | Shared deriving Eq
+import System.Plugins.LoadTypes
 
 -- ---------------------------------------------------------------------
 -- return status of all *load functions:
@@ -114,7 +104,7 @@ load obj incpaths pkgconfs sym = do
 
     -- load extra package information
     mapM_ addPkgConf pkgconfs
-    hif <- loadDepends obj incpaths
+    (hif,moduleDeps) <- loadDepends obj incpaths
 
     -- why is this the package name?
 #if DEBUG
@@ -128,7 +118,7 @@ load obj incpaths pkgconfs sym = do
 #if DEBUG
     putStrLn " ... done" >> hFlush stdout
 #endif
-
+    addModuleDeps m' moduleDeps
     v <- loadFunction m sym
     return $ case v of 
         Nothing -> LoadFailure ["load: couldn't find symbol <<"++sym++">>"]
@@ -309,7 +299,13 @@ dynload2 obj incpath pkgconfs sym = do
 -- it. Cause we don't unload all the dependencies
 --
 unload  :: Module -> IO ()
-unload = unloadObj
+unload m = rmModuleDeps m >> unloadObj m
+
+unloadAll :: Module -> IO ()
+unloadAll m = do moduleDeps <- fmap (fromMaybe []) (getModuleDeps m)
+                 rmModuleDeps m
+                 mapM_ unloadAll moduleDeps
+                 unload m
 
 --
 -- | this will be nice for panTHeon, needs thinking about the interface
@@ -409,7 +405,7 @@ loadFunction (Module { iface = i }) valsym
 -- Z-encoded modid from the .hi file. For archives/packages, we can
 -- probably get away with the package name
 --
-data Key = Object String | Package String
+
 
 loadObject :: FilePath -> Key -> IO Module
 loadObject p ky@(Object k)  = loadObject' p ky k 
@@ -424,7 +420,7 @@ loadObject' p ky k
          when (not alreadyLoaded) $ do
               r <- withCString p c_loadObj
               when (not r) (panic $ "Could not load module `"++p++"'")
-              addModule k   -- needs to Z-encode module name
+         addModule k (emptyMod p)   -- needs to Z-encode module name
          return (emptyMod p)
 
     where emptyMod q = Module q (mkModid q) Vanilla emptyIface ky
@@ -466,12 +462,11 @@ resolveObjs = do
 unloadObj :: Module -> IO () 
 unloadObj (Module { path = p, kind = k, key = ky }) = case k of
         Vanilla -> withCString p $ \c_p -> do
-                r <- c_unloadObj c_p 
-                when (not r) (panic "unloadObj: failed")
-                rmModule $ case ky of Object s -> s ; Package pk -> pk
-
+                removed <- rmModule name
+                when (removed) $ do r <- c_unloadObj c_p 
+                                    when (not r) (panic "unloadObj: failed")
         Shared  -> return () -- can't unload .so?
-
+    where name = case ky of Object s -> s ; Package pk -> pk
 --
 -- | from ghci/ObjLinker.c
 --
@@ -559,7 +554,7 @@ loadPackageWith p pkgconfs = do
 -- the modenv fm. We need a canonical form for the keys -- is basename
 -- good enough?
 --
-loadDepends :: FilePath -> [FilePath] -> IO Iface
+loadDepends :: FilePath -> [FilePath] -> IO (Iface,[Module])
 loadDepends obj incpaths = do
     let hifile = replaceSuffix obj hiSuf
     exists <- doesFileExist hifile
@@ -568,11 +563,11 @@ loadDepends obj incpaths = do
 #if DEBUG
                 putStrLn "No .hi file found." >> hFlush stdout
 #endif
-                return emptyIface   -- could be considered fatal
+                return (emptyIface,[])   -- could be considered fatal
 
         else do hiface <- readIface hifile
                 let ds = mi_deps hiface
-    
+
                 -- remove ones that we've already loaded
                 ds' <- filterM loaded (dep_mods ds)
 
@@ -611,8 +606,8 @@ loadDepends obj incpaths = do
                 putStr "Loading object" 
                 mapM_ (\(m,_) -> putStr (" "++(decode m)) >> hFlush stdout) mods''
 #endif
-                mapM_ (\(hi,m) -> loadObject m (Object hi)) mods''
-                return hiface
+                moduleDeps <- mapM (\(hi,m) -> loadObject m (Object hi)) mods''
+                return (hiface,moduleDeps)
 
 -- ---------------------------------------------------------------------
 -- C interface
