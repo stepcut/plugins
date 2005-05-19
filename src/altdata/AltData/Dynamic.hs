@@ -1,108 +1,161 @@
-{-# OPTIONS -cpp -fglasgow-exts #-}
+{-# OPTIONS_GHC -fno-implicit-prelude #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Data.Dynamic
+-- Copyright   :  (c) The University of Glasgow 2001
+-- License     :  BSD-style (see the file libraries/base/LICENSE)
 -- 
--- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
--- 
--- This library is free software; you can redistribute it and/or
--- modify it under the terms of the GNU Lesser General Public
--- License as published by the Free Software Foundation; either
--- version 2.1 of the License, or (at your option) any later version.
--- 
--- This library is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
--- Lesser General Public License for more details.
--- 
--- You should have received a copy of the GNU Lesser General Public
--- License along with this library; if not, write to the Free Software
--- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
--- USA
--- 
-
+-- Maintainer  :  libraries@haskell.org
+-- Stability   :  experimental
+-- Portability :  portable
 --
--- reimplement the Data.Dynamic library to use equality over the
--- canonical name of a type, rather than on integer keys. The later is
--- how the Haskell library works, and is broken for our situation:
--- static versus dynamic instances of the same type seem to generate
--- different keys, meaning equal types are not detected as such.
---
+-- The Dynamic interface provides basic support for dynamic types.
+-- 
+-- Operations for injecting values of arbitrary type into
+-- a dynamically typed value, Dynamic, are provided, together
+-- with operations for converting dynamic values into a concrete
+-- (monomorphic) type.
+-- 
+-----------------------------------------------------------------------------
 
-module AltData.Dynamic ( 
+module Data.Dynamic
+  (
 
-        Dynamic,                -- must be abstract
-        toDyn,                  -- :: Typeable a => a -> Dynamic
-        fromDyn,                -- :: Typeable a => Dynamic -> Maybe a
-        fromDynamic,
-        dynApp,
-        dynApply,
-        dynAppHList,
+	-- Module Data.Typeable re-exported for convenience
+	module Data.Typeable,
 
-        typecase,
-        (-->),
+	-- * The @Dynamic@ type
+	Dynamic,	-- abstract, instance of: Show, Typeable
 
-        _Int,
-        _Char,
-        _Bool,
-        _String,
-        _IntToInt,
+	-- * Converting to and from @Dynamic@
+	toDyn,		-- :: Typeable a => a -> Dynamic
+	fromDyn,	-- :: Typeable a => Dynamic -> a -> a
+	fromDynamic,	-- :: Typeable a => Dynamic -> Maybe a
+	
+	-- * Applying functions of dynamic type
+	dynApply,
+	dynApp,
+        dynTypeRep
 
-   ) where
+  ) where
+
 
 import AltData.Typeable
 import Data.Maybe
-import System.IO.Unsafe         ( unsafePerformIO )
-import GHC.Base                 ( unsafeCoerce# )
-import Data.List
 
+#ifdef __GLASGOW_HASKELL__
+import GHC.Base
+import GHC.Show
+import GHC.Err
+import GHC.Num
+#endif
+
+#ifdef __HUGS__
+import Hugs.Prelude
+import Hugs.IO
+import Hugs.IORef
+import Hugs.IOExts
+#endif
+
+#ifdef __GLASGOW_HASKELL__
+unsafeCoerce :: a -> b
+unsafeCoerce = unsafeCoerce#
+#endif
+
+#ifdef __NHC__
+import NonStdUnsafeCoerce (unsafeCoerce)
+import NHC.IOExtras (IORef,newIORef,readIORef,writeIORef,unsafePerformIO)
+#endif
+
+#include "Typeable.h"
+
+-------------------------------------------------------------
+--
+--		The type Dynamic
+--
+-------------------------------------------------------------
+
+{-|
+  A value of type 'Dynamic' is an object encapsulated together with its type.
+
+  A 'Dynamic' may only represent a monomorphic value; an attempt to
+  create a value of type 'Dynamic' from a polymorphically-typed
+  expression will result in an ambiguity error (see 'toDyn').
+
+  'Show'ing a value of type 'Dynamic' returns a pretty-printed representation
+  of the object\'s type; useful for debugging.
+-}
+#ifndef __HUGS__
 data Dynamic = Dynamic TypeRep Obj
+#endif
 
-type Obj = forall a . a
+INSTANCE_TYPEABLE0(Dynamic,dynamicTc,"Dynamic")
 
 instance Show Dynamic where
    -- the instance just prints the type representation.
    showsPrec _ (Dynamic t _) = 
-          showString "<" . 
+          showString "<<" . 
 	  showsPrec 0 t   . 
-	  showString ">"
+	  showString ">>"
 
-instance Typeable Dynamic where
-#if __GLASGOW_HASKELL__ >= 603
-    typeOf _ = mkTyConApp (mkTyCon "AltData.Dynamic") []
-#else
-    typeOf _ = mkAppTy    (mkTyCon "AltData.Dyanmic") []
+#ifdef __GLASGOW_HASKELL__
+type Obj = forall a . a
+ -- Dummy type to hold the dynamically typed value.
+ --
+ -- In GHC's new eval/apply execution model this type must
+ -- be polymorphic.  It can't be a constructor, because then
+ -- GHC will use the constructor convention when evaluating it,
+ -- and this will go wrong if the object is really a function.  On
+ -- the other hand, if we use a polymorphic type, GHC will use
+ -- a fallback convention for evaluating it that works for all types.
+ -- (using a function type here would also work).
+#elif !defined(__HUGS__)
+data Obj = Obj
 #endif
 
+-- | Converts an arbitrary value into an object of type 'Dynamic'.  
 --
--- must be monomophic, see Data.Dynamic
+-- The type of the object must be an instance of 'Typeable', which
+-- ensures that only monomorphically-typed objects may be converted to
+-- 'Dynamic'.  To convert a polymorphic object into 'Dynamic', give it
+-- a monomorphic type signature.  For example:
+--
+-- >    toDyn (id :: Int -> Int)
 --
 toDyn :: Typeable a => a -> Dynamic
-toDyn v = Dynamic (typeOf v) (unsafeCoerce# v)
+toDyn v = Dynamic (typeOf v) (unsafeCoerce v)
 
---
--- Converts a 'Dynamic' object back into an ordinary Haskell value of
--- the correct type. (this is the same as fromDynamic)
---
--- Uses string comparison of the name of the type, rather than the
--- hashed key of the type, which doesn't work for plugins, which mix
--- static and dynamic loaded code.
---
--- TypeRep is abstract, unfortunately.
---
-fromDyn :: Typeable a => Dynamic -> Maybe a
+-- | Converts a 'Dynamic' object back into an ordinary Haskell value of
+-- the correct type.  See also 'fromDynamic'.
+fromDyn :: Typeable a
+ 	=> Dynamic 	-- ^ the dynamically-typed object
+	-> a		-- ^ a default value 
+	-> a		-- ^ returns: the value of the first argument, if
+			-- it has the correct type, otherwise the value of
+			-- the second argument.
+fromDyn (Dynamic t v) def
+  | typeOf def == t = unsafeCoerce v
+  | otherwise       = def
 
-fromDyn (Dynamic t v) =
-  case unsafeCoerce# v of 
+-- | Converts a 'Dynamic' object back into an ordinary Haskell value of
+-- the correct type.  See also 'fromDyn'.
+fromDynamic
+	:: Typeable a
+	=> Dynamic	-- ^ the dynamically-typed object
+	-> Maybe a	-- ^ returns: @'Just' a@, if the dynamically-typed
+			-- object has the correct type (and @a@ is its value), 
+			-- or 'Nothing' otherwise.
+fromDynamic (Dynamic t v) =
+  case unsafeCoerce v of 
     r | t == typeOf r -> Just r
-      | otherwise     -> unsafePerformIO (putStrLn $
-                                "Couldn't match `"    ++show(typeOf r) ++
-                                        "' against `" ++show t         ++"'"++
-                                "\n\tExpected type: " ++show(typeOf r) ++
-                                "\n\tInferred type: " ++show t
-                        ) `seq` Nothing
+      | otherwise     -> Nothing
 
-fromDynamic d = case fromDyn d of
-                Just v  -> v
-                Nothing -> error ("\nType error in dynamic unwrapping.\n" ++
-                                  "In value `" ++ show d ++ "'")
+-- (f::(a->b)) `dynApply` (x::a) = (f a)::b
+dynApply :: Dynamic -> Dynamic -> Maybe Dynamic
+dynApply (Dynamic t1 f) (Dynamic t2 x) =
+  case funResultTy t1 t2 of
+    Just t3 -> Just (Dynamic t3 ((unsafeCoerce f) x))
+    Nothing -> Nothing
 
 dynApp :: Dynamic -> Dynamic -> Dynamic
 dynApp f x = case dynApply f x of 
@@ -111,64 +164,5 @@ dynApp f x = case dynApply f x of
                                "Can't apply function " ++ show f ++
                                " to argument " ++ show x)
 
---
--- (f::(a->b)) `dynApply` (x::a) = (f a)::b
---
-dynApply :: Dynamic -> Dynamic -> Maybe Dynamic
-dynApply (Dynamic t1 f) (Dynamic t2 x) =
-#if __GLASGOW_HASKELL__ >= 603
-  case funResultTy t1 t2 of
-#else
-  case applyTy t1 t2 of
-#endif
-    Just t3 -> Just (Dynamic t3 ((unsafeCoerce# f) x))
-    Nothing -> Nothing
-
-
---
--- hmm
---
-dynAppHList :: Dynamic -> [Dynamic] -> Dynamic
-dynAppHList fn []     = fn      -- partial applicaiton
-dynAppHList fn (x:xs) = (fn `dynApp` x) `dynAppHList` xs
-
--- ---------------------------------------------------------------------
---
--- Implementation of typecase, without patterns, based on "Dynamic
--- typing in a statically typed language". Mart\'in Abadi, Luca
--- Cardelli, Benjamin Pierce and Gordon Plotkin. ACM Trans. Prog. Lang.
--- and Syst. 13(2):237-268, 1991.
---
--- Doesn't provide the behaviour that if the value is not a Dynamic,
--- then typecase returns a error. Need low-level ops for that.
---
-
--- typecase :: Typeable u => Dynamic -> [(TypeRep, Dynamic)] -> u -> u
-
-typecase :: Typeable u
-         => Dynamic               -- selector
-         -> [(Dynamic, Dynamic)]  -- branches
-         -> u                     -- else arm
-         -> u                     -- return type
-
-typecase dv@(Dynamic ty _) alts dflt =
-        case find (hasType ty) alts of
-                Nothing -> dflt
-                Just v  -> fromDynamic $ snd v `dynApp` dv
-
-        where hasType t ((Dynamic u _),_) = t == u
-
-infixl 6 -->
-(-->) :: Typeable b => a -> b -> (a,Dynamic)
-a --> b = (a,toDyn b)
-
---
--- need a way to generate a Dynamic prelude
---
-_Int      = toDyn ( undefined :: Int        )
-_Char     = toDyn ( undefined :: Char       )
-_Bool     = toDyn ( undefined :: Bool       )
-_String   = toDyn ( undefined :: [Char]     )
-_IntToInt = toDyn ( undefined :: Int -> Int )
-
-------------------------------------------------------------------------
+dynTypeRep :: Dynamic -> TypeRep
+dynTypeRep (Dynamic tr _) = tr 
