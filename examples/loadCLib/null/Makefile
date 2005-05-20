@@ -1,4 +1,4 @@
-TEST=   unloadAll/null
-EXTRA_OBJS=Null.o Dep.o
+TEST=   loadCLib/null
+EXTRA_OBJS=Null.o
 TOP=../../..
 include ../../build.mk
