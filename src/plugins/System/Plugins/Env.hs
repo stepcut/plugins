@@ -48,14 +48,14 @@ module System.Plugins.Env (
 
 #include "../../../../config.h"
 
-import System.Plugins.LoadTypes
+import System.Plugins.LoadTypes (Module)
 import System.Plugins.PackageAPI  {- everything -}
 #if CABAL == 1 || __GLASGOW_HASKELL__ >= 604
 import System.Plugins.ParsePkgConfCabal( parsePkgConf )
 #else
 import System.Plugins.ParsePkgConfLite ( parsePkgConf )
 #endif
-import System.Plugins.Consts           ( ghcLibraryPath, sysPkgConf, sysPkgSuffix, dllSuf )
+import System.Plugins.Consts           ( ghcLibraryPath, sysPkgConf, sysPkgSuffix )
 
 import Data.IORef               ( writeIORef, readIORef, newIORef, IORef() )
 import Data.Maybe               ( isJust, isNothing )
@@ -102,8 +102,8 @@ lookupFM  = flip M.lookup
 -- safely ignore that request. We're in the IO monad anyway, so we can
 -- add some extra state of our own.
 --
--- The state is a FiniteMap String Bool (a hash of package/object names
--- to whether they have been loaded or not). 
+-- The state is a FiniteMap String (Module,Int) (a hash of package/object names
+-- to Modules and how many times they've been loaded).
 --
 -- It also contains the package.conf information, so that if there is a
 -- package dependency we can find it correctly, even if it has a
