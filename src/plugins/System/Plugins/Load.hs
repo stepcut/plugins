@@ -476,12 +476,15 @@ unloadObj (Module { path = p, kind = k, key = ky }) = case k of
 --
 loadShared :: FilePath -> IO Module
 loadShared str = do
-    str' <- return $ (reverse . drop 1 . dropWhile (/= '.') . reverse) str
-    maybe_errmsg <- withCString str' $ \dll -> c_addDLL dll
-    if maybe_errmsg == nullPtr  
+#if DEBUG
+    putStrLn $ " shared: " ++ str
+#endif
+    maybe_errmsg <- withCString str $ \dll -> c_addDLL dll
+    if maybe_errmsg == nullPtr 
         then return (Module str (mkModid str) Shared emptyIface (Package (mkModid str)))
         else do e <- peekCString maybe_errmsg
-                panic $ "loadShared: couldn't load `"++str'++"\' because "++e
+                panic $ "loadShared: couldn't load `"++str++"\' because "++e
+
 
 --
 -- Load a -package that we might need, implicitly loading the cbits too
@@ -499,7 +502,13 @@ loadPackage p = do
 #endif
         (libs,dlls) <- lookupPkg p
         mapM_ (\l -> loadObject l (Package (mkModid l))) libs
+#if DEBUG
+        putStr (' ':show dlls)
+#endif
 	mapM_ loadShared dlls
+
+
+
 --
 -- Unload a -package, that has already been loaded. Unload the cbits
 -- too. The argument is the name of the package.

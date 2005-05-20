@@ -341,6 +341,26 @@ lookupPkg p = do
 				   let (f',g') = unzip gss
 				   return $ (nub $ (concat f') ++ f,nub $ (concat g') ++ g)
 
+data LibrarySpec
+   = DLL String         -- -lLib
+   | DLLPath FilePath   -- -Lpath
+
+classifyLdInput :: FilePath -> IO (Maybe LibrarySpec)
+classifyLdInput ('-':'l':lib) = return (Just (DLL lib))
+classifyLdInput ('-':'L':path) = return (Just (DLLPath path))
+classifyLdInput _ = return Nothing
+
+#if defined(darwin_TARGET_OS)
+mkSOName root = "lib" ++ root ++ ".dylib"
+#elif defined(mingw32_TARGET_OS)
+-- Win32 DLLs have no .dll extension here, because addDLL tries
+-- both foo.dll and foo.drv
+mkSOName root = root
+#else
+mkSOName root = "lib" ++ root ++ ".so"
+#endif
+
+
 --
 -- return any stuff to load for this package, plus the list of packages
 -- this package depends on. which includes stuff we have to then load
@@ -354,25 +374,29 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
             Nothing -> go fms q     -- look in other pkgs
 
             Just package -> do
-#if defined(CYGWIN) || defined(__MINGW32__)
-                let    libdirs = fix_topdir $ libraryDirs package
-#else
-                let    libdirs = libraryDirs package
-#endif
-                       hslibs  = hsLibraries package
-                       extras  = extraLibraries package
+                let    hslibs  = hsLibraries package
+                       extras' = extraLibraries package
+                       cbits   = filter (\e -> reverse (take (length "_cbits") (reverse e)) == "_cbits") extras'
+                       extras  = filter (not . flip elem cbits) extras'
+                       ldopts  = ldOptions package
                        deppkgs = packageDeps package
-                libs <- mapM (findHSlib libdirs) (hslibs ++ extras)
+                ldInput <- mapM classifyLdInput ldopts
+                let ldOptsLibs  = [ path | Just (DLL path) <- ldInput ]
+                    ldOptsPaths = [ path | Just (DLLPath path) <- ldInput ]
+                    dlls        = map mkSOName (extras ++ ldOptsLibs)
+#if defined(CYGWIN) || defined(__MINGW32__)
+                    libdirs = fix_topdir (libraryDirs package) ++ ldOptsPaths
+#else
+                    libdirs = libraryDirs package ++ ldOptsPaths
+#endif
+                libs <- mapM (findHSlib libdirs) (hslibs ++ cbits)
 #if defined(CYGWIN) || defined(__MINGW32__)
 		syslibdir <- liftM ( \x -> x ++ "/SYSTEM") (getEnv "SYSTEMROOT")
-		libs' <- mapM (findDLL $ syslibdir : libdirs) extras
+		libs' <- mapM (findDLL $ syslibdir : libdirs) dlls
 #else
-		libs' <- mapM (findDLL libdirs) extras
+		libs' <- mapM (findDLL libdirs) dlls
 #endif
-                -- don't care if there are 'Nothings', that usually
-                -- means that they refer to system libraries. Can't do
-                -- anything about that.
-                return (deppkgs, (filterJust libs,filterJust libs') )
+                return (deppkgs, (filterRight libs,map (either id id) libs') )
 
 #if defined(CYGWIN) || defined(__MINGW32__)
         -- replace $topdir
@@ -386,30 +410,30 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 	replace_topdir (x:xs)       = x : replace_topdir xs
 #endif
         -- a list elimination form for the Maybe type
-        filterJust :: [Maybe a] -> [a]
-        filterJust []           = []
-        filterJust (Just x:xs)  = x:filterJust xs
-        filterJust (Nothing:xs) =   filterJust xs
+        filterRight :: [Either left right] -> [right]
+        filterRight []           = []
+        filterRight (Right x:xs) = x:filterRight xs
+        filterRight (Left _:xs)  =   filterRight xs
 
         --
         -- Check that a path to a library actually reaches a library
         -- Problem: sysPkgSuffix  is ".o", but extra libraries could be
         -- ".so" -- what to do?
         --
-        findHSlib :: [FilePath] -> String -> IO (Maybe FilePath)
-        findHSlib [] _  = return Nothing
+        findHSlib :: [FilePath] -> String -> IO (Either String FilePath)
+        findHSlib [] lib         = return (Left lib)
         findHSlib (dir:dirs) lib = do
                   let l = dir </> lib ++ sysPkgSuffix
                   b <- doesFileExist l
-                  if b then return $ Just l     -- found it!
+                  if b then return $ Right l     -- found it!
                        else findHSlib dirs lib
 
-        findDLL :: [FilePath] -> String -> IO (Maybe FilePath)
-	findDLL [] _           = return Nothing
+        findDLL :: [FilePath] -> String -> IO (Either String FilePath)
+	findDLL [] lib         = return (Left lib)
 	findDLL (dir:dirs) lib = do
-		 let l = dir </> lib ++ dllSuf
+		 let l = dir </> lib
 		 b <- doesFileExist l
-		 if b then return $ Just l
+		 if b then return $ Right l
 		      else findDLL dirs lib
 
 ------------------------------------------------------------------------

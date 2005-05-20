@@ -31,6 +31,7 @@ module System.Plugins.PackageAPI (
        , hsLibraries
        , libraryDirs
        , extraLibraries
+       , ldOptions
        , packageDeps
        , updImportDirs
        , updLibraryDirs 
@@ -88,5 +89,8 @@ libraryDirs    = library_dirs
 
 extraLibraries :: PackageConfig -> [String]
 extraLibraries = extra_libraries
+
+ldOptions :: PackageConfig -> [String]
+ldOptions = extra_ld_opts
 
 #endif
