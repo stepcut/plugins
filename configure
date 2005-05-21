@@ -3036,7 +3036,8 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 
-                    ac_config_files="$ac_config_files config.mk config.h"
+# System.Process uses cmd or command.com shell on Windows, doen't use Cygwin or MSYS shell
+                                        ac_config_files="$ac_config_files config.mk config.h examples/makewith/io/TestIO.conf examples/makewith/unsafeio/Unsafe.conf"
 
 
 cat >confcache <<\_ACEOF
@@ -3592,6 +3593,8 @@ do
   # Handling of arguments.
   "config.mk" ) CONFIG_FILES="$CONFIG_FILES config.mk" ;;
   "config.h" ) CONFIG_FILES="$CONFIG_FILES config.h" ;;
+  "examples/makewith/io/TestIO.conf" ) CONFIG_FILES="$CONFIG_FILES examples/makewith/io/TestIO.conf" ;;
+  "examples/makewith/unsafeio/Unsafe.conf" ) CONFIG_FILES="$CONFIG_FILES examples/makewith/unsafeio/Unsafe.conf" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;

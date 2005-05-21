@@ -218,7 +218,8 @@ AC_SUBST(SYMS)
 
 AC_PROG_INSTALL
 
-AC_CONFIG_FILES(config.mk config.h)
+# System.Process uses cmd or command.com shell on Windows, doen't use Cygwin or MSYS shell
+AC_CONFIG_FILES(config.mk config.h examples/makewith/io/TestIO.conf examples/makewith/unsafeio/Unsafe.conf)
 
 AC_OUTPUT
 

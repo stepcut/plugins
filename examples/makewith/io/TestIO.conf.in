@@ -13,5 +13,10 @@ resource = testio { field = date }
 -- call a shell command , returning it's output
 --
 date :: IO String
-date = do (_,out,_,_) <- catch (runInteractiveCommand "/bin/date") (\_->error "popen failed")
+date = do
+#if !defined(CYGWIN) || !defined(__MINGW32__)
+          (_,out,_,_) <- catch (runInteractiveCommand "/bin/date") (\_->error "popen failed")
+#else
+          (_,out,_,_) <- catch (runInteractiveCommand "@PREFIX@/../../bin/date") (\_->error "popen failed")
+#endif
           hGetLine out

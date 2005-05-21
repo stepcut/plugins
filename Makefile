@@ -79,6 +79,8 @@ clean:
 	find examples -name '*.o' -exec rm {} \;
 	find examples -name '*.core' -exec rm {} \;
 	find examples -name 'package.conf' -exec rm {} \;
+	rm -f examples/makewith/io/TestIO.conf
+	rm -f examples/makewith/unsafeio/Unsafe.conf
 	rm -rf examples/hmake/lib-plugs/plugs
 	rm -rf examples/hmake/one-shot/runplugs
 	rm -f EvalHaskell.h
