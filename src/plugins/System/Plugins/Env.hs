@@ -361,7 +361,6 @@ mkSOName root = root
 mkSOName root = "lib" ++ root ++ ".so"
 #endif
 
-
 --
 -- return any stuff to load for this package, plus the list of packages
 -- this package depends on. which includes stuff we have to then load
@@ -378,7 +377,7 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                 let    hslibs  = hsLibraries package
                        extras' = extraLibraries package
                        cbits   = filter (\e -> reverse (take (length "_cbits") (reverse e)) == "_cbits") extras'
-                       extras  = filter (not . flip elem cbits) extras'
+                       extras  = filter (not . flip elem (cbits++["m","gmp"])) extras'
                        ldopts  = ldOptions package
                        deppkgs = packageDeps package
                 ldInput <- mapM classifyLdInput ldopts
