@@ -350,9 +350,10 @@ classifyLdInput ('-':'l':lib) = return (Just (DLL lib))
 classifyLdInput ('-':'L':path) = return (Just (DLLPath path))
 classifyLdInput _ = return Nothing
 
+-- TODO need to define a MAC/DARWIN symbol
 #if defined(darwin_TARGET_OS)
 mkSOName root = "lib" ++ root ++ ".dylib"
-#elif defined(mingw32_TARGET_OS)
+#if defined(CYGWIN) || defined(__MINGW32__)
 -- Win32 DLLs have no .dll extension here, because addDLL tries
 -- both foo.dll and foo.drv
 mkSOName root = root
