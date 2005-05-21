@@ -1347,6 +1347,7 @@ if test "$MACOSX" = "yes"
 then
   WHOLE_ARCHIVE_FLAG=-all_load
   LEADING_UNDERSCORE=1
+  SYMS="$SYMS -DMACOSX"
 else
   WHOLE_ARCHIVE_FLAG=--whole-archive
   LEADING_UNDERSCORE=0
