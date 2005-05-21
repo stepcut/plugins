@@ -47,9 +47,10 @@ BUILDING:
         $ make
         $ make install
 
-* On cygwin/windows you may need to make sure that cygwin paths appear
-  before windows paths in your $PATH variable, otherwise windows 'find'
-  will be used over the cygwin find.
+* On cygwin/windows you (a) make sure the cygwin "find" is before the
+  windows "find" on your PATH, and (b) to give the windows-style path
+  (e.g., "c:/cygwin/usr/local") in the ./configure --prefix=foo/bar
+  step
 
 If you wish to register the libraries as official ghc pkg (probably as
 root):
