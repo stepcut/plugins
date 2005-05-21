@@ -353,7 +353,7 @@ classifyLdInput _ = return Nothing
 -- TODO need to define a MAC/DARWIN symbol
 #if defined(darwin_TARGET_OS)
 mkSOName root = "lib" ++ root ++ ".dylib"
-#if defined(CYGWIN) || defined(__MINGW32__)
+#elif defined(CYGWIN) || defined(__MINGW32__)
 -- Win32 DLLs have no .dll extension here, because addDLL tries
 -- both foo.dll and foo.drv
 mkSOName root = root
