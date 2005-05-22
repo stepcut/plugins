@@ -58,7 +58,7 @@ import System.Plugins.ParsePkgConfLite ( parsePkgConf )
 import System.Plugins.Consts           ( ghcLibraryPath, sysPkgConf, sysPkgSuffix )
 
 import Data.IORef               ( writeIORef, readIORef, newIORef, IORef() )
-import Data.Maybe               ( isJust, isNothing )
+import Data.Maybe               ( isJust, isNothing, fromMaybe )
 import Data.List                ( isPrefixOf, nub )
 
 import System.IO.Unsafe         ( unsafePerformIO )
@@ -247,8 +247,8 @@ addModuleDeps m deps = modifyDepEnv env $ \fm -> return $ addToFM fm m deps
 --
 -- Get module dependencies. Nothing if none have been recored.
 --
-getModuleDeps :: Module -> IO (Maybe [Module])
-getModuleDeps m = withDepEnv env $ \fm -> return $ lookupFM fm m
+getModuleDeps :: Module -> IO [Module]
+getModuleDeps m = withDepEnv env $ \fm -> return $ fromMaybe [] (lookupFM fm m)
 
 
 --
