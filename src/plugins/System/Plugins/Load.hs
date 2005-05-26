@@ -372,16 +372,18 @@ hasChanged = hasChanged' ["hs","lhs"]
 
 hasChanged' :: [String] -> Module -> IO Bool
 hasChanged' suffices m@(Module {path = p})
-    = do mbFile <- findFile suffices p
+    = do modFile <- doesFileExist p
+         mbFile <- findFile suffices p
          case mbFile of
-           Nothing -> return False
-           Just f  -> do srcT <- getModificationTime f
-                         objT <- getModificationTime p
-                         if srcT > objT
-                            then return True
-                            else do deps <- getModuleDeps m
-                                    depsStatus <- mapM (hasChanged' suffices) deps
-                                    return (or depsStatus)
+           Just f | modFile
+             -> do srcT <- getModificationTime f
+                   objT <- getModificationTime p
+                   if srcT > objT
+                      then return True
+                      else do deps <- getModuleDeps m
+                              depsStatus <- mapM (hasChanged' suffices) deps
+                              return (or depsStatus)
+           _ -> return False
     where findFile :: [String] -> FilePath -> IO (Maybe FilePath)
           findFile [] _  = return Nothing
           findFile (ext:exts) file
