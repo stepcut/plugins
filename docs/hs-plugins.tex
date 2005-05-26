@@ -781,7 +781,20 @@ main = do fn <- unsafeEval "(\\(x::Int) -> (x,x))" [] :: IO (Maybe (Int -> (Int,
           when (isJust fn) $ putStrLn $ show $ (fromJust fn) 7
 }
 \end{quote}
-
+\subsection{Utilities for use with eval}
+\code{hs-plugins} proves the following utilities for use with \code{eval}:
+\begin{itemize}
+\item
+\code{mkHsValues} is a helper function for converting \code{Data.Map}s
+of names and values into Haskell code. It relies on the assumption
+that the passed values' Show instances produce valid Haskell
+literals (this is true for all prelude types). It's type is as follows:
+\begin{quote}
+\scm{
+mkHsValues :: (Show a) => Data.Map String a -> String
+}
+\end{quote}
+\end{itemize}
 \subsection{Foreign Eval}
 
 A preliminary binding to \code{eval} has been implemented to allow C

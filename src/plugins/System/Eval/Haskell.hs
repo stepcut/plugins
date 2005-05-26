@@ -28,6 +28,7 @@ module System.Eval.Haskell (
         unsafeEval,
         unsafeEval_,
         typeOf,
+	mkHsValues,
 
         hs_eval_b,      -- return a Bool
         hs_eval_c,      -- return a CChar
@@ -46,6 +47,7 @@ import AltData.Dynamic             ( Dynamic )
 import AltData.Typeable            ( Typeable )
 
 import Data.Either
+import Data.Map as Map
 
 import System.IO
 import System.Directory
@@ -151,7 +153,15 @@ unsafeEval_ src mods args ldflags incs = do
         MakeFailure err -> return $ Left err
     makeCleaner tmpf
     return e_rsrc
-
+------------------------------------------------------------------------
+--
+-- Convenience function for use with eval (and friends). Returns a
+-- string of Haskell code with the Data.Map passed as values.
+--
+mkHsValues :: (Show a) => Map.Map String a -> String
+mkHsValues values = concat $ elems $ Map.mapWithKey convertToHs values
+	where convertToHs :: (Show a) => String -> a -> String
+	      convertToHs name value = name ++ " = " ++ show value ++ "\n"
 ------------------------------------------------------------------------
 --
 -- return a compiled value's type, by using Dynamic to get a
