@@ -317,18 +317,10 @@ readPackageConf f = do
 -- What do we need to load? With the library_dirs as prefix paths:
 --      * anything in the hs_libraries fields, $libdir expanded
 --      * anything in the extra_libraries fields (i.e. cbits), expanded,
---      which includes system .so files. Ignore these for now
+--      which includes system .so files.
 --      * also load any dependencies now, because of that weird mtl
 --      library that lang depends upon, but which doesn't show up in the
 --      interfaces for some reason.
---
--- ToDo At present this does not handle extra_libraries correctly.  It
--- only find those extra libraries that live in the directory specfied
--- by the library_dirs field of the package.conf entry. But
--- extra_libraries can contain any libraries supported by the system's
--- linker. For this library they must be, of course, be dynamic.  The
--- extensions for such libraries are different on various platforms.
--- This would need to be checked for by configure.ac.  (Scary - dons)
 --
 -- We return all the package paths that possibly exist, and the leave it
 -- up to loadObject not to load the same ones twice...
