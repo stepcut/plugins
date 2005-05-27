@@ -117,7 +117,7 @@ hasChanged' suffices m@(Module {path = p})
            _ -> return True
 
 --
--- |Like 'makeAll' but with better recompilation checks since module dependencies are known.
+-- |Same as 'makeAll' but with better recompilation checks since module dependencies are known.
 --
 recompileAll :: Module -> [Arg] -> IO MakeStatus
 recompileAll = recompileAll' ["hs","lhs"]
@@ -125,7 +125,7 @@ recompileAll = recompileAll' ["hs","lhs"]
 recompileAll' :: [String] -> Module -> [Arg] -> IO MakeStatus
 recompileAll' suffices m args
     = do changed <- hasChanged m
-         if not changed
+         if changed
             then do mbSource <- findFile suffices (path m)
                     case mbSource of
                       Nothing
