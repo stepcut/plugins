@@ -20,6 +20,11 @@
 
 module System.Plugins.Make ( 
 
+        hasChanged,
+        hasChanged',
+        recompileAll,
+        recompileAll',
+
         make, 
         makeAll,
         makeWith, 
@@ -41,11 +46,19 @@ module System.Plugins.Make (
 
 import System.Plugins.Utils
 import System.Plugins.Parser
+import System.Plugins.LoadTypes        ( Module (Module, path) )
 import System.Plugins.Consts           ( ghc, hiSuf, objSuf, hsSuf )
-import System.Plugins.Env              ( lookupMerged, addMerge )
+import System.Plugins.Env              ( lookupMerged, addMerge
+                                       , getModuleDeps)
 
-import System.IO
-import System.Directory         ( doesFileExist, removeFile )
+#if DEBUG
+import System.IO (hFlush, stdout, openFile, IOMode(..),hClose, hPutStr)
+#else
+import System.IO (openFile, IOMode(..),hClose,hPutStr)
+#endif
+
+import System.Directory         ( doesFileExist, removeFile
+                                , getModificationTime )
 
 import Control.Exception        ( handleJust )
 import GHC.IOBase               ( Exception(IOException) )
@@ -53,6 +66,7 @@ import GHC.IOBase               ( Exception(IOException) )
 #if __GLASGOW_HASKELL__ >= 604
 import System.IO.Error          ( isDoesNotExistError )
 #endif
+
 
 ------------------------------------------------------------------------
 --
@@ -79,6 +93,46 @@ type MergeCode = MakeCode
 
 type Args   = [Arg]
 type Errors = [String]
+
+--
+-- |Returns @True@ if the module or any of its dependencies have older object files than source files.
+--  Defaults to @True@ if some files couldn't be located.
+--
+hasChanged :: Module -> IO Bool
+hasChanged = hasChanged' ["hs","lhs"]
+
+hasChanged' :: [String] -> Module -> IO Bool
+hasChanged' suffices m@(Module {path = p})
+    = do modFile <- doesFileExist p
+         mbFile <- findFile suffices p
+         case mbFile of
+           Just f | modFile
+             -> do srcT <- getModificationTime f
+                   objT <- getModificationTime p
+                   if srcT > objT
+                      then return True
+                      else do deps <- getModuleDeps m
+                              depsStatus <- mapM (hasChanged' suffices) deps
+                              return (or depsStatus)
+           _ -> return True
+
+--
+-- |Like 'makeAll' but with better recompilation checks since module dependencies are known.
+--
+recompileAll :: Module -> [Arg] -> IO MakeStatus
+recompileAll = recompileAll' ["hs","lhs"]
+
+recompileAll' :: [String] -> Module -> [Arg] -> IO MakeStatus
+recompileAll' suffices m args
+    = do changed <- hasChanged m
+         if not changed
+            then do mbSource <- findFile suffices (path m)
+                    case mbSource of
+                      Nothing
+                          -> error $ "Couldn't find source for object file: " ++ path m
+                      Just source
+                          -> makeAll source args
+            else return (MakeSuccess NotReq (path m))
 
 -- ---------------------------------------------------------------------
 -- | Standard make. Compile a single module, unconditionally. 

@@ -30,13 +30,18 @@ module System.Plugins.Utils (
     mkUniqueIn,
     hMkUniqueIn,
 
+    findFile,
+
     mkTemp, mkTempIn, {- internal -}
 
     replaceSuffix,
     outFilePath,
     dropSuffix,
     mkModid,
- 
+    changeFileExt,
+    joinFileExt,
+    splitFileExt,
+
     isSublistOf,                -- :: Eq a => [a] -> [a] -> Bool
 
     dirname,
@@ -167,6 +172,16 @@ hMkUniqueIn dir = do (t,h) <- mkTempIn dir
                         then hClose h >> removeFile t >> hMkUniqueIn dir
                         else return (t,h)
 
+findFile :: [String] -> FilePath -> IO (Maybe FilePath)
+findFile [] _  = return Nothing
+findFile (ext:exts) file
+    = do let l = changeFileExt file ext
+         b <- doesFileExist l
+         if b then return $ Just l
+              else findFile exts file
+
+
+
 -- ---------------------------------------------------------------------
 --
 -- | execute a command and it's arguments, returning the
@@ -249,6 +264,66 @@ dropSuffix f = reverse . tail . dropWhile (/= '.') $ reverse f
 -- | work out the mod name from a filepath
 mkModid :: String -> String
 mkModid = (takeWhile (/= '.')) . reverse . (takeWhile (/= '/')) . reverse
+
+
+-----------------------------------------------------------
+-- Code from Cabal ----------------------------------------
+
+-- | Changes the extension of a file path.
+changeFileExt :: FilePath           -- ^ The path information to modify.
+              -> String             -- ^ The new extension (without a leading period).
+                                    -- Specify an empty string to remove an existing
+                                    -- extension from path.
+              -> FilePath           -- ^ A string containing the modified path information.
+changeFileExt fpath ext = joinFileExt name ext
+  where
+    (name,_) = splitFileExt fpath
+
+-- | The 'joinFileExt' function is the opposite of 'splitFileExt'.
+-- It joins a file name and an extension to form a complete file path.
+--
+-- The general rule is:
+--
+-- > filename `joinFileExt` ext == path
+-- >   where
+-- >     (filename,ext) = splitFileExt path
+joinFileExt :: String -> String -> FilePath
+joinFileExt fpath ""  = fpath
+joinFileExt fpath ext = fpath ++ '.':ext
+
+-- | Split the path into file name and extension. If the file doesn\'t have extension,
+-- the function will return empty string. The extension doesn\'t include a leading period.
+--
+-- Examples:
+--
+-- > splitFileExt "foo.ext" == ("foo", "ext")
+-- > splitFileExt "foo"     == ("foo", "")
+-- > splitFileExt "."       == (".",   "")
+-- > splitFileExt ".."      == ("..",  "")
+-- > splitFileExt "foo.bar."== ("foo.bar.", "")
+splitFileExt :: FilePath -> (String, String)
+splitFileExt p =
+  case break (== '.') fname of
+        (suf@(_:_),_:pre) -> (reverse (pre++fpath), reverse suf)
+        _                 -> (p, [])
+  where
+    (fname,fpath) = break isPathSeparator (reverse p)
+
+-- | Checks whether the character is a valid path separator for the host
+-- platform. The valid character is a 'pathSeparator' but since the Windows
+-- operating system also accepts a slash (\"\/\") since DOS 2, the function
+-- checks for it on this platform, too.
+isPathSeparator :: Char -> Bool
+isPathSeparator ch =
+#if defined(CYGWIN) || defined(__MINGW32__)
+  ch == '/' || ch == '\\'
+#else
+  ch == '/'
+#endif
+
+-- Code from Cabal end ------------------------------------
+-----------------------------------------------------------
+
 
 -- | return the object file, given the .conf file
 -- i.e. /home/dons/foo.rc -> /home/dons/foo.o

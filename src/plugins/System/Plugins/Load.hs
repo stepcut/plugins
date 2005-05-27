@@ -27,8 +27,6 @@ module System.Plugins.Load (
       , pdynload , pdynload_
       , unload
       , unloadAll
-      , hasChanged
-      , hasChanged'
       , reload
       , Module(..)
 
@@ -74,7 +72,6 @@ import GHC.Prim                 ( unsafeCoerce# )
 import System.IO                ( hFlush, stdout )
 #endif
 import System.IO                ( hClose )
-import System.Directory         ( getModificationTime )
 
 -- TODO need a loadPackage p package.conf :: IO () primitive
 
@@ -311,86 +308,7 @@ unloadAll m = do moduleDeps <- getModuleDeps m
                  mapM_ unloadAll moduleDeps
                  unload m
 
--- | Changes the extension of a file path.
-changeFileExt :: FilePath           -- ^ The path information to modify.
-              -> String             -- ^ The new extension (without a leading period).
-                                    -- Specify an empty string to remove an existing
-                                    -- extension from path.
-              -> FilePath           -- ^ A string containing the modified path information.
-changeFileExt fpath ext = joinFileExt name ext
-  where
-    (name,_) = splitFileExt fpath
 
--- | The 'joinFileExt' function is the opposite of 'splitFileExt'.
--- It joins a file name and an extension to form a complete file path.
---
--- The general rule is:
---
--- > filename `joinFileExt` ext == path
--- >   where
--- >     (filename,ext) = splitFileExt path
-joinFileExt :: String -> String -> FilePath
-joinFileExt fpath ""  = fpath
-joinFileExt fpath ext = fpath ++ '.':ext
-
--- | Split the path into file name and extension. If the file doesn\'t have extension,
--- the function will return empty string. The extension doesn\'t include a leading period.
---
--- Examples:
---
--- > splitFileExt "foo.ext" == ("foo", "ext")
--- > splitFileExt "foo"     == ("foo", "")
--- > splitFileExt "."       == (".",   "")
--- > splitFileExt ".."      == ("..",  "")
--- > splitFileExt "foo.bar."== ("foo.bar.", "")
-splitFileExt :: FilePath -> (String, String)
-splitFileExt p =
-  case break (== '.') fname of
-        (suf@(_:_),_:pre) -> (reverse (pre++fpath), reverse suf)
-        _                 -> (p, [])
-  where
-    (fname,fpath) = break isPathSeparator (reverse p)
-
--- | Checks whether the character is a valid path separator for the host
--- platform. The valid character is a 'pathSeparator' but since the Windows
--- operating system also accepts a slash (\"\/\") since DOS 2, the function
--- checks for it on this platform, too.
-isPathSeparator :: Char -> Bool
-isPathSeparator ch =
-#if defined(CYGWIN) || defined(__MINGW32__)
-  ch == '/' || ch == '\\'
-#else
-  ch == '/'
-#endif
-
-
---
--- |Returns @True@ if the module or any of its dependencies have older object files than source files.
---
-hasChanged :: Module -> IO Bool
-hasChanged = hasChanged' ["hs","lhs"]
-
-hasChanged' :: [String] -> Module -> IO Bool
-hasChanged' suffices m@(Module {path = p})
-    = do modFile <- doesFileExist p
-         mbFile <- findFile suffices p
-         case mbFile of
-           Just f | modFile
-             -> do srcT <- getModificationTime f
-                   objT <- getModificationTime p
-                   if srcT > objT
-                      then return True
-                      else do deps <- getModuleDeps m
-                              depsStatus <- mapM (hasChanged' suffices) deps
-                              return (or depsStatus)
-           _ -> return False
-    where findFile :: [String] -> FilePath -> IO (Maybe FilePath)
-          findFile [] _  = return Nothing
-          findFile (ext:exts) file
-              = do let l = changeFileExt file ext
-                   b <- doesFileExist l
-                   if b then return $ Just l
-                        else findFile exts file
 --
 -- | this will be nice for panTHeon, needs thinking about the interface
 -- reload a single object file. don't care about depends, assume they
