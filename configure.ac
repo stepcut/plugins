@@ -66,7 +66,7 @@ AC_SUBST(SYMS)
 
 # Find pwd, in a cygwin friendly way. 
 # Suggested by: http://www.haskell.org/ghc/docs/latest/html/users_guide/ch11s04.html
-TOP=`echo "Directory.getCurrentDirectory >>= putStrLn.init.tail.show " | ghcii.sh -ignore-dot-ghci -v0`
+TOP=`echo "Directory.getCurrentDirectory >>= putStrLn.init.tail.show " | ghc --interactive -ignore-dot-ghci -v0`
 AC_SUBST(TOP)
 
 # necessary tools
