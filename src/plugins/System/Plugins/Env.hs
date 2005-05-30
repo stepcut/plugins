@@ -65,8 +65,7 @@ import System.IO.Unsafe         ( unsafePerformIO )
 import System.Directory         ( doesFileExist )
 #if defined(CYGWIN) || defined(__MINGW32__)
 import System.Environment       ( getEnv )
-
-import Control.Monad            ( liftM )
+import System.IO.Error          ( catch, ioError, isDoesNotExistError )
 #endif
 
 import Control.Concurrent.MVar  ( MVar(), newMVar, withMVar )
@@ -383,7 +382,9 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 #endif
                 libs <- mapM (findHSlib libdirs) (hslibs ++ cbits)
 #if defined(CYGWIN) || defined(__MINGW32__)
-		syslibdir <- liftM ( \x -> x ++ "/SYSTEM") (getEnv "SYSTEMROOT")
+                sysroot <- catch (getEnv "SYSTEMROOT")
+			   (\e -> if isDoesNotExistError e then return "C:/windows" else ioError e) -- guess at a reasonable default
+		let syslibdir = sysroot ++ "/SYSTEM"
 		libs' <- mapM (findDLL $ syslibdir : libdirs) dlls
 #else
 		libs' <- mapM (findDLL libdirs) dlls

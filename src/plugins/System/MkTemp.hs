@@ -243,7 +243,9 @@ mkdir0700 dir = createDirectory dir
 --
 #ifdef __MINGW32__
 -- relies on Int == Int32 on Windows
-foreign import ccall unsafe "_getpid" getProcessID :: IO Int  
+foreign import ccall unsafe "_getpid" getProcessID' :: IO Int  
+getProcessID :: IO Int
+getProcessID = liftM abs getProcessID'
 #else
 getProcessID :: IO Int
 #ifdef CYGWIN
