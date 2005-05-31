@@ -1,4 +1,3 @@
-#!/usr/bin/sed -f
 
 # de-boldify and <p>-ify the Contents.
 

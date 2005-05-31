@@ -13,7 +13,7 @@ $(SRC).ps: $(SRC).dvi
 html: $(SRC).tex
 	tex2page $(SRC)
 	tex2page $(SRC)
-	./munge.sed < $(SRC)/$(SRC).html > tmp.out
+	sed -f munge.sed < $(SRC)/$(SRC).html > tmp.out
 	mv tmp.out $(SRC)/$(SRC).html
 	cp $(SRC)/$(SRC).html $(SRC)/index.html
 	tar czf $(SRC).html.tar.gz $(SRC)
