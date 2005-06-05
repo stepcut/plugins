@@ -848,6 +848,12 @@ int main(int argc, char *argv[])
 \end{verbatim}
 \end{quote}
 
+\subsection{Notes}
+
+Be careful if you're calling eval from a forked thread. This can
+introduce races between the thread and the forked process used by eval
+to compile its code.
+
 \subsection{Eval.Printf}
 
 It has been noted that \code{printf} format strings are the concrete syntax
