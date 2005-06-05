@@ -1,32 +1,17 @@
 For 0.1
 ----------
 
-+ Cascading unload/reload
-
-+ have eval, printf return errors as arguments, not to stdout
-
 + nice functions for cleaning up /tmp files, given a module name
-
-+ PORTABILITY -- pretty much all of this is in main/SysTools.lhs in GHC
-	-- where to /tmp files go? Use SysTools code from GHC
-	-- need to dosify file names on in and out
-	-- try to confirm the implementation of forkProcess
 
 + write a script to strip down the release code.
 
 + .hi file parser is broken on Itanium, again.
 
-+ Implement hs_eval by marshalling Dynamics across to the C side for
-  checking.
-
-+ Make data structures used by the library Storable, for C programs
-
-+ insert iface info into the state, building up a dependency graph like
-  hram's. use this to allow cascading unloading. Does anyone want this?
-
-+ enable more .hi interface code to provide full GHC-like :t options
-  to plugs.
- 
-+ replace the String interface to eval with an ExpQ interface. 
-
 + build way=p and way=''
+
+Cabal
+--------
+
+What we'd like is a cabalMake version of make, so rather than just
+compiling simple plugins, we let cabalMake rebuild whole Haskell apps --
+like Yi!
