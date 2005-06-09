@@ -134,6 +134,8 @@ recompileAll' suffices m args
                           -> makeAll source args
             else return (MakeSuccess NotReq (path m))
 
+-- touch.
+
 -- ---------------------------------------------------------------------
 -- | Standard make. Compile a single module, unconditionally. 
 -- Behaves like ghc -c

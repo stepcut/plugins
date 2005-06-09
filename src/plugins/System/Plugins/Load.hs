@@ -223,18 +223,27 @@ unify obj incs args ty sym = do
         hClose hdl1
 
         let nm  = mkModid (basename tmpf) 
-            src = mkTest nm (mkModid obj) (fst $ break (=='.') ty) ty sym
+            src = mkTest nm (hierize' . mkModid . hierize $ obj)
+                                (fst $ break (=='.') ty) ty sym
             is  = map (\s -> "-i"++s) incs      -- api
             i   = "-i" ++ dirname obj           -- plugin
 
         hWrite hdl src
---  was need for cygwin, should be ok now:
---         e <- build tmpf "nul" (i:is++args++["-fno-code","-ohi nul"])
 
         e <- build tmpf tmpf1 (i:is++args++["-fno-code","-ohi "++tmpf1])
-        removeFile tmpf 
+        -- removeFile tmpf 
         removeFile tmpf1
         return e
+
+        where
+            -- fix up hierarchical names
+            hierize []       = []
+            hierize ('/':cs) = '\\' : hierize cs
+            hierize (c:cs)   = c    : hierize cs
+
+            hierize'[]        = []
+            hierize' ('\\':cs) = '.' : hierize' cs
+            hierize' (c:cs)   = c    : hierize' cs
 
 mkTest modnm plugin api ty sym = 
        "module "++ modnm ++" where" ++
