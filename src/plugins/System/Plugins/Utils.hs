@@ -243,16 +243,36 @@ a  <> b = a ++ b
 -- if null, return "."
 --
 dirname :: FilePath -> FilePath
-dirname p  = 
-    case reverse $ dropWhile (/= '/') $ reverse p of
-        [] -> "."
-        p' -> p'
+dirname p  =
+    let x = findIndices (== '\\') p
+        y = findIndices (== '/') p
+    in
+    if not $ null x
+      then if not $ null y
+          then if (maximum x) > (maximum y) then dirname' '\\' p else dirname' '/' p
+          else dirname' '\\' p
+      else dirname' '/' p
+    where
+        dirname' chara pa =
+            case reverse $ dropWhile (/= chara) $ reverse pa of
+                [] -> "."
+                pa' -> pa'
 
 --
 -- | basename : return the filename portion of a path
 --
 basename :: FilePath -> FilePath
-basename p = reverse $ takeWhile (/= '/') $ reverse p
+basename p =
+    let x = findIndices (== '\\') p
+        y = findIndices (== '/') p
+    in
+    if not $ null x
+      then if not $ null y
+          then if (maximum x) > (maximum y) then basename' '\\' p else basename' '/' p
+          else basename' '\\' p
+      else basename' '/' p
+    where
+        basename' chara pa = reverse $ takeWhile (/= chara) $ reverse pa
 
 --
 -- drop suffix
