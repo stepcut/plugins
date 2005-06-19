@@ -1,6 +1,6 @@
-GHCFLAGS=   -O
+GHCFLAGS=   -O $(GHC_EXTRA_OPTS)
 PKGFLAGS=   -package-conf $(TOP)/plugins.conf.inplace
-PKGFLAGS+=  -package plugins -package unix
+PKGFLAGS+=  -package plugins
 
 all: build
 

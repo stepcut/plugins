@@ -283,7 +283,7 @@ dropSuffix f = reverse . tail . dropWhile (/= '.') $ reverse f
 --
 -- | work out the mod name from a filepath
 mkModid :: String -> String
-mkModid = (takeWhile (/= '.')) . reverse . (takeWhile (/= '/')) . reverse
+mkModid = (takeWhile (/= '.')) . reverse . (takeWhile (\x -> ('/'/= x) && ('\\' /= x))) . reverse
 
 
 -----------------------------------------------------------

@@ -15,12 +15,14 @@ import Control.Monad            (when)
 
 import System.Exit              (exitWith, ExitCode(ExitSuccess))
 import System.IO                (getContents, putStrLn)
+#if !defined(CYGWIN) && !defined(__MINGW32__)
 import System.Posix.Resource    (setResourceLimit,
 			         Resource(ResourceCPUTime), 
                                  ResourceLimits(ResourceLimits),
 			         ResourceLimit(ResourceLimit))
 
 rlimit = ResourceLimit 3
+#endif
 
 context = prehier ++ datas ++ controls
 
@@ -40,7 +42,9 @@ datas   = map ("Data." ++) [
 controls = map ("Control." ++) ["Monad", "Arrow"]
 
 main = do
+#if !defined(CYGWIN) && defined(__MINGW32__)
         setResourceLimit ResourceCPUTime (ResourceLimits rlimit rlimit)
+#endif
         s <- getContents
         when (not . null $ s) $ do
                 s <- unsafeEval ("(take 2048 (show ("++s++")))") context
