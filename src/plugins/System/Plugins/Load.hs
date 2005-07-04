@@ -46,6 +46,8 @@ module System.Plugins.Load (
 
       , Symbol
 
+      , getImports
+
   ) where
 
 import System.Plugins.Make             ( build )
@@ -628,6 +630,14 @@ loadDepends obj incpaths = do
 #endif
                 moduleDeps <- mapM (\(hi,m) -> loadObject m (Object hi)) mods''
                 return (hiface,moduleDeps)
+
+-- ---------------------------------------------------------------------
+-- Nice interface to .hi parser
+--
+getImports :: String -> IO [String]
+getImports m = do
+        hi <- readIface (m ++ hiSuf)
+        return $ dep_mods (mi_deps hi)
 
 -- ---------------------------------------------------------------------
 -- C interface
