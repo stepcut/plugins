@@ -70,6 +70,7 @@ import Data.List
 import System.IO
 import System.Environment           ( getEnv )
 import System.Directory
+import qualified Control.Exception as Control.Exception (handle)
 
 --
 -- The fork library
@@ -196,7 +197,10 @@ exec :: String -> [String] -> IO ([String],[String])
 -- Needs to be compiled with -threaded for waitForProcess not to block
 --
 exec prog args = do
-    (_,outh,errh,proc_hdl) <- runInteractiveProcess prog args Nothing Nothing
+    Control.Exception.handle (\e -> return ([], [show e])) $ do
+
+    (_inh,outh,errh,proc_hdl) <- runInteractiveProcess prog args Nothing Nothing
+
     output <- hGetContents outh
     errput <- hGetContents errh
     forkIO (Control.Exception.evaluate (length output) >> return ())
