@@ -1,17 +1,18 @@
-.TH HS-PLUGINS 1 2005-03-26 "hs-plugins version 0.9.8" "User Manual"
+.TH HS-PLUGINS 1 2005-07-06 "hs-plugins version 0.9.10" "User Manual"
 
 .SH NAME
 hs-plugins \- dynamic linker library for Haskell
 
 .SH DESCRIPTION
 .ds c \fIhs-plugins\fP
-\*c is a library for loading plugins written in Haskell into an
-application at runtime. It also provides a mechanism for (re)compiling 
-Haskell source at runtime. Thirdly, a combination of runtime compilation
-and dynamic loading provides a suite of eval functions.  Values exported
-by plugins are transparently available to Haskell host applications, and
-bindings exist to use Haskell plugins from at least C and Objective C
-programs. hs-plugins requires ghc-6.2.2 or greater.
+\*c is a library for loading code written in Haskell into an
+application at runtime, in the form of plugins. It also provides a
+mechanism for (re-)compiling Haskell source at runtime. Thirdly, a
+combination of runtime compilation and dynamic loading provides a set
+of eval functions.  Values exported by plugins are transparently
+available to Haskell host applications, and bindings exist to use
+Haskell plugins from at least C and Objective C programs. hs-plugins
+requires GHC 6.2.2 or later.
 
 .SH DOCUMENTATION
 The hs-plugins user manual is distributed in html format, and may be
@@ -32,5 +33,4 @@ LGPL.
 
 This manual page was written by Don Stewart, based on the man page for
 cpphs (written by Ian Lynagh).
-
 

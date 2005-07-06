@@ -44,18 +44,19 @@ h2      {font-size: 15pt}
 \medskip
 %
 {\htmlonly \textbf{Download \endhtmlonly 
-\urlh{ftp://ftp.cse.unsw.edu.au/pub/users/dons/hs-plugins/hs-plugins-0.9.8.tar.gz}
-     {version 0.9.8}}
+\urlh{ftp://ftp.cse.unsw.edu.au/pub/users/dons/hs-plugins/hs-plugins-0.9.10.tar.gz}
+     {version 0.9.10}}
 %
 \medskip
 
-\hsplugins{} is a library for loading plugins written in Haskell into an
-application at runtime. It also provides a mechanism for (re)compiling
-Haskell source at runtime. Thirdly, a combination of runtime compilation
-and dynamic loading provides a suite of \code{eval} functions.  Values
-exported by plugins are transparently available to Haskell host
+\hsplugins{} is a library for loading code written in Haskell into an
+application at runtime, in the form of plugins. It also provides a
+mechanism for (re-)compiling Haskell source at runtime. Thirdly, a
+combination of runtime compilation and dynamic loading provides a set
+of \code{eval} functions-- a form of runtime metaprogramming. Values
+exported by Haskell plugins are transparently available to Haskell host
 applications, and bindings exist to use Haskell plugins from at least C
-and Objective C programs. \hsplugins{} currently requires ghc-6.2.2.
+and Objective C programs. \hsplugins{} requires GHC 6.2.2 or later.
 
 \medskip
 
@@ -71,38 +72,56 @@ and Objective C programs. \hsplugins{} currently requires ghc-6.2.2.
 
 \item
 Download the latest stable release:\\
-\url{ftp://ftp.cse.unsw.edu.au/pub/users/dons/hs-plugins/hs-plugins-0.9.8.tar.gz}
-
+\url{ftp://ftp.cse.unsw.edu.au/pub/users/dons/hs-plugins/hs-plugins-0.9.10.tar.gz}
 
 \item
-Nightly cvs src snapshots are available at:\\
-\url{ftp://ftp.cse.unsw.edu.au/pub/users/dons/hs-plugins/snapshots/}
-
+Darcs repository of the latest code:\\
+\url{darcs get http://www.cse.unsw.edu.au/~dons/code/hs-plugins}
 
 \item
 A tarball of the document you are reading:\\
 \url{http://www.cse.unsw.edu.au/~dons/hs-plugins/hs-plugins.html.tar.gz}
 
-
 \item
 A postscript version of the document you are reading:\\
 \url{http://www.cse.unsw.edu.au/~dons/hs-plugins/hs-plugins.ps.gz}
 
+\item
+Papers:
+\begin{itemize}
+\item A paper on interesting uses of \hsplugins{} to enable Haskell to be used
+as an application extension language:\\
+\url{http://www.cse.unsw.edu.au/~dons/papers/PSSC04.html}
 
 \item
-A paper on interesting uses of \hsplugins{} to enable Haskell to be used
-as an application extension language:\\
-\url{http://www.cse.unsw.edu.au/~dons/hs-plugins/paper}
+A paper on dynamic applications in Haskell, utilizing \hsplugins{}:\\
+\url{http://www.cse.unsw.edu.au/~dons/papers/SC05.html}
+\end{itemize}
 
 \end{itemize}
 
 It is known to run on \code{i386-\{linux,freebsd,openbsd\}},
-\code{ia64-linux}, \code{sparc-solaris2} and \code{powerpc-\{macosx,linux\}}.
+\code{sparc-solaris2}, \code{powerpc-\{macosx,linux\}} and flavours of
+Windows.
 
 \section{History}
 
 \begin{itemize}
-	\item v0.9.8
+        \item June 2005, v0.9.10
+        \begin{itemize}
+                \item Support for GHC 6.4, with help from Sean
+                                Seefried for the package.conf parser.
+                \item Ported to Windows of various flavours thanks to Vivian McPhail and Shelarcy
+                \item Removed posix and unix dependencies
+                \item Now uses HSX parser, thanks to Niklas Broberg
+                \item Extended load interface, thanks to Lemmih
+                \item Source now in a darcs repository
+                \item Supports building with GNU make -jN
+                \item Simplified module hierarchy, moved under System.* namespace
+                \item Miscellaneous bug fixes
+        \end{itemize}
+
+	\item February 2005, v0.9.8
         \begin{itemize}
 		\item Fix bug in .hi parsing. 
 		\item Add reloading of packages. 
@@ -119,7 +138,7 @@ It is known to run on \code{i386-\{linux,freebsd,openbsd\}},
 		\item Better api.
 	\end{itemize}
 
-	\item Septemeber 2004.
+	\item September 2004.
         \begin{itemize}
 		\item makeAll
 		\item Better return type for make.
@@ -237,10 +256,10 @@ all the other code the \hsplugins{} depends on.
 \section{Overview}
 
 \hsplugins{} is a library for compiling and loading Haskell code into a
-program at runtime. It allows you to write a Haskell program (which may
-be spread over multiple modules) and have an application (implemented in
-any language with a Haskell FFI binding, including Haskell) load your
-code at runtime, and use the values found within.
+program at runtime. It allows you to write Haskell code (which may
+be spread over multiple modules), and have an application (implemented in
+any language with a Haskell FFI binding, including Haskell) load and use
+your code at runtime.
 
 \hsplugins{} provides 3 major features:
 %
@@ -252,26 +271,25 @@ code at runtime, and use the values found within.
 
 The \emph{dynamic loader} loads objects into the address space of an
 application, along with any dependencies the plugin may have. The
-loader is a binding to the GHC loader, which does single object
-loading. GHC also performs the necessary linking of new objects into
-the running process. On top of the GHC loader is our Haskell layer
-that arranges for module and package dependencies to be found prior to
-loading individual modules.
+loader is a binding to the GHC runtime system's dynamic linker, which
+does single object loading. GHC also performs the necessary linking of
+new objects into the running process. On top of the GHC loader is a
+Haskell layer that arranges for module and package dependencies to be
+found prior to loading individual modules.
 
 The \emph{compilation manager} is a \code{make}-like system for
-compiling Haskell source code into a form suitable for loading
-dynamically. While plugins are normally thought of as strictly object
-code, there are a variety of scenarios where it is desirable to be
-able to inspect the source code of a plugin, or to be able to
-recompile a plugin at runtime. The compilation manager fills this
-role. It is particularly useful in the implementation of \code{eval},
-and \code{printf}.
+compiling Haskell source code into a form suitable for loading.  While
+plugins are normally thought of as strictly object code, there are a
+variety of scenarios where it is desirable to be able to inspect the
+source code of a plugin, or to be able to recompile a plugin at runtime.
+The compilation manager fills this role. It is particularly useful in
+the implementation of \code{eval}.
 
-The \emph{evaluator}, \code{eval}, is a client of the loader and
-compilation manager. When passed a string of Haskell code, it compiles
-the string to object code, loads the result, and returns a Haskell
-value representing the compiled string to the caller. It can be
-considered a Haskell interpreter, implemented as a library.
+The \emph{evaluator}, \code{eval}, utilizes the loader and compilation
+manager. When passed a string of Haskell code, it compiles the string to
+object code, loads the result, and returns a Haskell value representing
+the compiled string to the caller. It can be considered a Haskell
+interpreter, implemented as a library.
 
 \section{Dynamic Loader}
 
@@ -287,6 +305,8 @@ The dynamic loader is available by using \code{-package plugins}.
 %
 \begin{quote}
 \scm{
+import System.Plugins
+
 load :: FilePath 
      -> [FilePath] 
      -> [PackageConf] 
@@ -371,7 +391,7 @@ distributed with \hsplugins{}, and the \hsplugins{}
 \code{Dynamic} refer to the \hsplugins{} reimplementation of these
 libraries. \code{AltData.Dynamic} is used at the moment, as there is a
 limitation in the existing Data.Dynamic library in the presence of
-dynamic loading. This will be fixed soon).
+dynamic loading).
 
 The value wrapped up in the \code{Dynamic} must be an instance of
 \code{AltData.Typeable}. If the value exported by the plugin \emph{is}
@@ -400,6 +420,16 @@ pdynload :: FilePath
          -> Symbol
          -> IO (LoadStatus a)
 }
+
+\scm{
+pdynload_ :: FilePath
+          -> [FilePath]
+          -> [PackageConf]
+          -> [Arg]
+          -> Type
+          -> Symbol
+          -> IO (LoadStatus a)
+}
 \end{quote}
 %
 Example:
@@ -425,8 +455,14 @@ argument. This can be considered a type annotation on the value the plugin
 should be constrained to.
  
 The type of the plugin's resource field must be equivalent to the
-\code{Type}. Prior to loading the object, \code{pdynload} generates a
-tiny Haskell source file containing, for example:
+\code{Type}. There are some restrictions on the arguments that may be
+passed to pdynload. Currently, we require:
+        \begin{itemize}
+                \item TODO
+        \end{itemize}
+
+Prior to loading the object, \code{pdynload} generates a tiny Haskell
+source file containing, for example:
 %
 \begin{quote}
 \scm{
@@ -453,10 +489,15 @@ checkable using the standard Dyanmic type. The cost is that
 \scm{
 unload :: Module -> IO ()
 }
+
+\scm{
+unloadAll :: Module -> IO ()
+}
 \end{quote}
 
 Unload an object, \emph{but not its dependencies} from the address
-space.
+space. \code{unloadAll} performs cascading unloading of a module
+\emph{and} its dependencies.
 
 \begin{quote}
 \scm{
@@ -506,6 +547,8 @@ compiled to object code suitable for loading.
 
 \begin{quote}
 \scm{
+import System.Plugins
+
 make :: FilePath 
      -> [Arg] 
      -> IO MakeStatus
@@ -513,6 +556,10 @@ make :: FilePath
 makeAll :: FilePath 
         -> [Arg] 
         -> IO MakeStatus
+
+recompileAll :: Module 
+             -> [Arg] 
+             -> IO MakeStatus
 
 data MakeStatus 
         = MakeSuccess MakeCode FilePath 
@@ -533,11 +580,16 @@ dependencies prior to loading the object itself. \code{makeAll} also
 recursively compiles any dependencies it can find using GHC's
 \code{--make} flag.
 
+\code{recompileAll} is like \code{makeAll}, but rather than relying on
+\code{ghc --make}, we explicitly check a module's dependencies.
+
 \begin{quote}
 \scm{
 merge   :: FilePath -> FilePath -> IO MergeStatus
 
 mergeTo :: FilePath -> FilePath -> FilePath -> IO MergeStatus
+
+mergeToDir :: FilePath -> FilePath -> FilePath -> IO MergeStatus
 
 data MergeStatus 
         = MergeSuccess MergeCode Args FilePath 
@@ -559,7 +611,12 @@ must be provided as a \code{-package} flag to GHC, they may specify
 this using the non-standard \code{GLOBALOPTIONS} pragma.  Options
 specified in the source this way will be added to the command line.
 This is useful for users who wish to use GHC flags that cannot be
-specified using the conventional \code{OPTIONS} pragma.
+specified using the conventional \code{OPTIONS} pragma. The merging
+operation uses the HSX parser library to parse Haskell source files.
+
+\code{mergeTo} behaves like \code{merge}, but we can specify the file in
+which to place output. \code{mergeToDir} lets you specify a directory in
+which to place merged files.
 
 \begin{quote}
 \scm{
@@ -615,6 +672,16 @@ names and types. Knowing the module name, in particular, is important
 for dynamic loading, which requires the module name be known when
 searching for symbols.
 
+\begin{quote}
+\scm{
+hasChanged :: Module -> IO Bool
+}
+\end{quote}
+
+\code{hasChanged} returns \code{True} if the module or any of its
+dependencies have older object files than source files. Defaults to
+\code{True} if some files couldn't be located.
+
 \subsection*{Levels of Safety}
 
 The normal dynamic loader, using \code{load} on object files only,
@@ -645,19 +712,27 @@ of type safe plugin loading is available in the \hsplugins{} paper
 \section{Eval.Haskell}
 
 \code{eval}, and its siblings, provide a mechanism to compile and run
-Haskell code at runtime, in the form of a String. It is provided as a
-separate package to the plugins package, and needs to be linked
-against using \code{-package eval}. The general framework is that the
-string is used to create a plugin source file, which is compiled and
-loaded, and type checked against its use. The resulting value is
-returned to the caller. It resembles the \code{eval} primitives of
-scripting languages.
+Haskell code at runtime, in the form of a String. The general framework
+is that the string is used to create a plugin source file, which is
+compiled and loaded, and type checked against its use. The resulting
+value is returned to the caller. It resembles a runtime metaprogramming
+\code{run} operator for closed code fragments.
 
 \subsection*{Interface}
 
 \begin{quote}
 \scm{
+import System.Eval.Haskell
+
 eval :: Typeable a => String -> [Import] -> IO (Maybe a)
+
+eval_ :: Typeable a =>
+         String      -- code to compile
+      -> [Import]    -- any imports
+      -> [String]    -- extra ghc flags
+      -> [FilePath]  -- extra package.conf files
+      -> [FilePath]  -- include search paths
+      -> IO (Either [String] (Maybe a))
 }
 \end{quote}
 
@@ -666,15 +741,17 @@ returns a \code{Maybe} value. \code{Nothing} means the code did not
 compile. \code{Just v} gives you \code{v}, the result of evaluating
 your code. It is interesting to note that \code{eval} has the type of
 an interpreter. The \code{Typeable} constraint is used to type check
-the evaluated code when it is loaded, using \code{dynload}. The
-existing \code{Data.Dynamic} library requires that only monomorphic
+the evaluated code when it is loaded, using \code{dynload}. 
+As usual, \code{eval_} is a version of \code{eval} that lets you pass
+extra flags to ghc and to the dynamic loader.
+
+The existing \code{Data.Dynamic} library requires that only monomorphic
 values are \code{Typeable}, so in order to evaluate polymorphic
-functions you need to wrap them up using rank-N types. Some
-examples:
+functions you need to wrap them up using rank-N types. Some examples:
 %
 \begin{quote}
 \scm{
-import Eval.Haskell
+import System.Eval.Haskell
 
 main = do i <- eval "1 + 6 :: Int" [] :: IO (Maybe Int)
           if isJust i then putStrLn (show (fromJust i)) else return ()
@@ -695,7 +772,7 @@ type of the polymorphic function:
 \begin{quote}
 \scm{
 import Poly
-import Eval.Haskell
+import System.Eval.Haskell
 
 main = do m_f <- eval "Fn (\\x y -> x == y)" ["Poly"]
           when (isJust m_f) $ do
@@ -775,7 +852,7 @@ order for Haskell to type the usage of \code{fn}:
 %
 \begin{quote}
 \scm{
-import Eval.Haskell
+import System.Eval.Haskell
 
 main = do fn <- unsafeEval "(\\(x::Int) -> (x,x))" [] :: IO (Maybe (Int -> (Int,Int)))
           when (isJust fn) $ putStrLn $ show $ (fromJust fn) 7
@@ -853,111 +930,6 @@ int main(int argc, char *argv[])
 Be careful if you're calling eval from a forked thread. This can
 introduce races between the thread and the forked process used by eval
 to compile its code.
-
-\subsection{Eval.Printf}
-
-It has been noted that \code{printf} format strings are the concrete syntax
-of a string formatting interpreter (over 1000 lines long in libc!). By
-combining runtime generation of new Haskell code, with dynamic typing,
-it becomes possible to implement a typesafe \code{printf} for Haskell.
-
-This has already been achieved in at least 3 different ways. A standard
-solution (Hinze, Danvey) begins by supplying printf with the abstract
-syntax of the formatting string, resolving the issue of the lack of
-typing in the raw fmt string. An alternative solution (see Ian Lynagh's
-Printf library) uses Template Haskell to transform a printf format
-string into a new Haskell function at compile time, however this
-requires that the format string is known at compile time. By using
-runtime compilation we can take a similar approach, but instead generate
-the print function at runtime! To make this safe, we then need to use
-dynamic typing to check the newly-generated print function against its
-arguments.
-
-\subsection*{Printf Interface}
-
-The \code{Printf} library implements a reasonable amount of the C
-printf's functionality.
-
-\begin{quote}
-\scm{
-printf :: String -> [Dynamic] -> IO ()
-}
-\end{quote}
-
-\begin{quote}
-\scm{
-sprintf :: String -> [Dynamic] -> IO String
-}
-\end{quote}
-
-Because the arguments to printf are of differing types, and the number
-of arguments is not known at compile time, we simulate variadic
-functions by using a heterogenous list of arguments. A special list
-constructor, \code{!}, is provided for this. An example, noting the
-syntax for constructing a heterogenous argument list:
-
-\begin{quote}
-\scm{
-import Eval.Printf
-
-main = do printf "%d\n"         $ (42::Int) ! []
-          printf "0x%X\n"       $ (42::Int) ! []
-          printf "%f\n"         $ (42.1234 :: Double) ! []
-          printf "%c:%c:%c\n"   $ 'a' ! 'b' ! 'c' ! []
-          printf "%s\n"         $ "haskell" ! []
-          printf "%010.4f\n"    $ (42.1234 :: Double) ! []
-          printf "%10.4s\n"     $ "haskell" ! []
-          printf "%-10.4s\n"    $ "haskell" ! []
-}
-\end{quote}
-
-Compiling this program against \code{-package eval}, and running it
-produces the following output:
-%
-\begin{quote}
-\begin{verbatim}
-42
-0x2A
-42.123400
-a:b:c
-haskell
-00042.1234
-      hask
-hask
-\end{verbatim}
-\end{quote}
-
-If you mismatch the types specified in the format string, and the
-types you apply printf to, printf will generate an exception, like so:
-
-\begin{quote}
-\scm{
-import Eval.Printf
-
-main = printf "%d\n" ("badstring" ! [])
-}
-\end{quote}
-
-The above code will generate this error, indicating that you attempted
-to apply a string to a function that expected an Int:
-%
-\begin{quote}
-\begin{verbatim}
-paprika$ ./a.out 
-Fail: Type error in dynamic application.
-Can't apply function <Int -> [Char]> to argument <[Char]>
-\end{verbatim}
-\end{quote}
-
-Note that this isn't the fastest printf implementation in the world. A
-call to printf invokes GHC to transform the printf format string into
-a Haskell code fragment, which is compiled and dynamically linked back
-into the application, and then applied to its arguments. If you need
-to use the same printf function against multiple times, you can save
-recompilation, in which case printf runs as fast as other native code.
-
-Additionally, it only implements the most common modifiers to the
-basic conversion specifiers, and they have not all been fully tested.
 
 \section{RTS Binding}
 
@@ -1390,7 +1362,7 @@ exported by the plugin:
 %
 \begin{quote}
 \scm{
-import Plugins
+import System.Plugins
 import StringProcessorAPI
 import System.Console.Readline
 import System.Exit
@@ -1572,7 +1544,7 @@ object file and \code{.hi} file with the application.
 %
 \begin{quote}
 \scm{
-import Plugins
+import System.Plugins
 import API
 
 main = do
@@ -1723,8 +1695,8 @@ the prompt around twice as fast as \code{hi}.
 
 \begin{quote}
 \scm{
-import Eval.Haskell
-import Plugins.Load
+import System.Eval.Haskell
+import System.Plugins
 
 import System.Exit              ( ExitCode(..), exitWith )
 import System.IO
