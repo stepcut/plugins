@@ -118,6 +118,7 @@ Windows.
                 \item Source now in a darcs repository
                 \item Supports building with GNU make -jN
                 \item Simplified module hierarchy, moved under System.* namespace
+                \item pdynload clarifications, thanks to Alistair Bayley 
                 \item Miscellaneous bug fixes
         \end{itemize}
 
@@ -453,13 +454,6 @@ for module interfaces, allowing plugins to use any type definable in Haskell.
 \code{pdynload} is like \code{dynload}, but requires a new \code{Type}
 argument. This can be considered a type annotation on the value the plugin
 should be constrained to.
- 
-The type of the plugin's resource field must be equivalent to the
-\code{Type}. There are some restrictions on the arguments that may be
-passed to pdynload. Currently, we require:
-        \begin{itemize}
-                \item TODO
-        \end{itemize}
 
 Prior to loading the object, \code{pdynload} generates a tiny Haskell
 source file containing, for example:
@@ -484,6 +478,34 @@ dynamic typechecking, on any type expressable in Haskell. A plugin's
 value may, for example, have class constraints -- something not
 checkable using the standard Dyanmic type. The cost is that
 \code{pdynload} is roughly 46\% slower than an unchecked load.
+ 
+The type of the plugin's resource field must be equivalent to the
+\code{Type}. There are some restrictions on the arguments that may be
+passed to pdynload. Currently, we require:
+        \begin{itemize}
+        \item The object name has the suffix (.o) removed and this
+        becomes a qualified module name in the generated type-checker
+        input file.
+
+        \item The type name must be a single fully-qualified
+        type-identifier, as the module name is stripped off (i.e.
+        everything up to the last ".") and used as a qualified import.
+        This means that you can't use, for example, \code{"Int ->
+        String"} as a type (type synonyms are fine, though).
+
+\end{itemize}
+
+For example, \code{pdynload "API2.o" ["./"] [] "API.PluginAPI"
+"doAction"} generates:
+
+\begin{quote}
+\scm{
+module <temp-generated-name> where
+import qualified API    -- comes from API.PluginAPI argument
+import qualified API2   -- comes from API2.o argument
+_ = API2.doAction :: API.PluginAPI
+}
+\end{quote}
 
 \begin{quote}
 \scm{
@@ -742,7 +764,7 @@ compile. \code{Just v} gives you \code{v}, the result of evaluating
 your code. It is interesting to note that \code{eval} has the type of
 an interpreter. The \code{Typeable} constraint is used to type check
 the evaluated code when it is loaded, using \code{dynload}. 
-As usual, \code{eval_} is a version of \code{eval} that lets you pass
+As usual, \code{eval\_} is a version of \code{eval} that lets you pass
 extra flags to ghc and to the dynamic loader.
 
 The existing \code{Data.Dynamic} library requires that only monomorphic
@@ -1657,27 +1679,10 @@ USA
 \section{Portability}
 
 The library tries to be portable. There are two major points that
-limit easy portabilty. The first is the dependence on the GHC dynamic
+limit easy portabilty. The main issue is a dependence on the GHC dynamic
 linker. \hsplugins{} is thus limited to platforms to which GHC's dyn
 linker has been ported (this is essentially the same as the platforms
 that can run GHCi).
-
-Other than this, there are 3 platform specific items that need to be
-defined for new platforms:
-\begin{itemize}
-	\item Where tmp files should be created. Define the
-		\code{tmpDir} variable in \code{Plugins/Consts.hs} 
-
-	\item Process creation, such that we can read stdin and stderr
-		from the process (this is the POpen library for Posix
-		systems). For Windows, \hsplugins{} carries Simon
-		Marlow's \code{forkProcess} library.
-
-	\item Dealing with backslashes in Dos-style path names
-\end{itemize}
-
-I plan to solve the above 3 problems (and thus have a Windows port) once 
-GHC 6.4 is out.
 
 \newpage
 
