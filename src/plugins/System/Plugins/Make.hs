@@ -20,20 +20,20 @@
 
 module System.Plugins.Make ( 
 
-        hasChanged,
-        hasChanged',
-        recompileAll,
-        recompileAll',
-
         make, 
         makeAll,
         makeWith, 
         MakeStatus(..),
         MakeCode(..),
 
+        hasChanged,
+        hasChanged',
+        recompileAll,
+        recompileAll',
+
         merge, 
         mergeTo,
-	    mergeToDir,
+        mergeToDir,
         MergeStatus(..),
         MergeCode,
 
