@@ -26,12 +26,13 @@ include ../build.mk
 
 HC_OPTS         += -package-conf $(TOP)/plugins.conf.inplace 
 HC_OPTS         += -package altdata -package hi
-HC_OPTS		+= -package Cabal
 HC_OPTS         += -O -funbox-strict-fields 
 HC_OPTS         += -Wall -fno-warn-missing-signatures
 
 ifeq ($(GLASGOW_HASKELL),602)
 HC_OPTS         += -package posix
+else
+HC_OPTS		+= -package Cabal
 endif
 
 install: install-me

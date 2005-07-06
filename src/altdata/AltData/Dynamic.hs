@@ -31,11 +31,13 @@ module AltData.Dynamic (
 	fromDyn,	-- :: Typeable a => Dynamic -> a -> a
 	fromDynamic,	-- :: Typeable a => Dynamic -> Maybe a
 	
+#if __GLASGOW_HASKELL__ >= 603
 	-- * Applying functions of dynamic type
 	dynApply,
 	dynApp,
         dynTypeRep
 
+#endif
   ) where
 
 import AltData.Typeable
@@ -45,7 +47,9 @@ import System.IO.Unsafe    (unsafePerformIO)
 
 import GHC.Base
 import GHC.Show
+#if __GLASGOW_HASKELL__ >= 603
 import GHC.Err
+#endif
 
 unsafeCoerce :: a -> b
 unsafeCoerce = unsafeCoerce#
@@ -135,12 +139,15 @@ fromDynamic (Dynamic t v) =
                                 "\n\tInferred type: " ++show t
                         ) `seq` Nothing
 
+#if __GLASGOW_HASKELL__ >= 603
+
 -- (f::(a->b)) `dynApply` (x::a) = (f a)::b
 dynApply :: Dynamic -> Dynamic -> Maybe Dynamic
 dynApply (Dynamic t1 f) (Dynamic t2 x) =
   case funResultTy t1 t2 of
     Just t3 -> Just (Dynamic t3 ((unsafeCoerce f) x))
     Nothing -> Nothing
+
 
 dynApp :: Dynamic -> Dynamic -> Dynamic
 dynApp f x = case dynApply f x of 
@@ -151,3 +158,5 @@ dynApp f x = case dynApply f x of
 
 dynTypeRep :: Dynamic -> TypeRep
 dynTypeRep (Dynamic tr _) = tr 
+
+#endif
