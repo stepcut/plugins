@@ -21,7 +21,7 @@ Package {
 }
 #else
 name:		hi
-version:	1.0
+version:	0.9.10
 license:	BSD3
 maintainer:	libraries@haskell.org
 exposed:	True

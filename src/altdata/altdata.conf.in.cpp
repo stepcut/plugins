@@ -21,7 +21,7 @@ Package {
 }
 #else
 name:		altdata
-version:	0.9.8
+version:	0.9.10
 license:	LGPL
 maintainer:	dons@cse.unsw.edu.au
 exposed:	True
