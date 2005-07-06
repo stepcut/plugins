@@ -19,6 +19,7 @@ TOP             = @TOP@
 PREFIX          = @PREFIX@
 LIBDIR          = $(PREFIX)/lib/hs-$(PACKAGE)
 BINDIR          = $(PREFIX)/bin
+MANDIR          = $(PREFIX)/man
 
 WHOLE_ARCHIVE_FLAG = @WHOLE_ARCHIVE_FLAG@
 

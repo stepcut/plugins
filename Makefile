@@ -23,6 +23,8 @@ EvalHaskell.h: build
 install:
 	$(INSTALL_DATA_DIR) $(LIBDIR)/include
 	$(INSTALL_DATA) EvalHaskell.h $(LIBDIR)/include
+	$(INSTALL_DATA_DIR) $(MANDIR)/man1
+	$(INSTALL_DATA) docs/hs-plugins.1 $(MANDIR)/man1
 	@(cd src && $(MAKE) install)
 
 #
