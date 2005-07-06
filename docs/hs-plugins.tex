@@ -56,7 +56,7 @@ combination of runtime compilation and dynamic loading provides a set
 of \code{eval} functions-- a form of runtime metaprogramming. Values
 exported by Haskell plugins are transparently available to Haskell host
 applications, and bindings exist to use Haskell plugins from at least C
-and Objective C programs. \hsplugins{} requires GHC 6.2.2 or later.
+and Objective C programs. \hsplugins{} requires GHC 6.4 or later.
 
 \medskip
 
@@ -1065,10 +1065,9 @@ the ``.'' in the 2nd argument to \code{load}).
 \subsection*{Dynamically Loading the Dynamic Loader}
 
 It is also possible to load the \code{plugins} or \code{eval}
-libraries in GHC. A couple of recent patches to the linker have made
-this possible (available in ghc-6.2.2 or in the head branch). Here,
-for example, we load the \code{plugs} interactive environment in GHCi,
-and evaluated some code. The source to \code{plugs} is in Appendix
+libraries in GHC. Here, for example, we load the \code{plugs}
+interactive environment in GHCi, and evaluated some code. The source to
+\code{plugs} is in Appendix
 \ref{sec:plugs}.
 %
 \begin{quote}
