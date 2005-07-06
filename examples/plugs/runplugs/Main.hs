@@ -8,18 +8,22 @@
 -- | Runplugs: use hs-plugins to run a Haskell expression under
 -- controlled conditions.
 --
-import System.Eval.Haskell             (unsafeEval)
+import System.Eval.Haskell      (unsafeEval_)
 
 import Data.Maybe               (isJust, fromJust)
 import Control.Monad            (when) 
+import Control.Exception        (evaluate) 
+
 
 import System.Exit              (exitWith, ExitCode(ExitSuccess))
-import System.IO                (getContents, putStrLn)
+import System.IO                (hGetContents, hPutStrLn, putStrLn, hClose, stdin, stdout, stderr)
 #if !defined(CYGWIN) && !defined(__MINGW32__)
 import System.Posix.Resource    (setResourceLimit,
 			         Resource(ResourceCPUTime), 
                                  ResourceLimits(ResourceLimits),
 			         ResourceLimit(ResourceLimit))
+import Control.Concurrent           ( forkIO )
+import qualified Control.Exception  ( evaluate )
 
 rlimit = ResourceLimit 3
 #endif
@@ -41,13 +45,24 @@ datas   = map ("Data." ++) [
 
 controls = map ("Control." ++) ["Monad", "Arrow"]
 
+--
+-- with ghc 6.4, ghc doesn't seem to be able to call gcc, setNoFDBlocking fails.
+--
+-- *** Assembler
+-- gcc -I/tmp -c /tmp/ghc11596.s -o /tmp/MySzQ14137.o
+-- 
+-- Failed: gcc -I/tmp -c /tmp/ghc11596.s -o /tmp/MySzQ14137.o
+-- gcc: setNonBlockingFD: invalid argument (Bad file descriptor)
+--
 main = do
 #if !defined(CYGWIN) && defined(__MINGW32__)
         setResourceLimit ResourceCPUTime (ResourceLimits rlimit rlimit)
 #endif
-        s <- getContents
+        s <- hGetContents stdin
         when (not . null $ s) $ do
-                s <- unsafeEval ("(take 2048 (show ("++s++")))") context
-                when (isJust s) (putStrLn (fromJust s))
+                s <- unsafeEval_ ("(take 2048 (show ("++s++")))") context ["-v"] [] []
+                case s of
+                        Left errs -> mapM_ putStrLn errs
+                        Right s   -> putStrLn s
         exitWith ExitSuccess
 
