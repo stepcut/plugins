@@ -25,7 +25,7 @@ Read the documentation in doc/ for more.
 ------------------------------------------------------------------------
 DEPENDENCIES:
 
-* Requires GHC > 6.2 (for Typeable.h)
+* Requires GHC >= 6.4
 * Requires GNU make or BSD make to build
 * Requires HSX, Niklas Broberg's Haskell parser library, available at:
     darcs get http://www.cs.chalmers.se/~d00nibro/haskell-src-exts
@@ -56,17 +56,11 @@ If you wish to register the libraries as official ghc pkg (probably as
 root):
 	$ make register
 
-And to unregister (maybe as root). Note that the unistall order
-matters:
-
-        $ ghc-pkg -r printf
-        $ ghc-pkg -r eval
-        $ ghc-pkg -r plugins
-        $ ghc-pkg -r hi
-        $ ghc-pkg -r altdata
+And to unregister (maybe as root):
+        $ make unregister
 
 Once it is registered, you can link against the library by just adding
--package plugins or, e.g. -package eval, to your command line.
+-package plugins to your command line.
 
 The documentation relies on latex, dvips, tex2page:
 
@@ -85,7 +79,7 @@ distributed under the BSD-style Glasgow University license.
 
 PORTABILITY:
 
-Requires GHC 6.2 or greater, though most testing has be done on 6.3.
+Requires GHC 6.4 or greater, though most testing has be done on 6.4.
 They dynamic loader requires a functional GHCi implementation.
 
 ---------------------+--------------------------------------------------
@@ -95,6 +89,7 @@ i386-*-linux         |    X
 i386-*-freebsd       |    X
 i386-*-openbsd       |    X           
 powerpc-apple-darwin |    X            
+powerpc-*-linux      |    X            
 sparc-*-solaris2     |    X            
 ia64-*-linux         |    #
 i386-*-solaris2      |                X
