@@ -1,10 +1,6 @@
 For 0.1
 ----------
 
-+ nice functions for cleaning up /tmp files, given a module name
-
-+ write a script to strip down the release code.
-
 + .hi file parser is broken on Itanium, again.
 
 + build way=p and way=''
