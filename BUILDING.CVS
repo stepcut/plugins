@@ -4,9 +4,7 @@ CVS BUILDING INSTRUCTIONS
 These are build instructions if you've checked out hs-plugins
 from CVS (instead of downloading a source distribution tarball).
 
-1.  Execute autogen.sh to generate the GNU ./configure script:
-
-    ./autogen.sh
+1.  Use autoconf to generate the GNU ./configure script:
 
 2.  Build hs-plugins as usual with ./configure && make
 
