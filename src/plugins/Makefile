@@ -32,7 +32,7 @@ HC_OPTS         += -Wall -fno-warn-missing-signatures
 ifeq ($(GLASGOW_HASKELL),602)
 HC_OPTS         += -package posix
 else
-HC_OPTS		+= -package Cabal
+#HC_OPTS		+= -package Cabal
 endif
 
 install: install-me
