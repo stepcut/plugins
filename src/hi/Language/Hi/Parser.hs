@@ -48,7 +48,6 @@ import Language.Hi.Syntax
 import Language.Hi.Binary
 import Language.Hi.FastString
 
-import GHC.Word  
 
 #include "../../../../config.h"
 
@@ -69,7 +68,7 @@ readIface hi_path = getBinFileWithDict hi_path
 instance Binary Iface where
     get bh = do
             version   <- get bh :: IO String
-            build_tag <- get bh :: IO Word8     -- 'way' flag
+            build_tag <- get bh :: IO String     -- 'way' flag
 
 #if __GLASGOW_HASKELL__ >= 604
             mod_name  <- get bh :: IO FastString
