@@ -343,12 +343,23 @@ instance Binary Int where
 #endif
 
 instance Binary a => Binary [a] where
+#if __GLASGOW_HASKELL__ < 605
     get bh         = do h <- getWord8 bh
                         case h of
                           0 -> return []
                           _ -> do x  <- get bh
                                   xs <- get bh
                                   return (x:xs)
+#else
+    get bh = do
+       b <- getByte bh
+       len <- if b == 0xff 
+                 then get bh
+                 else return (fromIntegral b :: Word32)
+       let loop 0 = return []
+           loop n = do a <- get bh; as <- loop (n-1); return (a:as)
+       loop len
+#endif
 
 instance (Binary a, Binary b) => Binary (a,b) where
     get bh        = do a <- get bh
