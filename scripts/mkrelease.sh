@@ -3,7 +3,7 @@
 cd /tmp
 rm -rf hs-plugins-0.9.10*
 
-darcs get --set-scripts-executable /home/dons/hs-plugins
+darcs get --partial --set-scripts-executable /home/dons/hs-plugins
 cd hs-plugins
 rm -rf _darcs
 cd ..
