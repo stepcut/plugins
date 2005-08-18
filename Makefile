@@ -8,13 +8,13 @@
 all: build EvalHaskell.h
 
 build::
-	cd plugins ;\
+	cd src ;\
 	$(GHC) -o setup --make Setup.hs ;\
 	./setup configure --prefix=$(PREFIX) --with-happy=$(TOP)/happy.sh ;\
 	./setup build
 
 EvalHaskell.h: build
-	cp plugins/System/Eval/Haskell_stub.h $@
+	cp src/System/Eval/Haskell_stub.h $@
 
 #
 # installing
@@ -26,7 +26,7 @@ install:
 	$(INSTALL_DATA) EvalHaskell.h $(LIBDIR)/include
 	$(INSTALL_DATA_DIR) $(MANDIR)/man1
 	$(INSTALL_DATA) docs/hs-plugins.1 $(MANDIR)/man1
-	cd plugins && ./setup install
+	cd src && ./setup install
 
 #
 # regress check. TODO check expected output
@@ -55,8 +55,8 @@ CLEAN_FILES += *.conf.*.old *~
 
 clean:
 	cd docs && $(MAKE) clean
-	cd plugins && ./setup clean 2> /dev/null || true
-	cd plugins && rm -rf dist Setup.hi Setup.o setup
+	cd src && ./setup clean 2> /dev/null || true
+	cd src && rm -rf dist Setup.hi Setup.o setup
 	rm -rf $(CLEAN_FILES)
 	find examples -name '*.a' -exec rm {} \;
 	find examples -name '*~' -exec rm {} \;
