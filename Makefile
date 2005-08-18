@@ -10,7 +10,7 @@ all: build EvalHaskell.h
 build::
 	cd src ;\
 	$(GHC) -o setup --make Setup.hs ;\
-	./setup configure --prefix=$(PREFIX) --with-happy=$(TOP)/happy.sh ;\
+	./setup configure --prefix=$(PREFIX) ;\
 	./setup build
 
 EvalHaskell.h: build
