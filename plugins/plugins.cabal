@@ -1,0 +1,36 @@
+name:		plugins
+version:	0.9.10
+license:	LGPL
+License-file:	LICENSE
+author:         Don Stewart
+maintainer:	dons@cse.unsw.edu.au
+exposed-modules:
+	AltData.Dynamic,
+	AltData.Typeable,
+        Language.Hi.Binary,
+        Language.Hi.FastMutInt,
+        Language.Hi.FastString,
+        Language.Hi.Parser,
+        Language.Hi.PrimPacked,
+        Language.Hi.Syntax,
+        System.Eval,
+        System.Eval.Haskell,
+        System.Eval.Utils,
+        System.MkTemp,
+        System.Plugins,
+        System.Plugins.Consts,
+        System.Plugins.Env,
+        System.Plugins.Load,
+        System.Plugins.LoadTypes,
+        System.Plugins.Make,
+        System.Plugins.Package,
+        System.Plugins.PackageAPI,
+        System.Plugins.ParsePkgConfCabal,
+        System.Plugins.Parser,
+        System.Plugins.Utils
+c-sources:
+        Language/Hi/hschooks.c
+includes:	      Linker.h
+Build-Depends:        haskell-src-exts>=0.2, Cabal
+ghc-options:          -Wall -Werror -O -fno-warn-missing-signatures -threaded -funbox-strict-fields
+
