@@ -1,7 +1,5 @@
-{-# OPTIONS -fglasgow-exts -cpp  -w #-}
--- parser produced by Happy Version 1.14
-
-
+{-# OPTIONS -fglasgow-exts -cpp #-}
+{-# OPTIONS -w #-}
 
 module System.Plugins.ParsePkgConfCabal ( 
         parsePkgConf, parseOnePkgConf
@@ -19,6 +17,8 @@ import GHC.Exts
 #else
 import GlaExts
 #endif
+
+-- parser produced by Happy Version 1.15
 
 newtype HappyAbsSyn  = HappyAbsSyn (() -> ())
 happyIn5 :: ([ PackageConfig ]) -> (HappyAbsSyn )
@@ -446,17 +446,34 @@ happyNewToken action sts stk (tk:tks) =
 	ITconid    happy_dollar_dollar -> cont 8#;
 	ITstring   happy_dollar_dollar -> cont 9#;
 	ITinteger  happy_dollar_dollar -> cont 10#;
-	_ -> happyError tks
+	_ -> happyError' (tk:tks)
 	}
 
-happyThen = \m k -> k m
-happyReturn = \a -> a
-happyThen1 = happyThen
-happyReturn1 = \a tks -> a
+happyError_ tk tks = happyError' (tk:tks)
 
-parse tks = happyThen (happyParse 0# tks) (\x -> happyReturn (happyOut5 x))
+newtype HappyIdentity a = HappyIdentity a
+happyIdentity = HappyIdentity
+happyRunIdentity (HappyIdentity a) = a
 
-parseOne tks = happyThen (happyParse 1# tks) (\x -> happyReturn (happyOut7 x))
+instance Monad HappyIdentity where
+    return = HappyIdentity
+    (HappyIdentity p) >>= q = q p
+
+happyThen :: () => HappyIdentity a -> (a -> HappyIdentity b) -> HappyIdentity b
+happyThen = (>>=)
+happyReturn :: () => a -> HappyIdentity a
+happyReturn = (return)
+happyThen1 m k tks = (>>=) m (\a -> k a tks)
+happyReturn1 :: () => a -> b -> HappyIdentity a
+happyReturn1 = \a tks -> (return) a
+happyError' :: () => [Token] -> HappyIdentity a
+happyError' = HappyIdentity . happyError
+
+parse tks = happyRunIdentity happySomeParser where
+  happySomeParser = happyThen (happyParse 0# tks) (\x -> happyReturn (happyOut5 x))
+
+parseOne tks = happyRunIdentity happySomeParser where
+  happySomeParser = happyThen (happyParse 1# tks) (\x -> happyReturn (happyOut7 x))
 
 happySeq = happyDontSeq
 
@@ -553,9 +570,13 @@ happyParse start_state = happyNewToken start_state notHappyAtAll notHappyAtAll
 -----------------------------------------------------------------------------
 -- Accepting the parse
 
-happyAccept j tk st sts (HappyStk ans _) = (happyTcHack j  				                  (happyTcHack st))
-
-					   (happyReturn1 ans)
+-- If the current token is 0#, it means we've just accepted a partial
+-- parse (a %partial parser).  We must ignore the saved token on the top of
+-- the stack in this case.
+happyAccept 0# tk st sts (_ `HappyStk` ans `HappyStk` _) =
+	happyReturn1 ans
+happyAccept j tk st sts (HappyStk ans _) = 
+	(happyTcHack j (happyTcHack st)) (happyReturn1 ans)
 
 -----------------------------------------------------------------------------
 -- Arrays only: do the next action
@@ -628,7 +649,7 @@ data HappyAddr = HappyA# Addr#
 -----------------------------------------------------------------------------
 -- HappyState data type (not arrays)
 
-{-# LINE 166 "GenericTemplate.hs" #-}
+{-# LINE 170 "GenericTemplate.hs" #-}
 
 -----------------------------------------------------------------------------
 -- Shifting a token
@@ -707,8 +728,7 @@ happyGoto nt j tk st =
 -- parse error if we are in recovery and we fail again
 happyFail  0# tk old_st _ stk =
 --	trace "failing" $ 
-    	happyError
-
+    	happyError_ tk
 
 {-  We don't need state discarding for our restricted implementation of
     "error".  In fact, it can cause some bogus parses, so I've disabled it
