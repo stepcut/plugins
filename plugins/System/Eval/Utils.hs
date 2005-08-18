@@ -28,7 +28,6 @@ module System.Eval.Utils (
         symbol,
         escape,
         getPaths,
-        find_altdata_pkgconf,
 
         mkUniqueWith,
         cleanup,
@@ -40,7 +39,6 @@ module System.Eval.Utils (
 
 import System.Plugins.Load                ( Symbol )
 import System.Plugins.Utils
-import System.Plugins.Consts              ( top {- :{ -} )
 
 import System.IO
 import System.Directory
@@ -74,30 +72,8 @@ escape s = concatMap (\c -> showLitChar c $ "") s
 --
 getPaths :: IO ([String],[String])
 getPaths = do
-        m_pkg <- find_altdata_pkgconf
-        let load_path = if isJust m_pkg then fromJust m_pkg else []
-        let make_line = 
-                let compulsory = ["-Onot","-fglasgow-exts","-package","altdata"]
-                in if not $ null load_path 
-                          then "-package-conf":load_path:compulsory
-                          else compulsory
-        let load_path' = if null load_path then [] else [load_path]
-        return (make_line,load_path')
-
--- ---------------------------------------------------------------------
--- if we are in-tree eval() needs to use the inplace package.conf to
--- find altdata, otherwise we need it to be in the ghc package system.
---
--- fixing Typeable/Dynamic in ghc obsoletes this code. as would adding
--- an extra param to eval, which I don't want to do.
---
-find_altdata_pkgconf :: IO (Maybe String)
-find_altdata_pkgconf = do
-        let f = top </> "plugins.conf.inplace"
-        b <- doesFileExist f
-        return $ if b 
-                 then Just f 
-                 else Nothing
+        let make_line = ["-Onot","-fglasgow-exts","-package","plugins"]
+        return (make_line,[])
 
 -- ---------------------------------------------------------------------
 -- create the tmp file, and write source into it, using wrapper to

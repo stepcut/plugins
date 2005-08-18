@@ -50,6 +50,8 @@ module System.Plugins.Load (
 
   ) where
 
+#include "../../../config.h"
+
 import System.Plugins.Make             ( build )
 import System.Plugins.Env
 import System.Plugins.Utils

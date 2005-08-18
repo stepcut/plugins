@@ -18,8 +18,6 @@
 -- USA
 -- 
 
-#include "../../../../config.h"
-
 module System.Plugins.Utils ( 
     Arg,
 
@@ -59,6 +57,8 @@ module System.Plugins.Utils (
     panic
 
   ) where
+
+#include "../../../config.h"
 
 import System.Plugins.Env              ( isLoaded )
 import System.Plugins.Consts           ( objSuf, hiSuf, tmpDir )

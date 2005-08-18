@@ -1,8 +1,6 @@
 include $(TOP)/config.mk
 include $(TOP)/examples/check.mk
 
-PKGFLAGS=	-package-conf $(TOP)/plugins.conf.inplace -package plugins
-
 BIN=a.out
 SRC=Main.hs
 

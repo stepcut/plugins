@@ -13,7 +13,6 @@ REALBIN=	./a.out
 API_OBJ=	api/API.o
 
 INCLUDES=   	-i$(TOP)/examples/$(TEST)/api
-PKGFLAGS=   	-package-conf $(TOP)/plugins.conf.inplace -package plugins
 GHCFLAGS=   	-Onot -cpp -fglasgow-exts
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s

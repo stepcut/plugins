@@ -20,7 +20,7 @@
 
 module System.Plugins.Consts where
 
-#include "../../../../config.h"
+#include "../../../config.h"
 
 
 #if __GLASGOW_HASKELL__ >= 604
@@ -33,7 +33,7 @@ import System.IO.Unsafe          ( unsafePerformIO )
 top             = TOP
 
 -- | what is ghc called?
-ghc             = GHC
+ghc             = WITH_GHC
 
 -- | path to standard ghc libraries
 ghcLibraryPath  = GHC_LIB_PATH

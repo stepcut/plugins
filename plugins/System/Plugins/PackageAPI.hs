@@ -37,7 +37,7 @@ module System.Plugins.PackageAPI (
        , updLibraryDirs 
    ) where
 
-#include "../../../../config.h"
+#include "../../../config.h"
 
 #if CABAL == 1 || __GLASGOW_HASKELL__ >= 604
 import Distribution.InstalledPackageInfo

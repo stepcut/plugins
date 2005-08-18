@@ -8,12 +8,13 @@
 all: build EvalHaskell.h
 
 build::
-	cd src && $(MAKE)
-	@find src -name depend -exec rm {} \;
-	@#cd src && $(MAKE) way=p
+	cd plugins ;\
+	$(GHC) -o setup --make Setup.hs ;\
+	./setup configure --prefix=$(PREFIX) --with-happy=$(TOP)/happy.sh ;\
+	./setup build
 
 EvalHaskell.h: build
-	cp src/plugins/System/Eval/Haskell_stub.h $@
+	cp plugins/System/Eval/Haskell_stub.h $@
 
 #
 # installing
@@ -25,22 +26,7 @@ install:
 	$(INSTALL_DATA) EvalHaskell.h $(LIBDIR)/include
 	$(INSTALL_DATA_DIR) $(MANDIR)/man1
 	$(INSTALL_DATA) docs/hs-plugins.1 $(MANDIR)/man1
-	@(cd src && $(MAKE) install)
-
-#
-# and register the library with ghc package system
-# Use this target if installing by hand. May need to be performed as root
-#
-register:
-	env LIBDIR=${LIBDIR} $(GHC_PKG) -u < src/altdata/altdata.conf.in
-	env LIBDIR=${LIBDIR} $(GHC_PKG) -u < src/hi/hi.conf.in
-	env LIBDIR=${LIBDIR} $(GHC_PKG) -u < src/plugins/plugins.conf.in
-
-# and unregister the packages
-unregister:
-	$(GHC_PKG) -r plugins
-	$(GHC_PKG) -r hi
-	$(GHC_PKG) -r altdata
+	cd plugins && ./setup install
 
 #
 # regress check. TODO check expected output
@@ -51,7 +37,7 @@ check:
 		exit 1 ;\
 	fi
 	@( d=/tmp/plugins.tmp.$$$$ ; mkdir $$d ; export TMPDIR=$$d ;\
-	   for i in `find examples ! -name CVS -type d -maxdepth 2 -mindepth 2` ; do \
+	   for i in `find examples ! -name CVS -type d -maxdepth 2 -mindepth 2 | sort` ; do \
 		printf "=== testing %-50s ... " "$$i" ;	\
 		( cd $$i ; if [ -f dont_test ] ; then \
 		 	echo "ignored."	;\
@@ -61,18 +47,16 @@ check:
 		  fi ) 2> /dev/null ;\
 	   done ; rm -rf $$d )
 	
-
 #
 # making clean
 #
 
 CLEAN_FILES += *.conf.*.old *~
-EXTRA_CLEANS+=*.conf.inplace* *.conf.in *.h autom4te.cache \
-	      config.h config.mk config.log config.status
 
 clean:
 	cd docs && $(MAKE) clean
-	cd src  && $(MAKE) clean
+	cd plugins && ./setup clean 2> /dev/null || true
+	cd plugins && rm -rf dist Setup.hi Setup.o setup
 	rm -rf $(CLEAN_FILES)
 	find examples -name '*.a' -exec rm {} \;
 	find examples -name '*~' -exec rm {} \;
@@ -87,7 +71,9 @@ clean:
 	rm -rf examples/hmake/one-shot/runplugs
 	rm -f EvalHaskell.h
 
+EXTRA_CLEANS+=*.conf.inplace* *.conf.in *.h autom4te.cache \
+	      config.h config.mk config.log config.status
 distclean: clean
 	rm -rf $(EXTRA_CLEANS)
 
-include config.mk
+-include config.mk

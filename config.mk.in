@@ -1,58 +1,20 @@
-#
-# Copyright (c) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
-# LGPL version 2.1 or later (see http://www.gnu.org/copyleft/lesser.html)
-#
- 
-#
-# config.mk.in :
-# variables that need to be visible in Makefiles
-#
-
-# all is the default rule for everyone
 default: all
 
+VERSION         = 0.9.10
 PACKAGE         = plugins
-UPACKAGE        = Plugins
 
 TOP             = @TOP@
 
 PREFIX          = @PREFIX@
-LIBDIR          = $(PREFIX)/lib/hs-$(PACKAGE)
+LIBDIR          = $(PREFIX)/lib/$(PACKAGE)-$(VERSION)
 BINDIR          = $(PREFIX)/bin
 MANDIR          = $(PREFIX)/man
 
-WHOLE_ARCHIVE_FLAG = @WHOLE_ARCHIVE_FLAG@
-
-# Are we using the new Cabal packages?
-CABAL           = @CABAL@
-
-
 GHC             = @GHC@
-GHC_LIB_PATH    = @GHC_LIB_PATH@
-GHC_VERSION     = @GHC_VERSION@
 GLASGOW_HASKELL = @GLASGOW_HASKELL@
-GHC_EXTRA_OPTS  = @SYMS@ @DEBUG_OPTS@
-GHC_LD_OPTS     =
-
-GHC_PKG         = @GHCPKG@
-
-LD              = @LD@
-LD_X            = @LD@ -x
-
-HAPPY           = @HAPPY@
-HAPPY_OPTS      = -a -g -c
-ALEX            = @ALEX@
-ALEX_OPTS       = --ghc
-HADDOCK         = @HADDOCK@
-
-AR              = @AR@
-RANLIB          = @RANLIB@
-
-RM              = @RM@
-
-INSTALL         = @INSTALL@
 
 # A few aliases
+INSTALL         = @INSTALL@
 INSTALL_PROGRAM = ${INSTALL} -s -m 755
 INSTALL_DATA    = ${INSTALL}    -m 644
 INSTALL_DATA_DIR= ${INSTALL} -d -m 755

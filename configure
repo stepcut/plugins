@@ -271,8 +271,8 @@ PACKAGE_VERSION=
 PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
-ac_unique_file="src/plugins/System/Plugins.hs"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os PREFIX WHOLE_ARCHIVE_FLAG LEADING_UNDERSCORE SYMS TOP GHC GHC_LIB_PATH GHC_VERSION GLASGOW_HASKELL CABAL DEBUG_OPTS GHCPKG HADDOCK HAPPY ALEX LD AR RANLIB RM TEX TEX2PAGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LIBOBJS LTLIBOBJS'
+ac_unique_file="plugins/System/Plugins.hs"
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os PREFIX TOP GHC GLASGOW_HASKELL TEX TEX2PAGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -802,8 +802,6 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-cabal          Enable use of Cabal packages in pluggable-1-branch
-                          of GHC
   --enable-debug          Enable a debug version of hs-plugins to be built
 
 Optional Packages:
@@ -1258,6 +1256,10 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+# Prepare to generate the config.h.in file
+          ac_config_headers="$ac_config_headers config.h"
+
+
 # untested on earlier than 2.52, but it won't work anyway
 
 
@@ -1338,43 +1340,54 @@ fi
 case $Platform in
 powerpc-apple-darwin*)
         MACOSX=yes
+
+cat >>confdefs.h <<_ACEOF
+#define MACOSX 1
+_ACEOF
+
+        LEADING_UNDERSCORE=1
 	;;
 *)
         MACOSX=no
+        LEADING_UNDERSCORE=0
 	;;
 esac
-if test "$MACOSX" = "yes"
-then
-  WHOLE_ARCHIVE_FLAG=-all_load
-  LEADING_UNDERSCORE=1
-  SYMS="$SYMS -DMACOSX"
-else
-  WHOLE_ARCHIVE_FLAG=--whole-archive
-  LEADING_UNDERSCORE=0
-fi
-
-
-
 
 if test "$build_os" = "mingw32"
 then
+
+cat >>confdefs.h <<\_ACEOF
+#define __MINGW32__ 1
+_ACEOF
+
   LEADING_UNDERSCORE=1
-  SYMS="$SYMS -D__MINGW32__"
 fi
-
-
 
 if test "$build_os" = "cygwin"
 then
+
+cat >>confdefs.h <<\_ACEOF
+#define CYGWIN 1
+_ACEOF
+
   LEADING_UNDERSCORE=1
-  SYMS="$SYMS -DCYGWIN"
 fi
 
+
+cat >>confdefs.h <<_ACEOF
+#define LEADING_UNDERSCORE $LEADING_UNDERSCORE
+_ACEOF
 
 
 # Find pwd, in a cygwin friendly way.
 # Suggested by: http://www.haskell.org/ghc/docs/latest/html/users_guide/ch11s04.html
 TOP=`echo "Directory.getCurrentDirectory >>= putStrLn.init.tail.show " | ghc --interactive -ignore-dot-ghci -v0`
+
+
+cat >>confdefs.h <<_ACEOF
+#define TOP "$TOP"
+_ACEOF
+
 
 
 # necessary tools
@@ -1436,25 +1449,10 @@ echo "$as_me: error: You need GHC to build this project" >&2;}
 
 fi;
 
+cat >>confdefs.h <<_ACEOF
+#define WITH_GHC $GHC
+_ACEOF
 
-# find path to GHC libs, for runtime_loader
-if test -n "$GHC" ; then
-    echo "$as_me:$LINENO: checking for ghc library directory" >&5
-echo $ECHO_N "checking for ghc library directory... $ECHO_C" >&6
-    GHC_LIB_PATH=`$GHC --print-libdir`
-    echo "$as_me:$LINENO: result: $GHC_LIB_PATH" >&5
-echo "${ECHO_T}$GHC_LIB_PATH" >&6
-fi
-
-
-# check ghc version here
-if test -n "$GHC" ; then
-    echo "$as_me:$LINENO: checking for ghc version" >&5
-echo $ECHO_N "checking for ghc version... $ECHO_C" >&6
-    GHC_VERSION=`$GHC --numeric-version`
-    echo "$as_me:$LINENO: result: $GHC_VERSION" >&5
-echo "${ECHO_T}$GHC_VERSION" >&6
-fi
 
 
 # Work out value of __GLASGOW_HASKELL__
@@ -1469,383 +1467,34 @@ echo "${ECHO_T}$GLASGOW_HASKELL" >&6
 fi
 
 
-MAJOR=`echo "$GHC_VERSION" | sed 's/^\([^\.]*\)\.\([^\.]*\).*/\1/'`
-MINOR=`echo "$GHC_VERSION" | sed 's/^\([^\.]*\)\.\([^\.]*\).*/\2/'`
-
-if test "$MAJOR" -lt "6"; then
-	{ { echo "$as_me:$LINENO: error: Found major $MAJOR. You need a ghc version >= 6.2" >&5
-echo "$as_me: error: Found major $MAJOR. You need a ghc version >= 6.2" >&2;}
-   { (exit 1); exit 1; }; } ;
-fi
-if test "$MINOR" -lt "2"; then
-	{ { echo "$as_me:$LINENO: error: You need a ghc version >= 6.2" >&5
-echo "$as_me: error: You need a ghc version >= 6.2" >&2;}
-   { (exit 1); exit 1; }; } ;
+# find path to GHC libs, for runtime_loader
+if test -n "$GHC" ; then
+    echo "$as_me:$LINENO: checking for ghc library directory" >&5
+echo $ECHO_N "checking for ghc library directory... $ECHO_C" >&6
+    GHC_LIB_PATH=`$GHC --print-libdir`
+    echo "$as_me:$LINENO: result: $GHC_LIB_PATH" >&5
+echo "${ECHO_T}$GHC_LIB_PATH" >&6
 fi
 
-#Allow plugins to be built with Cabal libraries
-# Check whether --enable-cabal or --disable-cabal was given.
-if test "${enable_cabal+set}" = set; then
-  enableval="$enable_cabal"
-   CABAL=1
-else
-   CABAL=0
-fi;
-
-# used by the Makefile`s to alter dependencies.
-if test "$MAJOR" -ge "6" -a "$MINOR" -ge "4"; then
-  CABAL=1
-fi
-
+cat >>confdefs.h <<_ACEOF
+#define GHC_LIB_PATH "$GHC_LIB_PATH"
+_ACEOF
 
 
 # Allow a debugging version of hs-plugins to be built
 # Check whether --enable-debug or --disable-debug was given.
 if test "${enable_debug+set}" = set; then
   enableval="$enable_debug"
-   DEBUG_OPTS=-DDEBUG
+
+cat >>confdefs.h <<_ACEOF
+#define DEBUG 1
+_ACEOF
+
 else
-   DEBUG_OPTS=
+   :
 fi;
 
 
-
-# Search for ghc-pkg
-echo "$as_me:$LINENO: checking for ghc-pkg" >&5
-echo $ECHO_N "checking for ghc-pkg... $ECHO_C" >&6
-ghc_pkg_guess=`echo $GHC | sed 's,ghc\([^/\\]*\)$,ghc-pkg\1,'`
-if "$ghc_pkg_guess" -l > /dev/null 2>&1; then
-      matching_ghc_pkg=$ghc_pkg_guess
-else
-      matching_ghc_pkg=no
-fi
-if test x"$matching_ghc_pkg" = xno; then
-    # Extract the first word of "ghc-pkg", so it can be a program name with args.
-set dummy ghc-pkg; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_GHCPKG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$GHCPKG"; then
-  ac_cv_prog_GHCPKG="$GHCPKG" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_GHCPKG=""
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-GHCPKG=$ac_cv_prog_GHCPKG
-if test -n "$GHCPKG"; then
-  echo "$as_me:$LINENO: result: $GHCPKG" >&5
-echo "${ECHO_T}$GHCPKG" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-    if test -z "$GHCPKG" ; then
-       { { echo "$as_me:$LINENO: error: ghc-pkg not found." >&5
-echo "$as_me: error: ghc-pkg not found." >&2;}
-   { (exit 1); exit 1; }; }
-    fi
-else
-    GHCPKG=$matching_ghc_pkg
-fi
-echo "$as_me:$LINENO: result: $GHCPKG" >&5
-echo "${ECHO_T}$GHCPKG" >&6
-
-
-# Extract the first word of "haddock", so it can be a program name with args.
-set dummy haddock; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_HADDOCK+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$HADDOCK"; then
-  ac_cv_prog_HADDOCK="$HADDOCK" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_HADDOCK="haddock"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-HADDOCK=$ac_cv_prog_HADDOCK
-if test -n "$HADDOCK"; then
-  echo "$as_me:$LINENO: result: $HADDOCK" >&5
-echo "${ECHO_T}$HADDOCK" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-if test -z "$HADDOCK" ; then
-  { echo "$as_me:$LINENO: WARNING: You need Haddock if you want developer documentation" >&5
-echo "$as_me: WARNING: You need Haddock if you want developer documentation" >&2;}
-fi
-
-# Extract the first word of "happy", so it can be a program name with args.
-set dummy happy; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_HAPPY+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$HAPPY"; then
-  ac_cv_prog_HAPPY="$HAPPY" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_HAPPY="happy"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-HAPPY=$ac_cv_prog_HAPPY
-if test -n "$HAPPY"; then
-  echo "$as_me:$LINENO: result: $HAPPY" >&5
-echo "${ECHO_T}$HAPPY" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-if test -z "$HAPPY" ; then
-  { echo "$as_me:$LINENO: WARNING: If you change or remove the parser you'll need Happy" >&5
-echo "$as_me: WARNING: If you change or remove the parser you'll need Happy" >&2;}
-fi
-
-# Extract the first word of "alex", so it can be a program name with args.
-set dummy alex; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_ALEX+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$ALEX"; then
-  ac_cv_prog_ALEX="$ALEX" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ALEX="alex"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-ALEX=$ac_cv_prog_ALEX
-if test -n "$ALEX"; then
-  echo "$as_me:$LINENO: result: $ALEX" >&5
-echo "${ECHO_T}$ALEX" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-if test -z "$ALEX" ; then
-	{ echo "$as_me:$LINENO: WARNING: If you change or remove the lexer files you'll need alex" >&5
-echo "$as_me: WARNING: If you change or remove the lexer files you'll need alex" >&2;}
-fi
-
-# Extract the first word of "ld", so it can be a program name with args.
-set dummy ld; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_LD+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$LD"; then
-  ac_cv_prog_LD="$LD" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_LD="ld"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-LD=$ac_cv_prog_LD
-if test -n "$LD"; then
-  echo "$as_me:$LINENO: result: $LD" >&5
-echo "${ECHO_T}$LD" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-if test -z "$LD" ; then
-  { echo "$as_me:$LINENO: WARNING: You need ld -export-dynamic" >&5
-echo "$as_me: WARNING: You need ld -export-dynamic" >&2;}
-fi
-
-# Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_AR+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$AR"; then
-  ac_cv_prog_AR="$AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="ar"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-AR=$ac_cv_prog_AR
-if test -n "$AR"; then
-  echo "$as_me:$LINENO: result: $AR" >&5
-echo "${ECHO_T}$AR" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-if test -z "$AR" ; then
-  { echo "$as_me:$LINENO: WARNING: You need ar to build the library" >&5
-echo "$as_me: WARNING: You need ar to build the library" >&2;}
-fi
-
-# Extract the first word of "ranlib", so it can be a program name with args.
-set dummy ranlib; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_RANLIB+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$RANLIB"; then
-  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="ranlib"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-RANLIB=$ac_cv_prog_RANLIB
-if test -n "$RANLIB"; then
-  echo "$as_me:$LINENO: result: $RANLIB" >&5
-echo "${ECHO_T}$RANLIB" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-if test -z "$RANLIB" ; then
-  { echo "$as_me:$LINENO: WARNING: You need randlib to build the library" >&5
-echo "$as_me: WARNING: You need randlib to build the library" >&2;}
-fi
-
-# Extract the first word of "rm", so it can be a program name with args.
-set dummy rm; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_RM+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$RM"; then
-  ac_cv_prog_RM="$RM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RM="rm"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-RM=$ac_cv_prog_RM
-if test -n "$RM"; then
-  echo "$as_me:$LINENO: result: $RM" >&5
-echo "${ECHO_T}$RM" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-if test -z "$RM" ; then
-  { echo "$as_me:$LINENO: WARNING: You need rm!" >&5
-echo "$as_me: WARNING: You need rm!" >&2;}
-fi
 
 # Extract the first word of "tex", so it can be a program name with args.
 set dummy tex; ac_word=$2
@@ -2859,9 +2508,13 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-echo "$as_me:$LINENO: checking for arc4random" >&5
-echo $ECHO_N "checking for arc4random... $ECHO_C" >&6
-if test "${ac_cv_func_arc4random+set}" = set; then
+
+for ac_func in arc4random
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
+if eval "test \"\${$as_ac_var+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -2870,12 +2523,12 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-/* Define arc4random to an innocuous variant, in case <limits.h> declares arc4random.
+/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
    For example, HP-UX 11i <limits.h> declares gettimeofday.  */
-#define arc4random innocuous_arc4random
+#define $ac_func innocuous_$ac_func
 
 /* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char arc4random (); below.
+    which can conflict with char $ac_func (); below.
     Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
     <limits.h> exists even on freestanding compilers.  */
 
@@ -2885,7 +2538,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 # include <assert.h>
 #endif
 
-#undef arc4random
+#undef $ac_func
 
 /* Override any gcc2 internal prototype to avoid an error.  */
 #ifdef __cplusplus
@@ -2894,14 +2547,14 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char arc4random ();
+char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined (__stub_arc4random) || defined (__stub___arc4random)
+#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
 choke me
 #else
-char (*f) () = arc4random;
+char (*f) () = $ac_func;
 #endif
 #ifdef __cplusplus
 }
@@ -2910,7 +2563,7 @@ char (*f) () = arc4random;
 int
 main ()
 {
-return f != arc4random;
+return f != $ac_func;
   ;
   return 0;
 }
@@ -2937,23 +2590,25 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_func_arc4random=yes
+  eval "$as_ac_var=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_func_arc4random=no
+eval "$as_ac_var=no"
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 fi
-echo "$as_me:$LINENO: result: $ac_cv_func_arc4random" >&5
-echo "${ECHO_T}$ac_cv_func_arc4random" >&6
-if test $ac_cv_func_arc4random = yes; then
-  SYMS="$SYMS -DHAVE_ARC4RANDOM"
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
 fi
-
-
+done
 
 
 # Find a good install program.  We prefer a C program (faster),
@@ -3037,8 +2692,7 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 
 # System.Process uses cmd or command.com shell on Windows, doen't use Cygwin or MSYS shell
-                                        ac_config_files="$ac_config_files config.mk config.h examples/makewith/io/TestIO.conf examples/makewith/unsafeio/Unsafe.conf"
-
+                              ac_config_files="$ac_config_files config.mk examples/makewith/io/TestIO.conf examples/makewith/unsafeio/Unsafe.conf"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -3114,38 +2768,7 @@ s/^[^=]*=[	 ]*$//;
 }'
 fi
 
-# Transform confdefs.h into DEFS.
-# Protect against shell expansion while executing Makefile rules.
-# Protect against Makefile macro expansion.
-#
-# If the first sed substitution is executed (which looks for macros that
-# take arguments), then we branch to the quote section.  Otherwise,
-# look for a macro that doesn't take arguments.
-cat >confdef2opt.sed <<\_ACEOF
-t clear
-: clear
-s,^[	 ]*#[	 ]*define[	 ][	 ]*\([^	 (][^	 (]*([^)]*)\)[	 ]*\(.*\),-D\1=\2,g
-t quote
-s,^[	 ]*#[	 ]*define[	 ][	 ]*\([^	 ][^	 ]*\)[	 ]*\(.*\),-D\1=\2,g
-t quote
-d
-: quote
-s,[	 `~#$^&*(){}\\|;'"<>?],\\&,g
-s,\[,\\&,g
-s,\],\\&,g
-s,\$,$$,g
-p
-_ACEOF
-# We use echo to avoid assuming a particular line-breaking character.
-# The extra dot is to prevent the shell from consuming trailing
-# line-breaks from the sub-command output.  A line-break within
-# single-quotes doesn't work because, if this script is created in a
-# platform that uses two characters for line-breaks (e.g., DOS), tr
-# would break.
-ac_LF_and_DOT=`echo; echo .`
-DEFS=`sed -n -f confdef2opt.sed confdefs.h | tr "$ac_LF_and_DOT" ' .'`
-rm -f confdef2opt.sed
-
+DEFS=-DHAVE_CONFIG_H
 
 ac_libobjs=
 ac_ltlibobjs=
@@ -3479,9 +3102,14 @@ Usage: $0 [OPTIONS] [FILE]...
       --recheck    update $as_me by reconfiguring in the same conditions
   --file=FILE[:TEMPLATE]
 		   instantiate the configuration file FILE
+  --header=FILE[:TEMPLATE]
+		   instantiate the configuration header FILE
 
 Configuration files:
 $config_files
+
+Configuration headers:
+$config_headers
 
 Report bugs to <bug-autoconf@gnu.org>."
 _ACEOF
@@ -3592,9 +3220,9 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "config.mk" ) CONFIG_FILES="$CONFIG_FILES config.mk" ;;
-  "config.h" ) CONFIG_FILES="$CONFIG_FILES config.h" ;;
   "examples/makewith/io/TestIO.conf" ) CONFIG_FILES="$CONFIG_FILES examples/makewith/io/TestIO.conf" ;;
   "examples/makewith/unsafeio/Unsafe.conf" ) CONFIG_FILES="$CONFIG_FILES examples/makewith/unsafeio/Unsafe.conf" ;;
+  "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -3607,6 +3235,7 @@ done
 # bizarre bug on SunOS 4.1.3.
 if $ac_need_defaults; then
   test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
+  test "${CONFIG_HEADERS+set}" = set || CONFIG_HEADERS=$config_headers
 fi
 
 # Have a temporary directory for convenience.  Make it in the build tree
@@ -3683,24 +3312,9 @@ s,@build_cpu@,$build_cpu,;t t
 s,@build_vendor@,$build_vendor,;t t
 s,@build_os@,$build_os,;t t
 s,@PREFIX@,$PREFIX,;t t
-s,@WHOLE_ARCHIVE_FLAG@,$WHOLE_ARCHIVE_FLAG,;t t
-s,@LEADING_UNDERSCORE@,$LEADING_UNDERSCORE,;t t
-s,@SYMS@,$SYMS,;t t
 s,@TOP@,$TOP,;t t
 s,@GHC@,$GHC,;t t
-s,@GHC_LIB_PATH@,$GHC_LIB_PATH,;t t
-s,@GHC_VERSION@,$GHC_VERSION,;t t
 s,@GLASGOW_HASKELL@,$GLASGOW_HASKELL,;t t
-s,@CABAL@,$CABAL,;t t
-s,@DEBUG_OPTS@,$DEBUG_OPTS,;t t
-s,@GHCPKG@,$GHCPKG,;t t
-s,@HADDOCK@,$HADDOCK,;t t
-s,@HAPPY@,$HAPPY,;t t
-s,@ALEX@,$ALEX,;t t
-s,@LD@,$LD,;t t
-s,@AR@,$AR,;t t
-s,@RANLIB@,$RANLIB,;t t
-s,@RM@,$RM,;t t
 s,@TEX@,$TEX,;t t
 s,@TEX2PAGE@,$TEX2PAGE,;t t
 s,@CC@,$CC,;t t
@@ -3951,6 +3565,229 @@ s,@INSTALL@,$ac_INSTALL,;t t
     rm -f $tmp/out
   fi
 
+done
+_ACEOF
+cat >>$CONFIG_STATUS <<\_ACEOF
+
+#
+# CONFIG_HEADER section.
+#
+
+# These sed commands are passed to sed as "A NAME B NAME C VALUE D", where
+# NAME is the cpp macro being defined and VALUE is the value it is being given.
+#
+# ac_d sets the value in "#define NAME VALUE" lines.
+ac_dA='s,^\([	 ]*\)#\([	 ]*define[	 ][	 ]*\)'
+ac_dB='[	 ].*$,\1#\2'
+ac_dC=' '
+ac_dD=',;t'
+# ac_u turns "#undef NAME" without trailing blanks into "#define NAME VALUE".
+ac_uA='s,^\([	 ]*\)#\([	 ]*\)undef\([	 ][	 ]*\)'
+ac_uB='$,\1#\2define\3'
+ac_uC=' '
+ac_uD=',;t'
+
+for ac_file in : $CONFIG_HEADERS; do test "x$ac_file" = x: && continue
+  # Support "outfile[:infile[:infile...]]", defaulting infile="outfile.in".
+  case $ac_file in
+  - | *:- | *:-:* ) # input from stdin
+	cat >$tmp/stdin
+	ac_file_in=`echo "$ac_file" | sed 's,[^:]*:,,'`
+	ac_file=`echo "$ac_file" | sed 's,:.*,,'` ;;
+  *:* ) ac_file_in=`echo "$ac_file" | sed 's,[^:]*:,,'`
+	ac_file=`echo "$ac_file" | sed 's,:.*,,'` ;;
+  * )   ac_file_in=$ac_file.in ;;
+  esac
+
+  test x"$ac_file" != x- && { echo "$as_me:$LINENO: creating $ac_file" >&5
+echo "$as_me: creating $ac_file" >&6;}
+
+  # First look for the input files in the build tree, otherwise in the
+  # src tree.
+  ac_file_inputs=`IFS=:
+    for f in $ac_file_in; do
+      case $f in
+      -) echo $tmp/stdin ;;
+      [\\/$]*)
+	 # Absolute (can't be DOS-style, as IFS=:)
+	 test -f "$f" || { { echo "$as_me:$LINENO: error: cannot find input file: $f" >&5
+echo "$as_me: error: cannot find input file: $f" >&2;}
+   { (exit 1); exit 1; }; }
+	 # Do quote $f, to prevent DOS paths from being IFS'd.
+	 echo "$f";;
+      *) # Relative
+	 if test -f "$f"; then
+	   # Build tree
+	   echo "$f"
+	 elif test -f "$srcdir/$f"; then
+	   # Source tree
+	   echo "$srcdir/$f"
+	 else
+	   # /dev/null tree
+	   { { echo "$as_me:$LINENO: error: cannot find input file: $f" >&5
+echo "$as_me: error: cannot find input file: $f" >&2;}
+   { (exit 1); exit 1; }; }
+	 fi;;
+      esac
+    done` || { (exit 1); exit 1; }
+  # Remove the trailing spaces.
+  sed 's/[	 ]*$//' $ac_file_inputs >$tmp/in
+
+_ACEOF
+
+# Transform confdefs.h into two sed scripts, `conftest.defines' and
+# `conftest.undefs', that substitutes the proper values into
+# config.h.in to produce config.h.  The first handles `#define'
+# templates, and the second `#undef' templates.
+# And first: Protect against being on the right side of a sed subst in
+# config.status.  Protect against being in an unquoted here document
+# in config.status.
+rm -f conftest.defines conftest.undefs
+# Using a here document instead of a string reduces the quoting nightmare.
+# Putting comments in sed scripts is not portable.
+#
+# `end' is used to avoid that the second main sed command (meant for
+# 0-ary CPP macros) applies to n-ary macro definitions.
+# See the Autoconf documentation for `clear'.
+cat >confdef2sed.sed <<\_ACEOF
+s/[\\&,]/\\&/g
+s,[\\$`],\\&,g
+t clear
+: clear
+s,^[	 ]*#[	 ]*define[	 ][	 ]*\([^	 (][^	 (]*\)\(([^)]*)\)[	 ]*\(.*\)$,${ac_dA}\1${ac_dB}\1\2${ac_dC}\3${ac_dD},gp
+t end
+s,^[	 ]*#[	 ]*define[	 ][	 ]*\([^	 ][^	 ]*\)[	 ]*\(.*\)$,${ac_dA}\1${ac_dB}\1${ac_dC}\2${ac_dD},gp
+: end
+_ACEOF
+# If some macros were called several times there might be several times
+# the same #defines, which is useless.  Nevertheless, we may not want to
+# sort them, since we want the *last* AC-DEFINE to be honored.
+uniq confdefs.h | sed -n -f confdef2sed.sed >conftest.defines
+sed 's/ac_d/ac_u/g' conftest.defines >conftest.undefs
+rm -f confdef2sed.sed
+
+# This sed command replaces #undef with comments.  This is necessary, for
+# example, in the case of _POSIX_SOURCE, which is predefined and required
+# on some systems where configure will not decide to define it.
+cat >>conftest.undefs <<\_ACEOF
+s,^[	 ]*#[	 ]*undef[	 ][	 ]*[a-zA-Z_][a-zA-Z_0-9]*,/* & */,
+_ACEOF
+
+# Break up conftest.defines because some shells have a limit on the size
+# of here documents, and old seds have small limits too (100 cmds).
+echo '  # Handle all the #define templates only if necessary.' >>$CONFIG_STATUS
+echo '  if grep "^[	 ]*#[	 ]*define" $tmp/in >/dev/null; then' >>$CONFIG_STATUS
+echo '  # If there are no defines, we may have an empty if/fi' >>$CONFIG_STATUS
+echo '  :' >>$CONFIG_STATUS
+rm -f conftest.tail
+while grep . conftest.defines >/dev/null
+do
+  # Write a limited-size here document to $tmp/defines.sed.
+  echo '  cat >$tmp/defines.sed <<CEOF' >>$CONFIG_STATUS
+  # Speed up: don't consider the non `#define' lines.
+  echo '/^[	 ]*#[	 ]*define/!b' >>$CONFIG_STATUS
+  # Work around the forget-to-reset-the-flag bug.
+  echo 't clr' >>$CONFIG_STATUS
+  echo ': clr' >>$CONFIG_STATUS
+  sed ${ac_max_here_lines}q conftest.defines >>$CONFIG_STATUS
+  echo 'CEOF
+  sed -f $tmp/defines.sed $tmp/in >$tmp/out
+  rm -f $tmp/in
+  mv $tmp/out $tmp/in
+' >>$CONFIG_STATUS
+  sed 1,${ac_max_here_lines}d conftest.defines >conftest.tail
+  rm -f conftest.defines
+  mv conftest.tail conftest.defines
+done
+rm -f conftest.defines
+echo '  fi # grep' >>$CONFIG_STATUS
+echo >>$CONFIG_STATUS
+
+# Break up conftest.undefs because some shells have a limit on the size
+# of here documents, and old seds have small limits too (100 cmds).
+echo '  # Handle all the #undef templates' >>$CONFIG_STATUS
+rm -f conftest.tail
+while grep . conftest.undefs >/dev/null
+do
+  # Write a limited-size here document to $tmp/undefs.sed.
+  echo '  cat >$tmp/undefs.sed <<CEOF' >>$CONFIG_STATUS
+  # Speed up: don't consider the non `#undef'
+  echo '/^[	 ]*#[	 ]*undef/!b' >>$CONFIG_STATUS
+  # Work around the forget-to-reset-the-flag bug.
+  echo 't clr' >>$CONFIG_STATUS
+  echo ': clr' >>$CONFIG_STATUS
+  sed ${ac_max_here_lines}q conftest.undefs >>$CONFIG_STATUS
+  echo 'CEOF
+  sed -f $tmp/undefs.sed $tmp/in >$tmp/out
+  rm -f $tmp/in
+  mv $tmp/out $tmp/in
+' >>$CONFIG_STATUS
+  sed 1,${ac_max_here_lines}d conftest.undefs >conftest.tail
+  rm -f conftest.undefs
+  mv conftest.tail conftest.undefs
+done
+rm -f conftest.undefs
+
+cat >>$CONFIG_STATUS <<\_ACEOF
+  # Let's still pretend it is `configure' which instantiates (i.e., don't
+  # use $as_me), people would be surprised to read:
+  #    /* config.h.  Generated by config.status.  */
+  if test x"$ac_file" = x-; then
+    echo "/* Generated by configure.  */" >$tmp/config.h
+  else
+    echo "/* $ac_file.  Generated by configure.  */" >$tmp/config.h
+  fi
+  cat $tmp/in >>$tmp/config.h
+  rm -f $tmp/in
+  if test x"$ac_file" != x-; then
+    if diff $ac_file $tmp/config.h >/dev/null 2>&1; then
+      { echo "$as_me:$LINENO: $ac_file is unchanged" >&5
+echo "$as_me: $ac_file is unchanged" >&6;}
+    else
+      ac_dir=`(dirname "$ac_file") 2>/dev/null ||
+$as_expr X"$ac_file" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$ac_file" : 'X\(//\)[^/]' \| \
+	 X"$ac_file" : 'X\(//\)$' \| \
+	 X"$ac_file" : 'X\(/\)' \| \
+	 .     : '\(.\)' 2>/dev/null ||
+echo X"$ac_file" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{ s//\1/; q; }
+  	  /^X\(\/\/\)[^/].*/{ s//\1/; q; }
+  	  /^X\(\/\/\)$/{ s//\1/; q; }
+  	  /^X\(\/\).*/{ s//\1/; q; }
+  	  s/.*/./; q'`
+      { if $as_mkdir_p; then
+    mkdir -p "$ac_dir"
+  else
+    as_dir="$ac_dir"
+    as_dirs=
+    while test ! -d "$as_dir"; do
+      as_dirs="$as_dir $as_dirs"
+      as_dir=`(dirname "$as_dir") 2>/dev/null ||
+$as_expr X"$as_dir" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$as_dir" : 'X\(//\)[^/]' \| \
+	 X"$as_dir" : 'X\(//\)$' \| \
+	 X"$as_dir" : 'X\(/\)' \| \
+	 .     : '\(.\)' 2>/dev/null ||
+echo X"$as_dir" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{ s//\1/; q; }
+  	  /^X\(\/\/\)[^/].*/{ s//\1/; q; }
+  	  /^X\(\/\/\)$/{ s//\1/; q; }
+  	  /^X\(\/\).*/{ s//\1/; q; }
+  	  s/.*/./; q'`
+    done
+    test ! -n "$as_dirs" || mkdir $as_dirs
+  fi || { { echo "$as_me:$LINENO: error: cannot create directory \"$ac_dir\"" >&5
+echo "$as_me: error: cannot create directory \"$ac_dir\"" >&2;}
+   { (exit 1); exit 1; }; }; }
+
+      rm -f $ac_file
+      mv $tmp/config.h $ac_file
+    fi
+  else
+    cat $tmp/config.h
+    rm -f $tmp/config.h
+  fi
 done
 _ACEOF
 

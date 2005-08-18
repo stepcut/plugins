@@ -1,21 +1,43 @@
-/* 
- * Copyright (c) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
- * LGPL version 2.1 or later (see http://www.gnu.org/copyleft/lesser.html)
- */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* symbols that must be assigned to variables in Haskell code */
+/* Defined if compiling with mingw */
+#undef CYGWIN
 
-/* NOTE: this is not the same as symbols needed for cpp of .hs code */
+/* Defined if a debugging version is to be built */
+#undef DEBUG
 
-/* path to ghc */
-#define GHC             "@GHC@"
+/* Path to ghc libraries */
+#undef GHC_LIB_PATH
 
-/* path to GHC libraries */
-#define GHC_LIB_PATH    "@GHC_LIB_PATH@"
+/* Define to 1 if you have the `arc4random' function. */
+#undef HAVE_ARC4RANDOM
 
-#define TOP             "@TOP@"
+/* Whether symbols are prefixed with a leading underscore */
+#undef LEADING_UNDERSCORE
 
-#define LEADING_UNDERSCORE @LEADING_UNDERSCORE@
+/* Defined if compiling on the mac */
+#undef MACOSX
 
-#define CABAL 		@CABAL@
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
 
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Path to top of build tree */
+#undef TOP
+
+/* Which ghc to use */
+#undef WITH_GHC
+
+/* Defined if compiling with mingw */
+#undef __MINGW32__
