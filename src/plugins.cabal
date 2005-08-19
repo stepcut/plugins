@@ -27,10 +27,11 @@ exposed-modules:
         System.Plugins.PackageAPI,
         System.Plugins.ParsePkgConfCabal,
         System.Plugins.Parser,
+        System.Plugins.Process,
         System.Plugins.Utils
 c-sources:
         Language/Hi/hschooks.c
 includes:	      Linker.h
 Build-Depends:        haskell-src-exts>=0.2, Cabal
-ghc-options:          -Wall -Werror -O -fno-warn-missing-signatures -threaded -funbox-strict-fields
+ghc-options:          -Wall -O -fvia-C -funbox-strict-fields -fno-warn-missing-signatures -threaded
 
