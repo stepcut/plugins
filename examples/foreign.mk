@@ -16,7 +16,7 @@ REALBIN=	$(BIN)
 all:  $(BIN)
 
 $(BIN): $(SRC)
-	@$(GHC) $(INCLUDES) $(PKGFLAGS) $(SRC)
+	$(GHC) -package plugins $(INCLUDES) $(PKGFLAGS) $(SRC)
 
 clean: 
 	rm -rf *.hi *.o *~ $(BIN)
