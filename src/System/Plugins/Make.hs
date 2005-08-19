@@ -48,6 +48,7 @@ import System.Plugins.Utils
 import System.Plugins.Parser
 import System.Plugins.LoadTypes        ( Module (Module, path) )
 import System.Plugins.Consts           ( ghc, hiSuf, objSuf, hsSuf )
+import System.Plugins.Process          ( exec )
 import System.Plugins.Env              ( lookupMerged, addMerge
                                        , getModuleDeps)
 
@@ -231,11 +232,15 @@ build src obj extra_opts = do
 
     let flags = ghc_opts ++ output ++ extra_opts ++ [src]
 
+
 #if DEBUG
     -- env.
     putStr $ show $ ghc : flags
 #endif
-    (_,err) <- exec ghc flags       -- this is a fork()
+
+    (out,err) <- exec ghc flags       -- this is a fork()
+    print $ "OUT = " ++ show out
+    print $ "ERR = " ++ show err
 
     obj_exists <- doesFileExist obj -- sanity
     return $ if not obj_exists && null err -- no errors, but no object?

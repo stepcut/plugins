@@ -53,7 +53,6 @@ module System.Plugins.Utils (
     decode,
     EncodedString,
 
-    exec,
     panic
 
   ) where
@@ -71,18 +70,6 @@ import System.IO
 import System.Environment           ( getEnv )
 import System.Directory
 import qualified Control.Exception as Control.Exception (handle)
-
---
--- The fork library
---
-#if CABAL == 0 && __GLASGOW_HASKELL__ < 604
-import POpen                        ( popen )
-import System.Posix.Process         ( getProcessStatus )
-#else
-import System.Process
-import Control.Concurrent           ( forkIO )
-import qualified Control.Exception  ( evaluate )
-#endif
 
 -- ---------------------------------------------------------------------
 -- some misc types we use
@@ -180,45 +167,6 @@ findFile (ext:exts) file
          b <- doesFileExist l
          if b then return $ Just l
               else findFile exts file
-
-
-
--- ---------------------------------------------------------------------
---
--- | execute a command and it's arguments, returning the
--- (stdout,stderr), waiting for it to exit, too.
---
-
-exec :: String -> [String] -> IO ([String],[String])
-
-#if CABAL == 1 || __GLASGOW_HASKELL__ >= 604
---
--- Use the forkProcess library, adapted from lambdabot's PosixCompat
--- Needs to be compiled with -threaded for waitForProcess not to block
---
-exec prog args = do
-    Control.Exception.handle (\e -> return ([], [show e])) $ do
-
-    (_inh,outh,errh,proc_hdl) <- runInteractiveProcess prog args Nothing Nothing
-
-    output <- hGetContents outh
-    errput <- hGetContents errh
-    forkIO (Control.Exception.evaluate (length output) >> return ())
-    forkIO (Control.Exception.evaluate (length errput) >> return ())
-    waitForProcess proc_hdl
-    return ( lines $ output, lines $ errput )
-
-#else 
---
--- 6.2.2 Posix version.
---
-exec prog args = do
-    (out,err,pid) <- popen prog args Nothing
-    b <- getProcessStatus True False pid  -- wait
-    case b of    
-        Nothing -> return ([], ["process `"++prog++"' has disappeared"])
-        _       -> return ( lines $! out, lines $! err )
-#endif
 
 -- ---------------------------------------------------------------------
 -- some filename manipulation stuff
