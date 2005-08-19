@@ -238,7 +238,7 @@ build src obj extra_opts = do
     putStr $ show $ ghc : flags
 #endif
 
-    (out,err) <- exec ghc flags       -- this is a fork()
+    (_out,err) <- exec ghc flags       -- this is a fork()
 
     obj_exists <- doesFileExist obj -- sanity
     return $ if not obj_exists && null err -- no errors, but no object?
