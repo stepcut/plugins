@@ -1,5 +1,5 @@
 GHCFLAGS=   -Onot $(GHC_EXTRA_OPTS)
-PKGFLAGS=   -package posix -package-conf $(TOP)/plugins.conf.inplace
+PKGFLAGS=   -package posix
 PKGFLAGS+=  -package plugins
 
 all: build
