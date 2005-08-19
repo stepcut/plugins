@@ -32,6 +32,6 @@ exposed-modules:
 c-sources:
         Language/Hi/hschooks.c
 includes:	      Linker.h
-Build-Depends:        haskell-src-exts>=0.2, Cabal
+Build-Depends:        base, haskell-src-exts>=0.2, Cabal
 ghc-options:          -Wall -O -fvia-C -funbox-strict-fields -fno-warn-missing-signatures -threaded
 
