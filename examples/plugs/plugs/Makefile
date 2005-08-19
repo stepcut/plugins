@@ -1,5 +1,4 @@
 GHCFLAGS=   -O
-PKGFLAGS=   -package-conf $(TOP)/plugins.conf.inplace
 PKGFLAGS+=  -package plugins -package readline
 
 all: build
