@@ -39,8 +39,8 @@ import Distribution.InstalledPackageInfo
 import Distribution.Package
 import Distribution.Version
 
-import Char             ( isSpace, isAlpha, isAlphaNum, isUpper, isDigit )
-import List             ( break )
+import Data.Char             ( isSpace, isAlpha, isAlphaNum, isUpper, isDigit )
+import Data.List             ( break )
 
 }
 

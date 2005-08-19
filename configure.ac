@@ -84,7 +84,7 @@ AC_ARG_WITH(ghc,
     fi 
   ]
   )
-AC_DEFINE_UNQUOTED(WITH_GHC, $GHC, [Which ghc to use])
+AC_DEFINE_UNQUOTED(WITH_GHC, "$GHC", [Which ghc to use])
 AC_SUBST(GHC)
 
 # Work out value of __GLASGOW_HASKELL__

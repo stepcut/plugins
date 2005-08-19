@@ -67,8 +67,8 @@ module Language.Hi.FastString
 
 import Language.Hi.PrimPacked
 
-import IO
-import Char             ( chr, ord )
+import System.IO
+import Data.Char             ( chr, ord )
 
 import GHC.Exts
 import GHC.IOBase

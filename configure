@@ -1450,7 +1450,7 @@ echo "$as_me: error: You need GHC to build this project" >&2;}
 fi;
 
 cat >>confdefs.h <<_ACEOF
-#define WITH_GHC $GHC
+#define WITH_GHC "$GHC"
 _ACEOF
 
 
