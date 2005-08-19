@@ -108,10 +108,19 @@ AC_DEFINE_UNQUOTED(GHC_LIB_PATH, "$GHC_LIB_PATH", [Path to ghc libraries])
 # Allow a debugging version of hs-plugins to be built
 AC_ARG_ENABLE(debug,
    [  --enable-debug          Enable a debug version of hs-plugins to be built],
-   [ AC_DEFINE_UNQUOTED(DEBUG, [1], [Defined if a debugging version is to be built]) ],
+   [ 
+     AC_DEFINE_UNQUOTED(DEBUG, [1], [Defined if a debugging version is to be built]) ],
    [ : ])
 
+# Allow a debugging version of hs-plugins to be built
+AC_ARG_ENABLE(hsx,
+   [  --enable-hsx          Enable a debug version of hs-plugins to be built],
+   [ HASKELL_SRC=haskell-src-exts ;
+     AC_DEFINE_UNQUOTED(WITH_HSX, [1], 
+          [Defined if hs-plugins is to be built with Niklas Broberg's HSX parser]) ],
+   [ HASKELL_SRC=haskell-src ])
 
+AC_SUBST(HASKELL_SRC)
 
 AC_CHECK_PROG(TEX,tex,tex)
 if test -z "$TEX" ; then
@@ -128,6 +137,6 @@ AC_CHECK_FUNCS(arc4random)
 AC_PROG_INSTALL
 
 # System.Process uses cmd or command.com shell on Windows, doen't use Cygwin or MSYS shell
-AC_CONFIG_FILES([config.mk examples/makewith/io/TestIO.conf examples/makewith/unsafeio/Unsafe.conf])
+AC_CONFIG_FILES([config.mk src/plugins.cabal examples/makewith/io/TestIO.conf examples/makewith/unsafeio/Unsafe.conf])
 AC_OUTPUT
 

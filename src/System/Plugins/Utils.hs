@@ -69,7 +69,6 @@ import Data.List
 import System.IO
 import System.Environment           ( getEnv )
 import System.Directory
-import qualified Control.Exception as Control.Exception (handle)
 
 -- ---------------------------------------------------------------------
 -- some misc types we use

@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="src/System/Plugins.hs"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os PREFIX TOP GHC GLASGOW_HASKELL TEX TEX2PAGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os PREFIX TOP GHC GLASGOW_HASKELL HASKELL_SRC TEX TEX2PAGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -803,6 +803,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-debug          Enable a debug version of hs-plugins to be built
+  --enable-hsx          Enable a debug version of hs-plugins to be built
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1486,12 +1487,27 @@ _ACEOF
 if test "${enable_debug+set}" = set; then
   enableval="$enable_debug"
 
+
 cat >>confdefs.h <<_ACEOF
 #define DEBUG 1
 _ACEOF
 
 else
    :
+fi;
+
+# Allow a debugging version of hs-plugins to be built
+# Check whether --enable-hsx or --disable-hsx was given.
+if test "${enable_hsx+set}" = set; then
+  enableval="$enable_hsx"
+   HASKELL_SRC=haskell-src-exts ;
+
+cat >>confdefs.h <<_ACEOF
+#define WITH_HSX 1
+_ACEOF
+
+else
+   HASKELL_SRC=haskell-src
 fi;
 
 
@@ -2692,7 +2708,7 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 
 # System.Process uses cmd or command.com shell on Windows, doen't use Cygwin or MSYS shell
-                              ac_config_files="$ac_config_files config.mk examples/makewith/io/TestIO.conf examples/makewith/unsafeio/Unsafe.conf"
+                                        ac_config_files="$ac_config_files config.mk src/plugins.cabal examples/makewith/io/TestIO.conf examples/makewith/unsafeio/Unsafe.conf"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -3220,6 +3236,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "config.mk" ) CONFIG_FILES="$CONFIG_FILES config.mk" ;;
+  "src/plugins.cabal" ) CONFIG_FILES="$CONFIG_FILES src/plugins.cabal" ;;
   "examples/makewith/io/TestIO.conf" ) CONFIG_FILES="$CONFIG_FILES examples/makewith/io/TestIO.conf" ;;
   "examples/makewith/unsafeio/Unsafe.conf" ) CONFIG_FILES="$CONFIG_FILES examples/makewith/unsafeio/Unsafe.conf" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
@@ -3315,6 +3332,7 @@ s,@PREFIX@,$PREFIX,;t t
 s,@TOP@,$TOP,;t t
 s,@GHC@,$GHC,;t t
 s,@GLASGOW_HASKELL@,$GLASGOW_HASKELL,;t t
+s,@HASKELL_SRC@,$HASKELL_SRC,;t t
 s,@TEX@,$TEX,;t t
 s,@TEX2PAGE@,$TEX2PAGE,;t t
 s,@CC@,$CC,;t t

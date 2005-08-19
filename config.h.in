@@ -39,5 +39,8 @@
 /* Which ghc to use */
 #undef WITH_GHC
 
+/* Defined if hs-plugins is to be built with Niklas Broberg's HSX parser */
+#undef WITH_HSX
+
 /* Defined if compiling with mingw */
 #undef __MINGW32__

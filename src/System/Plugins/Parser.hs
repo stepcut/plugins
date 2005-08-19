@@ -1,4 +1,4 @@
-{-# OPTIONS -fglasgow-exts #-}
+{-# OPTIONS -cpp -fglasgow-exts #-}
 -- 
 -- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 
@@ -24,11 +24,19 @@ module System.Plugins.Parser (
         replaceModName
   ) where
 
+#include "../../../config.h"
+
 import Data.List 
 import Data.Char
 import Data.Either
 
+#if defined(WITH_HSX)
 import Language.Haskell.Hsx
+#else
+import Language.Haskell.Parser
+import Language.Haskell.Syntax
+import Language.Haskell.Pretty
+#endif
 
 --
 -- | parse a file (as a string) as Haskell src
@@ -38,7 +46,11 @@ parse :: FilePath                -- ^ module name
       -> Either String HsModule  -- ^ abstract syntax
 
 parse f fsrc = 
+#if defined(WITH_HSX)
     case parseFileContentsWithMode (ParseMode f) fsrc of
+#else
+    case parseModuleWithMode (ParseMode f) fsrc of
+#endif
         ParseOk src       -> Right src
         ParseFailed loc _ -> Left $ srcmsg loc
   where

@@ -23,15 +23,37 @@ generated, dynamically-typed printf.
 Read the documentation in doc/ for more.
 
 ------------------------------------------------------------------------
+
+BUILDING:
+        $ ./configure --prefix=/usr/local
+        $ make
+        $ make install
+
+------------------------------------------------------------------------
+
 DEPENDENCIES:
 
 * Requires GHC >= 6.4
-* Requires GNU make or BSD make to build
-* Requires HSX, Niklas Broberg's Haskell parser library, available at:
-    darcs get http://www.cs.chalmers.se/~d00nibro/haskell-src-exts
-  Read the README with this package for how to install it (quite simple)
+* Requires Cabal
 
 ------------------------------------------------------------------------
+
+* Optional:
+   If you are doing a lot of `merge'-related operations, and require
+   an extended haskell parser, you can compile hs-plugins to use 
+   HSX, Niklas Broberg's Haskell parser library, available at:
+
+    darcs get http://www.cs.chalmers.se/~d00nibro/haskell-src-exts
+
+   To get hs-plugins to use HSX, use the --enable-hsx to ./configure.
+   Make sure to install HSX first though :)
+
+------------------------------------------------------------------------
+
+* On cygwin/windows you (a) make sure the cygwin "find" is before the
+  windows "find" on your PATH, and (b) to give the windows-style path
+  (e.g., "c:/cygwin/usr/local") in the ./configure --prefix=foo/bar
+  step
 
 * 'plugs' requires a working readline library.
 
@@ -39,32 +61,13 @@ DEPENDENCIES:
   you require a patch to GHC's linker, that was committed into ghc
   6.3, and ghc 6.2 -stable branch, and is available from 6.2.2 onwards.
 
-* If you need to regenerate ./configure you need >= autoconf-2.53
+* If you need to regenerate ./configure you need >= autoreconf-2.53
 
-------------------------------------------------------------------------
-BUILDING:
-        $ ./configure --prefix=/usr/local
-        $ make
-        $ make install
-
-* On cygwin/windows you (a) make sure the cygwin "find" is before the
-  windows "find" on your PATH, and (b) to give the windows-style path
-  (e.g., "c:/cygwin/usr/local") in the ./configure --prefix=foo/bar
-  step
-
-If you wish to register the libraries as official ghc pkg (probably as
-root):
-	$ make register
-
-And to unregister (maybe as root):
-        $ make unregister
-
-Once it is registered, you can link against the library by just adding
--package plugins to your command line.
-
-The documentation relies on latex, dvips, tex2page:
+* The documentation relies on latex, dvips, tex2page:
 
         $ cd doc && make
+
+------------------------------------------------------------------------
 
 EXAMPLES:
 
