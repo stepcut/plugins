@@ -8,9 +8,6 @@ apipath = "../api"
 
 main = do
         status <- makeWith conf stub ["-i"++apipath]
-        print status
-        return ()
-{-
         o <- case status of
                 MakeFailure e   -> mapM_ putStrLn e >> error "failed"
                 MakeSuccess _ o -> return o
@@ -23,4 +20,3 @@ main = do
         putStrLn user_editor
         makeCleaner o
 
--}

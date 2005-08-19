@@ -13,8 +13,6 @@
 import System.Eval
 import AltData.Dynamic
 
-pkgconf = TOP ++ "/plugins.conf.inplace"
-
 main = do
     a <- return $ toDyn (3::Integer)
 
@@ -22,8 +20,8 @@ main = do
     -- looks like with GHC 6.4, we need to make sure the package.confs work:
     m_b <- unsafeEval_ "\\dyn -> fromDyn dyn (7 :: Integer)"
                 ["AltData.Dynamic"]
-                [ "-package-conf "++pkgconf , "-package altdata" ]
-                [ pkgconf ]
+                [ ]
+                [ ]
                 []
 
     case m_b of 
