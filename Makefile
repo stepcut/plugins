@@ -72,7 +72,8 @@ clean:
 	rm -f EvalHaskell.h
 
 EXTRA_CLEANS+=*.conf.inplace* *.conf.in *.h autom4te.cache \
-	      config.h config.mk config.log config.status
+	      config.h config.mk config.log config.status src/plugins.cabal
+
 distclean: clean
 	rm -rf $(EXTRA_CLEANS)
 
