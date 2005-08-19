@@ -33,5 +33,5 @@ c-sources:
         Language/Hi/hschooks.c
 includes:	      Linker.h
 Build-Depends:        base, haskell98, Cabal, @HASKELL_SRC@
-ghc-options:          -Wall -O -fvia-C -funbox-strict-fields -fno-warn-missing-signatures -threaded
+ghc-options:          -Wall -O -fvia-C -funbox-strict-fields -fno-warn-missing-signatures
 
