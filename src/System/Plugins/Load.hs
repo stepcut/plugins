@@ -113,7 +113,7 @@ load obj incpaths pkgconfs sym = do
 
     m' <- loadObject obj (Object (mi_module hif))
     let m = m' { iface = hif }
-    resolveObjs
+    resolveObjs (mapM_ unloadAll (m:moduleDeps))
 
 #if DEBUG
     putStrLn " ... done" >> hFlush stdout
@@ -340,7 +340,7 @@ reload m@(Module{path = p, iface = hi}) sym = do
         m_ <- loadObject p (Object $ mi_module hi)   -- load object at path p
         let m' = m_ { iface = hi }
     
-        resolveObjs     
+        resolveObjs (unloadAll m)
 #if DEBUG
         putStrLn "done" >> hFlush stdout
 #endif
@@ -466,11 +466,10 @@ loadRawObject obj = loadObject obj (Object k)
 --
 -- | Resolve (link) the modules loaded by the 'loadObject' function.
 --
-resolveObjs :: IO ()
-resolveObjs = do
-    r <- c_resolveObjs
-    when (not r) $
-        panic $ "resolveObjs failed with <<" ++ show r ++ ">>"
+resolveObjs :: IO a -> IO ()
+resolveObjs unloadLoaded
+    = do r <- c_resolveObjs
+         when (not r) $ unloadLoaded >> panic "resolvedObjs failed."
 
 
 -- | Unload a module
@@ -624,7 +623,7 @@ loadDepends obj incpaths = do
                 when (not (null ps')) $
                         putStr " ... linking ... " >> hFlush stdout
 #endif
-                resolveObjs
+                resolveObjs (mapM_ unloadPackage ps')
 #if DEBUG
                 when (not (null ps')) $ putStrLn "done" 
                 putStr "Loading object" 
