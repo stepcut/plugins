@@ -6,6 +6,7 @@
 --
 module System.Plugins.Process (exec, popen) where
 
+import System.Exit
 #if __GLASGOW_HASKELL__ >= 604
 import System.IO
 import System.Process
@@ -59,9 +60,12 @@ popen file args minput =
     forkIO (Control.Exception.evaluate (length errput) >> return ())
 
     -- And now we wait. We must wait after we read, unsurprisingly.
-    waitForProcess pid -- blocks without -threaded, you're warned.
-
-    return (output,errput,pid)
+    exitCode <- waitForProcess pid -- blocks without -threaded, you're warned.
+    case exitCode of
+      ExitFailure code
+          | null errput -> let errMsg = file ++ ": failed with error code " ++ show code
+                           in return ([],errMsg,error errMsg)
+      _ -> return (output,errput,pid)
 
 #else
 
