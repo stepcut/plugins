@@ -17,7 +17,7 @@ main = do
         putStr "Loading package base" >> hFlush stdout
         loadPackage "base" 
         putStr " ... linking ... " >> hFlush stdout
-        resolveObjs
+        resolveObjs (return ())
         putStrLn "done"
 
         shell []
