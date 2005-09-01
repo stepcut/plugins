@@ -83,7 +83,7 @@ distributed under the BSD-style Glasgow University license.
 PORTABILITY:
 
 Requires GHC 6.4 or greater, though most testing has be done on 6.4.
-They dynamic loader requires a functional GHCi implementation.
+The dynamic loader requires a functional GHCi implementation.
 
 ---------------------+--------------------------------------------------
   Platform           |  Works   Should work*    Unknown    Won't work
