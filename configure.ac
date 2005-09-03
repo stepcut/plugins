@@ -137,6 +137,6 @@ AC_CHECK_FUNCS(arc4random)
 AC_PROG_INSTALL
 
 # System.Process uses cmd or command.com shell on Windows, doen't use Cygwin or MSYS shell
-AC_CONFIG_FILES([config.mk examples/makewith/io/TestIO.conf examples/makewith/unsafeio/Unsafe.conf])
+AC_CONFIG_FILES([config.mk testsuite/makewith/io/TestIO.conf testsuite/makewith/unsafeio/Unsafe.conf])
 AC_OUTPUT
 
