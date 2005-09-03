@@ -74,7 +74,7 @@ DEPENDENCIES:
 
 EXAMPLES:
 
-Have a look in the examples/ directory for many examples of how to
+Have a look in the testsuite/ directory for many examples of how to
 arrange your code.
 
 LICENSE:
