@@ -1,4 +1,3 @@
-{-# OPTIONS -fglasgow-exts -fffi #-}
 -- 
 -- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 
@@ -28,12 +27,14 @@ module System.Eval.Haskell (
         unsafeEval,
         unsafeEval_,
         typeOf,
-	mkHsValues,
+        mkHsValues,
 
+{-
         hs_eval_b,      -- return a Bool
         hs_eval_c,      -- return a CChar
         hs_eval_i,      -- return a CInt
         hs_eval_s,      -- return a CString
+-}
 
         module System.Eval.Utils, 
 
@@ -207,6 +208,7 @@ wrap expr nm mods =
         "resource = let { v = \n" ++
         "{-# LINE 1 \"<Plugins.Eval>\" #-}\n" ++ expr ++ ";} in v"
 
+{-
 ------------------------------------------------------------------------
 --
 -- And for our friends in foreign parts
@@ -257,3 +259,4 @@ eval_cstring :: Typeable a => CString -> IO (Maybe a)
 eval_cstring cs = do s <- peekCString cs
                      eval s []            -- TODO use eval()
 
+-}

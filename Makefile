@@ -3,13 +3,6 @@
 
 # cut down reimplementation of $fptools/mk directory
 
-.PHONY: build all
-
-all: build EvalHaskell.h
-
-EvalHaskell.h: build
-	cp System/Eval/Haskell_stub.h $@
-
 #
 # installing
 #

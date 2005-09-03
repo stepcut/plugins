@@ -1,12 +1,12 @@
-name:		plugins
-version:	0.9.10
-license:	LGPL
-License-file:	LICENSE
+name:           plugins
+version:        0.9.10
+license:        LGPL
+License-file:   LICENSE
 author:         Don Stewart
-maintainer:	dons@cse.unsw.edu.au
+maintainer:     dons@cse.unsw.edu.au
 exposed-modules:
-	AltData.Dynamic,
-	AltData.Typeable,
+        AltData.Dynamic,
+        AltData.Typeable,
         Language.Hi.Binary,
         Language.Hi.FastMutInt,
         Language.Hi.FastString,
@@ -31,8 +31,7 @@ exposed-modules:
         System.Plugins.Utils
 c-sources:
         Language/Hi/hschooks.c
-includes:	          Linker.h
+includes:             Linker.h
 extensions:           CPP, ForeignFunctionInterface
-Build-Depends:        base, haskell98, Cabal, haskell-src
+Build-Depends:        base, Cabal, haskell-src
 ghc-options:          -Wall -O -fvia-C -funbox-strict-fields -fno-warn-missing-signatures
-
