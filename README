@@ -25,9 +25,9 @@ Read the documentation in doc/ for more.
 ------------------------------------------------------------------------
 
 BUILDING:
-        $ ./configure --prefix=/usr/local
-        $ make
-        $ make install
+        $ runhaskell Setup.hs configure --prefix=/usr/local
+        $ runhaskell Setup.hs build
+        $ runhaskell Setup.hs install
 
 ------------------------------------------------------------------------
 
@@ -45,7 +45,10 @@ DEPENDENCIES:
 
     darcs get http://www.cs.chalmers.se/~d00nibro/haskell-src-exts
 
-   To get hs-plugins to use HSX, use the --enable-hsx to ./configure.
+   To get hs-plugins to use HSX, use: 
+
+        $ runhaskell Setup.hs configure --enable-hsx
+
    Make sure to install HSX first though :)
 
 ------------------------------------------------------------------------

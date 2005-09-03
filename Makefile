@@ -47,6 +47,9 @@ check:
 
 CLEAN_FILES += *.conf.*.old *~
 
+EXTRA_CLEANS+=*.conf.inplace* *.conf.in *.h autom4te.cache \
+	      config.h config.mk config.log config.status
+
 clean:
 	cd docs && $(MAKE) clean
 	runhaskell Setup.hs clean 2> /dev/null || true
@@ -63,11 +66,6 @@ clean:
 	rm -rf examples/hmake/lib-plugs/plugs
 	rm -rf examples/hmake/one-shot/runplugs
 	rm -f EvalHaskell.h
-
-EXTRA_CLEANS+=*.conf.inplace* *.conf.in *.h autom4te.cache \
-	      config.h config.mk config.log config.status
-
-distclean: clean
 	rm -rf $(EXTRA_CLEANS)
 
 -include config.mk
