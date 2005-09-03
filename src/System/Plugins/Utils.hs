@@ -56,7 +56,7 @@ module System.Plugins.Utils (
 
   ) where
 
-#include "../../config.h"
+#include "../../../config.h"
 
 import System.Plugins.Env              ( isLoaded )
 import System.Plugins.Consts           ( objSuf, hiSuf, tmpDir )

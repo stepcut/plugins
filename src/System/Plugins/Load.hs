@@ -49,7 +49,7 @@ module System.Plugins.Load (
 
   ) where
 
-#include "../../config.h"
+#include "../../../config.h"
 
 import System.Plugins.Make             ( build )
 import System.Plugins.Env

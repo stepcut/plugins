@@ -8,7 +8,7 @@
 # only AC_DEFINES are visible in Haskell src
 
 # sanity test
-AC_INIT(System/Plugins.hs)
+AC_INIT(src/System/Plugins.hs)
 
 # Prepare to generate the config.h.in file
 AC_CONFIG_HEADERS([config.h])

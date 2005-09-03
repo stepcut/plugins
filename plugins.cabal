@@ -30,8 +30,9 @@ exposed-modules:
         System.Plugins.Process,
         System.Plugins.Utils
 c-sources:
-        Language/Hi/hschooks.c
+        src/Language/Hi/hschooks.c
 includes:             Linker.h
 extensions:           CPP, ForeignFunctionInterface
 Build-Depends:        base, Cabal, haskell-src
 ghc-options:          -Wall -O -fvia-C -funbox-strict-fields -fno-warn-missing-signatures
+Hs-source-dirs: src

@@ -45,7 +45,7 @@ module System.Plugins.Env (
 
    ) where
 
-#include "../../config.h"
+#include "../../../config.h"
 
 import System.Plugins.LoadTypes (Module)
 import System.Plugins.PackageAPI  {- everything -}
