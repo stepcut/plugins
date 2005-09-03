@@ -1,6 +1,5 @@
-{-# OPTIONS -cpp #-}
 -- 
--- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
+-- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 
 -- This library is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU Lesser General Public
@@ -224,7 +223,7 @@ build :: FilePath          -- path to .hs source
 
 build src obj extra_opts = do
 
-    let odir = dirname obj -- *always* put the .hi file next to the .o file
+    let odir = dirname obj -- always put the .hi file next to the .o file
 
     let ghc_opts = [ "-Onot" ]
         output   = [ "-o", obj, "-odir", odir, 

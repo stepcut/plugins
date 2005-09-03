@@ -1,6 +1,5 @@
-{-# OPTIONS -cpp #-}
 --
--- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
+-- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 
 -- This library is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU Lesser General Public
@@ -97,25 +96,26 @@ lookupFM  = flip M.lookup
 #endif
 
 --
--- We need to record what modules and packages we have loaded, so if we
--- read a .hi file that wants to load something already loaded, we can
--- safely ignore that request. We're in the IO monad anyway, so we can
--- add some extra state of our own.
+-- | We need to record what modules and packages we have loaded, so if
+-- we read a .hi file that wants to load something already loaded, we
+-- can safely ignore that request. We're in the IO monad anyway, so we
+-- can add some extra state of our own.
 --
--- The state is a FiniteMap String (Module,Int) (a hash of package/object names
--- to Modules and how many times they've been loaded).
+-- The state is a FiniteMap String (Module,Int) (a hash of
+-- package\/object names to Modules and how many times they've been
+-- loaded).
 --
 -- It also contains the package.conf information, so that if there is a
 -- package dependency we can find it correctly, even if it has a
 -- non-standard path or name, and if it isn't an official package (but
--- rather one provided via -package-conf). This is stored as a 
--- FiniteMap PackageName PackageConfig. The problem then is whether a
--- user's package.conf, that uses the same package name as an existing
--- GHC package, should be allowed, or should shadow a library package?
--- I don't know, but I'm inclined to have the GHC package shadow the
+-- rather one provided via -package-conf). This is stored as a FiniteMap
+-- PackageName PackageConfig. The problem then is whether a user's
+-- package.conf, that uses the same package name as an existing GHC
+-- package, should be allowed, or should shadow a library package?  I
+-- don't know, but I'm inclined to have the GHC package shadow the
 -- user's package.
 --
--- This idea is based on *Hampus Ram's dynamic loader* dependency
+-- This idea is based on /Hampus Ram's dynamic loader/ dependency
 -- tracking system. He uses state to record dependency trees to allow
 -- clean unloading and other fun. This is quite cool. We're just using
 -- state to make sure we don't load the same package twice. Implementing
@@ -160,10 +160,9 @@ env = unsafePerformIO $ do
 
 -- -----------------------------------------------------------
 --
--- apply 'f' to the loaded objects Env
--- apply 'f' to the package.conf FM
--- *locks up the MVar* so you can't recursively call a function inside a
--- with*Env function. Nice and threadsafe
+-- | apply 'f' to the loaded objects Env, apply 'f' to the package.conf
+-- FM /locks up the MVar/ so you can't recursively call a function
+-- inside a with any -Env function. Nice and threadsafe
 --
 withModEnv  :: Env -> (ModEnv   -> IO a) -> IO a
 withDepEnv  :: Env -> (DepEnv   -> IO a) -> IO a
@@ -195,7 +194,7 @@ lockAndWrite mvar ref f = withMVar mvar (\_->readIORef ref>>=f>>=writeIORef ref)
 
 -- -----------------------------------------------------------
 --
--- insert a loaded module name into the environment
+-- | insert a loaded module name into the environment
 --
 addModule :: String -> Module -> IO ()
 addModule s m = modifyModEnv env $ \fm -> let c = maybe 0 snd (lookupFM fm s)
@@ -205,7 +204,8 @@ addModule s m = modifyModEnv env $ \fm -> let c = maybe 0 snd (lookupFM fm s)
 --getModule s = withModEnv env $ \fm -> return (lookupFM fm s)
 
 --
--- remove a module name from the environment. Returns True if the module was actually removed.
+-- | remove a module name from the environment. Returns True if the
+-- module was actually removed.
 --
 rmModule :: String -> IO Bool
 rmModule s = do modifyModEnv env $ \fm -> let c = maybe 1 snd (lookupFM fm s)
@@ -216,13 +216,13 @@ rmModule s = do modifyModEnv env $ \fm -> let c = maybe 1 snd (lookupFM fm s)
                 withModEnv env $ \fm -> return (isNothing  (lookupFM fm s))
 
 --
--- insert a list of module names all in one go
+-- | insert a list of module names all in one go
 --
 addModules :: [(String,Module)] -> IO ()
 addModules ns = mapM_ (uncurry addModule) ns
 
 --
--- is a module/package already loaded?
+-- | is a module\/package already loaded?
 --
 isLoaded :: String -> IO Bool
 isLoaded s = withModEnv env $ \fm -> return $ isJust (lookupFM fm s)
@@ -239,30 +239,31 @@ loaded m = do t <- isLoaded m ; return (not t)
 --
 
 --
--- set the dependencies of a Module.
+-- | Set the dependencies of a Module.
 --
 addModuleDeps :: Module -> [Module] -> IO ()
 addModuleDeps m deps = modifyDepEnv env $ \fm -> return $ addToFM fm m deps
 
 --
--- Get module dependencies. Nothing if none have been recored.
+-- | Get module dependencies. Nothing if none have been recored.
 --
 getModuleDeps :: Module -> IO [Module]
 getModuleDeps m = withDepEnv env $ \fm -> return $ fromMaybe [] (lookupFM fm m)
 
 
 --
--- Unrecord a module from the environment.
+-- | Unrecord a module from the environment.
 --
 rmModuleDeps :: Module -> IO ()
 rmModuleDeps m = modifyDepEnv env $ \fm -> return $ delFromFM fm m
 
 -- -----------------------------------------------------------
 -- Package management stuff
+
 --
--- insert a single package.conf (containing multiple configs)
--- means: create a new FM. insert packages into FM. add FM to end of
--- list of FM stored in the environment.
+-- | Insert a single package.conf (containing multiple configs) means:
+-- create a new FM. insert packages into FM. add FM to end of list of FM
+-- stored in the environment.
 --
 addPkgConf :: FilePath -> IO ()
 addPkgConf f = do 
@@ -270,7 +271,7 @@ addPkgConf f = do
     modifyPkgEnv env $ \ls -> return $ union ls ps
 
 --
--- add a new FM for the package.conf to the list of existing ones
+-- | add a new FM for the package.conf to the list of existing ones
 --
 union :: PkgEnvs -> [PackageConfig] -> PkgEnvs
 union ls ps' = 
@@ -278,8 +279,8 @@ union ls ps' =
         in ls ++ [foldr (\p fm' -> addToFM fm' (packageName p) p) fm ps']
 
 -- 
--- generate a PkgEnv from the system package.conf
--- * the path to the default package.conf was determined by ./configure *
+-- | generate a PkgEnv from the system package.conf
+-- The path to the default package.conf was determined by /configure/
 -- This imposes a constraint that you must build your plugins with the
 -- same ghc you use to build hs-plugins. This is reasonable, we feel.
 --
@@ -315,10 +316,13 @@ readPackageConf f = do
 -- return the path to all the libraries needed to load this package.
 --
 -- What do we need to load? With the library_dirs as prefix paths:
---      * anything in the hs_libraries fields, $libdir expanded
---      * anything in the extra_libraries fields (i.e. cbits), expanded,
+--      . anything in the hs_libraries fields, libdir expanded
+--
+--      . anything in the extra_libraries fields (i.e. cbits), expanded,
+--
 --      which includes system .so files.
---      * also load any dependencies now, because of that weird mtl
+--
+--      . also load any dependencies now, because of that weird mtl
 --      library that lang depends upon, but which doesn't show up in the
 --      interfaces for some reason.
 --
@@ -342,7 +346,7 @@ classifyLdInput ('-':'l':lib) = return (Just (DLL lib))
 classifyLdInput ('-':'L':path) = return (Just (DLLPath path))
 classifyLdInput _ = return Nothing
 
--- TODO need to define a MAC/DARWIN symbol
+-- TODO need to define a MAC\/DARWIN symbol
 #if defined(MACOSX)
 mkSOName root = "lib" ++ root ++ ".dylib"
 #elif defined(CYGWIN) || defined(__MINGW32__)

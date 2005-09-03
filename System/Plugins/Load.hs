@@ -1,7 +1,7 @@
 {-# OPTIONS -#include "Linker.h" #-}
-{-# OPTIONS -fglasgow-exts -cpp #-}
+{-# OPTIONS -fglasgow-exts #-}
 --
--- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
+-- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 
 -- This library is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU Lesser General Public
@@ -351,7 +351,7 @@ reload m@(Module{path = p, iface = hi}) sym = do
 
 -- ---------------------------------------------------------------------
 -- This is a stripped-down version of André Pang's runtime_loader,
--- which in turn is based on GHC's ghci/ObjLinker.lhs binding
+-- which in turn is based on GHC's ghci\/ObjLinker.lhs binding
 --
 --  Load and unload\/Haskell modules at runtime.  This is not really
 --  \'dynamic loading\', as such -- that implies that you\'re working
@@ -361,7 +361,7 @@ reload m@(Module{path = p, iface = hi}) sym = do
 --  the function.  I have no idea if this works for types, but that
 --  doesn\'t mean that you can\'t try it :).
 --
--- read $fptools/ghc/compiler/ghci/ObjLinker.lhs for how to use this stuff
+-- read $fptools\/ghc\/compiler\/ghci\/ObjLinker.lhs for how to use this stuff
 --
 ------------------------------------------------------------------------
 
@@ -417,7 +417,7 @@ loadFunction (Module { iface = i }) valsym
 --
 -- the second argument to loadObject is a string to use as the unique
 -- identifier for this object. For normal .o objects, it should be the
--- Z-encoded modid from the .hi file. For archives/packages, we can
+-- Z-encoded modid from the .hi file. For archives\/packages, we can
 -- probably get away with the package name
 --
 
@@ -482,7 +482,7 @@ unloadObj (Module { path = p, kind = k, key = ky }) = case k of
         Shared  -> return () -- can't unload .so?
     where name = case ky of Object s -> s ; Package pk -> pk
 --
--- | from ghci/ObjLinker.c
+-- | from ghci\/ObjLinker.c
 --
 -- Load a .so type object file.
 --
