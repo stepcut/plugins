@@ -4,17 +4,5 @@ VERSION         = 0.9.10
 PACKAGE         = plugins
 
 TOP             = @TOP@
-
-PREFIX          = @PREFIX@
-LIBDIR          = $(PREFIX)/lib/$(PACKAGE)-$(VERSION)
-BINDIR          = $(PREFIX)/bin
-MANDIR          = $(PREFIX)/man
-
 GHC             = @GHC@
 GLASGOW_HASKELL = @GLASGOW_HASKELL@
-
-# A few aliases
-INSTALL         = @INSTALL@
-INSTALL_PROGRAM = ${INSTALL} -s -m 755
-INSTALL_DATA    = ${INSTALL}    -m 644
-INSTALL_DATA_DIR= ${INSTALL} -d -m 755
