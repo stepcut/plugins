@@ -7,14 +7,8 @@
 
 all: build EvalHaskell.h
 
-build::
-	cd src ;\
-	$(GHC) -o setup --make Setup.hs ;\
-	./setup configure --prefix=$(PREFIX) ;\
-	./setup build
-
 EvalHaskell.h: build
-	cp src/System/Eval/Haskell_stub.h $@
+	cp System/Eval/Haskell_stub.h $@
 
 #
 # installing
@@ -55,8 +49,7 @@ CLEAN_FILES += *.conf.*.old *~
 
 clean:
 	cd docs && $(MAKE) clean
-	cd src && ./setup clean 2> /dev/null || true
-	cd src && rm -rf dist Setup.hi Setup.o setup
+	runhaskell Setup.hs clean 2> /dev/null || true
 	rm -rf $(CLEAN_FILES)
 	find examples -name '*.a' -exec rm {} \;
 	find examples -name '*~' -exec rm {} \;
@@ -72,7 +65,7 @@ clean:
 	rm -f EvalHaskell.h
 
 EXTRA_CLEANS+=*.conf.inplace* *.conf.in *.h autom4te.cache \
-	      config.h config.mk config.log config.status src/plugins.cabal
+	      config.h config.mk config.log config.status
 
 distclean: clean
 	rm -rf $(EXTRA_CLEANS)

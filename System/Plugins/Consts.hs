@@ -1,4 +1,3 @@
-{-# OPTIONS -cpp #-}
 -- 
 -- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 
@@ -20,7 +19,7 @@
 
 module System.Plugins.Consts where
 
-#include "../../../config.h"
+#include "../../config.h"
 
 
 #if __GLASGOW_HASKELL__ >= 604

@@ -126,6 +126,8 @@ unsafeCoerce = unsafeCoerce#
 --
 -- equality of keys doesn't work for dynamically loaded code, so we
 -- revert back to canonical type names.
+-- 
+-- could use packed strings here.
 --
 data TypeRep = TypeRep !Key TyCon [TypeRep] 
 

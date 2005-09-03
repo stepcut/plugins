@@ -48,7 +48,7 @@ import Language.Hi.Syntax
 import Language.Hi.Binary
 import Language.Hi.FastString
 
-#include "../../../config.h"
+#include "../../config.h"
 
 -- ---------------------------------------------------------------------------
 -- how to get there from here

@@ -8,7 +8,7 @@
 # only AC_DEFINES are visible in Haskell src
 
 # sanity test
-AC_INIT(src/System/Plugins.hs)
+AC_INIT(System/Plugins.hs)
 
 # Prepare to generate the config.h.in file
 AC_CONFIG_HEADERS([config.h])
@@ -137,6 +137,6 @@ AC_CHECK_FUNCS(arc4random)
 AC_PROG_INSTALL
 
 # System.Process uses cmd or command.com shell on Windows, doen't use Cygwin or MSYS shell
-AC_CONFIG_FILES([config.mk src/plugins.cabal examples/makewith/io/TestIO.conf examples/makewith/unsafeio/Unsafe.conf])
+AC_CONFIG_FILES([config.mk examples/makewith/io/TestIO.conf examples/makewith/unsafeio/Unsafe.conf])
 AC_OUTPUT
 
