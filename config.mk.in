@@ -1,8 +1,4 @@
 default: all
-
-VERSION         = 0.9.10
-PACKAGE         = plugins
-
 TOP             = @TOP@
 GHC             = @GHC@
 GLASGOW_HASKELL = @GLASGOW_HASKELL@
