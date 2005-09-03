@@ -1,4 +1,4 @@
-{-# OPTIONS -cpp -fglasgow-exts -fno-implicit-prelude #-}
+{-# OPTIONS -fglasgow-exts #-}
 -- 
 -- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 

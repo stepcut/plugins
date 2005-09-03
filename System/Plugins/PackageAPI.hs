@@ -1,4 +1,3 @@
-{-# OPTIONS -cpp #-}
 --
 -- Copyright (C) 2005 Sean Seefried - http://www.cse.unsw.edu.au/~sseefried
 -- 

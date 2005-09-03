@@ -1,4 +1,4 @@
-{-# OPTIONS -fglasgow-exts -cpp #-}
+{-# OPTIONS -fglasgow-exts #-}
 {-# OPTIONS -w #-}
 
 module System.Plugins.ParsePkgConfCabal ( 

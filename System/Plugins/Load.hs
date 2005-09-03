@@ -1,4 +1,3 @@
-{-# OPTIONS -#include "Linker.h" #-}
 {-# OPTIONS -fglasgow-exts #-}
 --
 -- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons

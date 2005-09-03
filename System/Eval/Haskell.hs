@@ -53,8 +53,8 @@ import Data.Map as Map
 import System.IO
 import System.Directory
 
-import Foreign.C
-import Foreign
+-- import Foreign.C
+-- import Foreign
 
 --
 -- ok. the idea is: the have either installed the library, in which case
@@ -176,10 +176,10 @@ typeOf src mods = do
     status             <- make tmpf cmdline
     ty <- case status of
         MakeSuccess _ obj -> do 
-            m_v <- load obj [pwd] loadpath symbol
+            m_v <- load obj [pwd] loadpath symbol :: IO (LoadStatus Dynamic)
             case m_v of 
-                LoadFailure _              -> return "<failure>"
-                LoadSuccess _ (v::Dynamic) -> return $ (init . tail) $ show v
+                LoadFailure _   -> return "<failure>"
+                LoadSuccess _ v -> return $ (init . tail) $ show v
 
         MakeFailure err -> mapM_ putStrLn err >> return []
     makeCleaner tmpf

@@ -1,5 +1,5 @@
-{-# OPTIONS -fglasgow-exts -cpp #-}
------------------------------------------------------------------------------
+{-# OPTIONS -fglasgow-exts #-}
+--
 -- |
 -- Module      :  Data.Dynamic
 -- Copyright   :  (c) The University of Glasgow 2001

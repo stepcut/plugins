@@ -1,4 +1,4 @@
-{-# OPTIONS -cpp -fffi -fglasgow-exts #-}
+{-# OPTIONS -fglasgow-exts #-}
 --
 -- glaexts for I# ops
 -- 

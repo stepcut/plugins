@@ -1,4 +1,3 @@
-{-# OPTIONS -cpp #-}
 --
 -- | A Posix.popen compatibility mapping.
 --
