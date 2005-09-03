@@ -1,5 +1,5 @@
 include $(TOP)/config.mk
-include $(TOP)/examples/check.mk
+include $(TOP)/testsuite/check.mk
 
 BIN=a.out
 SRC=Main.hs

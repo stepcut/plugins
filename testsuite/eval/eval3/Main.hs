@@ -4,7 +4,7 @@
 --
 -- Not so bad to use AltData, as it is already derived for all the basic
 -- types. Then, just replace deriving Typeable, with hand-derived
--- instance of Typeable (see hs-plugins/examples/eval/eval_fn1/Poly.hs
+-- instance of Typeable (see hs-plugins/testsuite/eval/eval_fn1/Poly.hs
 --
 --
 

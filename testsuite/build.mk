@@ -1,7 +1,7 @@
 # how to build the default projects
 
 include $(TOP)/config.mk
-include $(TOP)/examples/check.mk
+include $(TOP)/testsuite/check.mk
 
 BIN= 		prog/a.out
 OBJ=		prog/Main.o
@@ -12,7 +12,7 @@ REALBIN=	./a.out
 
 API_OBJ=	api/API.o
 
-INCLUDES=   	-i$(TOP)/examples/$(TEST)/api
+INCLUDES=   	-i$(TOP)/testsuite/$(TEST)/api
 GHCFLAGS=   	-Onot -cpp -fglasgow-exts
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s
