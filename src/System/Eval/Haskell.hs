@@ -18,7 +18,11 @@
 -- 
 
 --
--- compile and run haskell strings at runtime.
+-- | Evaluate Haskell at runtime, using runtime compilation and dynamic
+-- loading. Arguments are compiled to native code, and dynamically
+-- loaded, returning a Haskell value representing the compiled argument.
+-- The underlying implementation treats 'String' arguments as the source
+-- for plugins to be compiled at runtime.
 --
 
 module System.Eval.Haskell ( 
@@ -56,26 +60,37 @@ import System.Directory
 -- import Foreign.C
 -- import Foreign
 
+-- | 'eval' provides a typesafe (to a limit) form of runtime evaluation
+-- for Haskell -- a limited form of /runtime metaprogramming/. The
+-- 'String' argument to 'eval' is a Haskell source fragment to evaluate
+-- at rutime. @imps@ are a list of module names to use in the context of
+-- the compiled value.
+-- 
+-- The value returned by 'eval' is constrained to be 'Typeable' --
+-- meaning we can perform a /limited/ runtime typecheck, using the
+-- 'dynload' function. One consequence of this is that the code must
+-- evaluate to a monomorphic value (which will be wrapped in a
+-- 'Dynamic').
 --
--- ok. the idea is: the have either installed the library, in which case
--- is is registered, and the path to altdata is known to ghc, so just
--- saying "-package altdata" will work. if not, we search in the build
--- dir just in case. this should work for inplace work.
+-- If the evaluated code typechecks under the 'Typeable' constraints,
+-- 'Just v' is returned. 'Nothing' indicates typechecking failed.
+-- Typechecking may fail at two places: when compiling the argument, or
+-- when typechecking the splice point. 'eval' resembles a
+-- metaprogramming 'run' operator for /closed/ source fragments.
 --
--- TODO could have a few extra package.conf search paths in here,
--- including PREFIX.
+-- To evaluate polymorphic values you need to wrap them in data
+-- structures using rank-N types.
 --
-
--- ---------------------------------------------------------------------
--- return a compiled value, and type check it first
+-- Examples:
 --
--- TODO make this faster.
+-- > do i <- eval "1 + 6 :: Int" [] :: IO (Maybe Int)
+-- >    when (isJust i) $ putStrLn (show (fromJust i))
 --
 eval :: Typeable a => String -> [Import] -> IO (Maybe a)
-eval src mods = do
+eval src imps = do
     pwd                <- getCurrentDirectory
     (cmdline,loadpath) <- getPaths
-    tmpf               <- mkUniqueWith dynwrap src mods
+    tmpf               <- mkUniqueWith dynwrap src imps
     status             <- make tmpf cmdline
     m_rsrc <- case status of
         MakeSuccess _ obj -> do 
@@ -86,8 +101,12 @@ eval src mods = do
     makeCleaner tmpf
     return m_rsrc
 
--- ---------------------------------------------------------------------
--- Version of eval with all the buttons available.
+--
+-- | 'eval_' is a variety of 'eval' with all the internal hooks
+-- available. You are able to set any extra arguments to the compiler
+-- (for example, optimisation flags) or dynamic loader, as well as
+-- having any errors returned in an 'Either' type.
+--
 eval_ :: Typeable a =>
          String           -- ^ code to compile
       -> [Import]         -- ^ any imports
@@ -110,10 +129,28 @@ eval_ src mods args ldflags incs = do
     makeCleaner tmpf
     return m_rsrc
 
--- ---------------------------------------------------------------------
--- unsafe because it doesn't use Dynamic types
--- useful for not having to provide type constraints to values, or when
--- you want to easily deal with polymorphic values.
+-- | Sometimes when constructing string fragments to evaluate, the
+-- programmer is able to provide some other constraint on the evaluated
+-- string, such that the evaluated expression will be typesafe, without
+-- requiring a 'Typeable' constraint. In such cases, the monomorphic
+-- restriction is annoying. 'unsafeEval' removes any splice-point
+-- typecheck, with an accompanying obligation on the programmer to
+-- ensure that the fragment evaluated will be typesafe at the point it
+-- is spliced.
+--
+-- An example of how to do this would be to wrap the fragment in a call
+-- to 'show'. The augmented fragment would then be checked when compiled
+-- to return a 'String', and the programmer can rely on this, without
+-- requiring a splice-point typecheck, and thus no 'Typeable'
+-- restriction.
+--
+-- Note that if you get the proof wrong, your program will likely
+-- segfault.
+-- 
+-- Example:
+--
+-- > do s <- unsafeEval "map toUpper \"haskell\"" ["Data.Char"]
+-- >    when (isJust s) $ putStrLn (fromJust s)
 --
 unsafeEval :: String -> [Import] -> IO (Maybe a)
 unsafeEval src mods = do
@@ -130,10 +167,10 @@ unsafeEval src mods = do
     return m_rsrc
 
 --
--- like unsafeEval, except you can supply extra args to make and load,
--- and the error messages are returned too.
---
--- Need  to be able to specify a search path to look in.
+-- | 'unsafeEval_' is a form of 'unsafeEval' with all internal hooks
+-- exposed. This is useful for application wishing to return error
+-- messages to users, to specify particular libraries to link against
+-- and so on.
 --
 unsafeEval_ :: String           -- ^ code to compile
             -> [Import]         -- ^ any imports
@@ -156,8 +193,11 @@ unsafeEval_ src mods args ldflags incs = do
     return e_rsrc
 ------------------------------------------------------------------------
 --
--- Convenience function for use with eval (and friends). Returns a
--- string of Haskell code with the Data.Map passed as values.
+-- | 'mkHsValues' is a helper function for converting 'Data.Map's
+-- of names and values into Haskell code. It relies on the assumption of
+-- names and values into Haskell code. It relies on the assumption that
+-- the passed values' Show instances produce valid Haskell literals
+-- (this is true for all Prelude types).
 --
 mkHsValues :: (Show a) => Map.Map String a -> String
 mkHsValues values = concat $ elems $ Map.mapWithKey convertToHs values
@@ -165,7 +205,7 @@ mkHsValues values = concat $ elems $ Map.mapWithKey convertToHs values
 	      convertToHs name value = name ++ " = " ++ show value ++ "\n"
 ------------------------------------------------------------------------
 --
--- return a compiled value's type, by using Dynamic to get a
+-- | Return a compiled value's type, by using Dynamic to get a
 -- representation of the inferred type.
 --
 typeOf :: String -> [Import] -> IO String
