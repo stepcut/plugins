@@ -760,12 +760,13 @@ eval_ :: Typeable a =>
 
 \code{eval} takes a string, and a list of import module names, and
 returns a \code{Maybe} value. \code{Nothing} means the code did not
-compile. \code{Just v} gives you \code{v}, the result of evaluating
-your code. It is interesting to note that \code{eval} has the type of
-an interpreter. The \code{Typeable} constraint is used to type check
-the evaluated code when it is loaded, using \code{dynload}. 
-As usual, \code{eval\_} is a version of \code{eval} that lets you pass
-extra flags to ghc and to the dynamic loader.
+compile, or did not typecheck at its splice point. \code{Just v} gives
+you \code{v}, the result of evaluating your code. It is interesting to
+note that \code{eval} has the type of an interpreter. The
+\code{Typeable} constraint is used to type check the evaluated code when
+it is loaded, using \code{dynload}.  As usual, \code{eval\_} is a
+version of \code{eval} that lets you pass extra flags to ghc and to the
+dynamic loader.
 
 The existing \code{Data.Dynamic} library requires that only monomorphic
 values are \code{Typeable}, so in order to evaluate polymorphic
