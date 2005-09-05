@@ -35,4 +35,4 @@ includes:             Linker.h
 extensions:           CPP, ForeignFunctionInterface
 Build-Depends:        base, Cabal, haskell-src-exts
 ghc-options:          -Wall -O -fvia-C -funbox-strict-fields -fno-warn-missing-signatures
-Hs-source-dirs: src
+hs-source-dir: src
