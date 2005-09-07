@@ -17,28 +17,42 @@
 -- USA
 -- 
 
+-- | An interface to a Haskell compiler, providing the facilities of a
+-- compilation manager.
+
 module System.Plugins.Make ( 
 
+        -- * The @MakeStatus@ type
+        MakeStatus(..),
+
+        -- * The @MakeCode@ type
+        MakeCode(..),
+
+        -- * Compiling Haskell modules
         make, 
         makeAll,
         makeWith, 
-        MakeStatus(..),
-        MakeCode(..),
 
+        -- * Handling reecompilation
         hasChanged,
         hasChanged',
         recompileAll,
         recompileAll',
 
+        -- * Merging together Haskell source files 
+        MergeStatus(..),
+        MergeCode,
+        Args,
+        Errors,
         merge, 
         mergeTo,
         mergeToDir,
-        MergeStatus(..),
-        MergeCode,
 
+        -- * Cleaning up temporary files
         makeClean,
         makeCleaner,
 
+        -- * Low-level compilation primitives
         build, {- internal -}
 
   ) where
@@ -67,36 +81,94 @@ import GHC.IOBase               ( Exception(IOException) )
 import System.IO.Error          ( isDoesNotExistError )
 #endif
 
-
-------------------------------------------------------------------------
 --
--- A better compiler status.
+-- | The @MakeStatus@ type represents success or failure of compilation.
+-- Compilation can fail for the usual reasons: syntax errors, type
+-- errors and the like. The @MakeFailure@ constructor returns any error
+-- messages produced by the compiler. @MakeSuccess@ returns a @MakeCode@
+-- value, and the path to the object file produced.
 --
 data MakeStatus 
-        = MakeSuccess MakeCode FilePath 
-        | MakeFailure Errors
+        = MakeSuccess MakeCode FilePath     -- ^ compilation was successful
+        | MakeFailure Errors                -- ^ compilation failed
         deriving (Eq,Show)
 
-data MakeCode = ReComp | NotReq
+-- | The @MakeCode@ type is used when compilation is successful, to
+-- distinguish two cases: 
+--  * The source file needed recompiling, and this was done
+--  * The source file was already up to date, recompilation was skipped
+data MakeCode   
+    = ReComp    -- ^ recompilation was performed
+    | NotReq    -- ^ recompilation was not required
         deriving (Eq,Show)
+
+--
+-- | An equivalent status for the preprocessor phase
+--
+data MergeStatus 
+        = MergeSuccess MergeCode Args FilePath  -- ^ the merge was successful
+        | MergeFailure Errors                   -- ^ failure, and any errors returned
+        deriving (Eq,Show)
+
+-- 
+-- | Merging may be avoided if the source files are older than an
+-- existing merged result. The @MergeCode@ type indicates whether
+-- merging was performed, or whether it was unneccessary.
+--
+type MergeCode = MakeCode
+
+-- | A list of @String@ arguments
+type Args   = [Arg]
+
+-- | Convience synonym
+type Errors = [String]
+
+-- touch.
+
+-- ---------------------------------------------------------------------
+-- | One-shot unconditional compilation of a single Haskell module.
+-- @make@ behaves like 'ghc -c'. Extra arguments to 'ghc' may be passed
+-- in the 'args' parameter, they will be appended to the argument list.
+-- @make@ always recompiles its target, whether or not it is out of
+-- date.
+-- 
+-- A side-effect of calling 'make' is to have GHC produce a @.hi@ file
+-- containing a list of package and objects that the source depends on.
+-- Subsequent calls to 'load' will use this interface file to load
+-- module and library dependencies prior to loading the object itself.
+--
+make :: FilePath -> [Arg] -> IO MakeStatus
+make src args = rawMake src ("-c":args)  True
+
+-- | 'makeAll' recursively compiles any dependencies it can find using
+-- GHC's @--make@ flag. Dependencies will be recompiled only if they are
+-- visible to 'ghc' -- this may require include paths in the 'args'
+-- parameter. 'makeAll' takes the top-level file as the first argument.
+--
+makeAll :: FilePath -> [Arg] -> IO MakeStatus
+makeAll src args = 
+    rawMake src ( "--make":"-no-hs-main":"-no-link":"-v0":args ) False
+
+-- | merge two files; then make them. will leave a .o and .hi file in tmpDir.
+--      
+makeWith :: FilePath                           -- ^ a src file
+         -> FilePath                           -- ^ a syntax stub file
+         -> [Arg]                              -- ^ any required args
+         -> IO MakeStatus                      -- ^ path to an object file
+
+makeWith src stub args = do
+    status <- merge src stub
+    case status of
+        MergeFailure errs -> return $ MakeFailure ("merge failed:\n":errs)
+        MergeSuccess _ args' tmpf -> do
+                 status' <- rawMake tmpf ("-c": args' ++ args) True
+                 return status'
 
 ------------------------------------------------------------------------
 --
--- An equivalent status for the preprocessor (merge)
---
-data MergeStatus 
-        = MergeSuccess MergeCode Args FilePath 
-        | MergeFailure Errors
-        deriving (Eq,Show)
-
-type MergeCode = MakeCode
-
-type Args   = [Arg]
-type Errors = [String]
-
---
--- |Returns @True@ if the module or any of its dependencies have older object files than source files.
---  Defaults to @True@ if some files couldn't be located.
+-- | @hasChanged@ returns @True@ if the module or any of its
+-- dependencies have older object files than source files.  Defaults to
+-- @True@ if some files couldn't be located.
 --
 hasChanged :: Module -> IO Bool
 hasChanged = hasChanged' ["hs","lhs"]
@@ -117,7 +189,8 @@ hasChanged' suffices m@(Module {path = p})
            _ -> return True
 
 --
--- |Same as 'makeAll' but with better recompilation checks since module dependencies are known.
+-- | Same as 'makeAll' but with better recompilation checks since module
+-- dependencies are known.
 --
 recompileAll :: Module -> [Arg] -> IO MakeStatus
 recompileAll = recompileAll' ["hs","lhs"]
@@ -133,38 +206,6 @@ recompileAll' suffices m args
                       Just source
                           -> makeAll source args
             else return (MakeSuccess NotReq (path m))
-
--- touch.
-
--- ---------------------------------------------------------------------
--- | Standard make. Compile a single module, unconditionally. 
--- Behaves like ghc -c
---
-make :: FilePath -> [Arg] -> IO MakeStatus
-make src args = rawMake src ("-c":args)  True
-
--- | Recursive make. Compile a module, and its dependencies if we can
--- find them. Takes the top-level file as the first argument.
--- Behaves like ghc --make
---
-makeAll :: FilePath -> [Arg] -> IO MakeStatus
-makeAll src args = 
-    rawMake src ( "--make":"-no-hs-main":"-no-link":"-v0":args ) False
-
--- | merge two files; then make them. will leave a .o and .hi file in tmpDir.
---      
-makeWith :: FilePath                           -- ^ a src file
-         -> FilePath                           -- ^ a syntax stub file
-         -> [Arg]                              -- ^ any required args
-         -> IO MakeStatus                      -- ^ path to an object file
-
-makeWith src stub args = do
-    status <- merge src stub
-    case status of
-        MergeFailure errs -> return $ MakeFailure ("merge failed:\n":errs)
-        MergeSuccess _ args' tmpf -> do
-                 status' <- rawMake tmpf ("-c": args' ++ args) True
-                 return status'
 
 -- ---------------------------------------------------------------------
 -- rawMake : really do the compilation
