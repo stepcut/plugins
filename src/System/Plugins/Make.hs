@@ -142,14 +142,40 @@ make src args = rawMake src ("-c":args)  True
 
 -- | 'makeAll' recursively compiles any dependencies it can find using
 -- GHC's @--make@ flag. Dependencies will be recompiled only if they are
--- visible to 'ghc' -- this may require include paths in the 'args'
--- parameter. 'makeAll' takes the top-level file as the first argument.
+-- visible to 'ghc' -- this may require passing appropriate include path
+-- flags in the 'args' parameter. 'makeAll' takes the top-level file as
+-- the first argument.
 --
 makeAll :: FilePath -> [Arg] -> IO MakeStatus
 makeAll src args = 
     rawMake src ( "--make":"-no-hs-main":"-no-link":"-v0":args ) False
 
--- | merge two files; then make them. will leave a .o and .hi file in tmpDir.
+-- | This is a variety of 'make' that first calls 'merge' to
+-- combine the plugin source with a syntax stub. The result is then
+-- compiled. This is provided for EDSL authors who wish to add extra
+-- syntax to a user\'s source. It is important to note that the
+-- module and types from the second file argument are used to override
+-- any of those that appear in the first argument. For example, consider
+-- the following source files:
+--
+-- > module A where
+-- > a :: Integer
+-- > a = 1
+--
+-- and
+-- 
+-- > module B where
+-- > a :: Int
+--
+-- Calling @makeWith "A" "B" []@ will merge the module name and types
+-- from module B into module A, generating a third file:
+--
+-- > {-# LINE 1 "A.hs" #-}
+-- > module MxYz123 where
+-- > {-# LINE 3 "B.hs" #-}
+-- > a :: Int
+-- > {-# LINE 4 "A.hs" #-}
+-- > a = 1
 --      
 makeWith :: FilePath                           -- ^ a src file
          -> FilePath                           -- ^ a syntax stub file
@@ -189,8 +215,10 @@ hasChanged' suffices m@(Module {path = p})
            _ -> return True
 
 --
--- | Same as 'makeAll' but with better recompilation checks since module
--- dependencies are known.
+-- | 'recompileAll' is like 'makeAll', but rather than relying on 
+-- @ghc --make@, we explicitly check a module\'s dependencies using our
+-- internal map of module dependencies. Performance is thus better, and
+-- the result is more accurate.
 --
 recompileAll :: Module -> [Arg] -> IO MakeStatus
 recompileAll = recompileAll' ["hs","lhs"]
@@ -251,15 +279,14 @@ rawMake src args docheck = do
         }
 
 --
--- compile a .hs file to a .o file
---
+-- | Lower-level than 'make'. Compile a .hs file to a .o file
 -- If the plugin needs to import an api (which should be almost
 -- everyone) then the ghc flags to find the api need to be provided as
 -- arguments
 --
-build :: FilePath          -- path to .hs source
-      -> FilePath          -- path to object file
-      -> [String]          -- any extra cmd line flags
+build :: FilePath          -- ^ path to .hs source
+      -> FilePath          -- ^ path to object file
+      -> [String]          -- ^ any extra cmd line flags
       -> IO [String]
 
 build src obj extra_opts = do
@@ -290,6 +317,24 @@ build src obj extra_opts = do
 -- merge these two stub files before, then reuse the module name (helps
 -- recompilation checking)
 --
+-- The merging operation is extremely useful for providing extra default
+-- syntax. An EDSL user then need not worry about declaring module
+-- names, or having required imports.  In this way, the stub file can
+-- also be used to provide syntax declarations that would be
+-- inconvenient to require of the plugin author. 
+--
+-- 'merge' will include any import and export declarations written in
+-- the stub, as well as any module name, so that plugin author\'s need
+-- not worry about this compulsory syntax. Additionally, if a plugin
+-- requires some non-standard library, which must be provided as a
+-- @-package@ flag to GHC, they may specify this using the non-standard
+-- @GLOBALOPTIONS@ pragma.  Options specified in the source this way
+-- will be added to the command line. This is useful for users who wish
+-- to use GHC flags that cannot be specified using the conventional
+-- @OPTIONS@ pragma. The merging operation uses the parser hs-plugins
+-- was configured with, either 'Language.Haskell' or the HSX parser, to
+-- parse Haskell source files.
+--
 merge :: FilePath -> FilePath -> IO MergeStatus
 merge src stb = do 
     m_mod <- lookupMerged src stb
@@ -300,12 +345,13 @@ merge src stb = do
                 Just nm -> return $ (nm <> hsSuf, False)
     rawMerge src stb out domerge
 
--- | Merge to source files and store them in the specified output file,
--- instead of a temp file as merge does.
---
+-- | 'mergeTo' behaves like 'merge', but we can specify the file in
+-- which to place output. 
 mergeTo :: FilePath -> FilePath -> FilePath -> IO MergeStatus
 mergeTo src stb out = rawMerge src stb out False
 
+-- | 'mergeToDir' behaves like 'merge', but lets you specify a target
+-- directory.
 mergeToDir :: FilePath -> FilePath -> FilePath -> IO MergeStatus
 mergeToDir src stb dir = do
 	out <- mkUniqueIn dir
@@ -371,8 +417,8 @@ rawMerge src stb out always_merge = do
 
 -- ---------------------------------------------------------------------
 -- | makeClean : assuming we some element of [f.hs,f.hi,f.o], remove the
--- .hi and .o components. Silently ignore any missing components. *Does
--- not remove .hs files*. To do that use makeCleaner. This would be
+-- .hi and .o components. Silently ignore any missing components. /Does
+-- not remove .hs files/. To do that use 'makeCleaner'. This would be
 -- useful for merged files, for example.
 --
 makeClean :: FilePath -> IO ()
