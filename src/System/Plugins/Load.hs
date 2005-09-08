@@ -18,20 +18,27 @@
 -- USA
 -- 
 
+-- | An interface to the GHC runtime's dynamic linker, providing runtime
+-- loading and linking of Haskell object files, commonly known as
+-- /plugins/.
+
 module System.Plugins.Load (
 
--- high level interface
-        load , load_
+      -- * The @LoadStatus@ type
+      LoadStatus(..)
+
+      -- * High-level interface
+      , load
+      , load_
       , dynload
-      , pdynload , pdynload_
+      , pdynload 
+      , pdynload_
       , unload
       , unloadAll
       , reload
       , Module(..)
 
-      , LoadStatus(..)
-
--- low level interface
+      -- * Low-level interface
       , initLinker      -- start it up
       , loadModule      -- load a vanilla .o
       , loadFunction    -- retrieve a function from an object
@@ -78,19 +85,41 @@ import System.IO                ( hClose )
 
 -- TODO need a loadPackage p package.conf :: IO () primitive
 
--- ---------------------------------------------------------------------
--- return status of all *load functions:
+--
+-- | The @LoadStatus@ type encodes the return status of functions that
+-- perform dynamic loading in a type isomorphic to 'Either'. Failure
+-- returns a list of error strings, success returns a reference to a
+-- loaded module, and the Haskell value corresponding to the symbol that
+-- was indexed.
 --
 data LoadStatus a
         = LoadSuccess Module a
         | LoadFailure Errors
 
--- ---------------------------------------------------------------------
--- | load an object file into the address space, returning the closure
--- associated with the symbol requested, after removing its dynamism.
 --
--- Recursively loads the specified modules, and all the modules they
--- depend on.
+-- | 'load' is the basic interface to the dynamic loader. A call to
+-- 'load' imports a single object file into the caller's address space,
+-- returning the value associated with the symbol requested. Libraries
+-- and modules that the requested module depends upon are loaded and
+-- linked in turn.
+--
+-- The first argument is the path to the object file to load, the second
+-- argument is a list of directories to search for dependent modules.
+-- The third argument is a list of paths to user-defined, but
+-- unregistered, /package.conf/ files. The 'Symbol' argument is the
+-- symbol name of the value you with to retrieve.
+--
+-- The value returned must be given an explicit type signature, or
+-- provided with appropriate type constraints such that Haskell compiler
+-- can determine the expected type returned by 'load', as the return
+-- type is notionally polymorphic.
+-- 
+-- Example:
+--
+-- > do mv <- load "Plugin.o" ["api"] [] "resource"
+-- >    case mv of
+-- >        LoadFailure msg -> print msg
+-- >        LoadSuccess _ v -> return v
 --
 load :: FilePath                -- ^ object file
      -> [FilePath]              -- ^ any include paths
