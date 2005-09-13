@@ -42,6 +42,7 @@ module System.Plugins.Load (
       , initLinker      -- start it up
       , loadModule      -- load a vanilla .o
       , loadFunction    -- retrieve a function from an object
+      , loadFunction_   -- retrieve a function from an object
       , loadPackage     -- load a ghc library and its cbits
       , unloadPackage   -- unload a ghc library and its cbits
       , loadPackageWith -- load a pkg using the package.conf provided
@@ -402,13 +403,18 @@ reload m@(Module{path = p, iface = hi}) sym = do
 --
 -- | Load a function from a module (which must be loaded and resolved first).
 --
+
 loadFunction :: Module          -- ^ The module the value is in
              -> String          -- ^ Symbol name of value
              -> IO (Maybe a)    -- ^ The value you want
-
 loadFunction (Module { iface = i }) valsym
-   = do let m = mi_module i
-            symbol = symbolise m 
+    = loadFunction_ (mi_module i) valsym
+
+loadFunction_ :: String
+              -> String
+              -> IO (Maybe a)
+loadFunction_ m valsym
+   = do let symbol = prefixUnderscore++m++"_"++(encode valsym)++"_closure"
 #if DEBUG
         putStrLn $ "Looking for <<"++symbol++">>"
 #endif
@@ -417,8 +423,6 @@ loadFunction (Module { iface = i }) valsym
             then return Nothing
             else case addrToHValue# addr of
                 (# hval #) -> return ( Just hval )
-    where   
-        symbolise m = prefixUnderscore++m++"_"++(encode valsym)++"_closure"
 
 
 
