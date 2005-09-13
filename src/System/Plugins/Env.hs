@@ -18,6 +18,7 @@
 -- 
 
 module System.Plugins.Env (
+        env,
         withModEnv,
         withDepEnv,
         withPkgEnvs,
