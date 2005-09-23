@@ -277,7 +277,7 @@ addPkgConf f = do
 union :: PkgEnvs -> [PackageConfig] -> PkgEnvs
 union ls ps' = 
         let fm = emptyFM -- new FM for this package.conf
-        in ls ++ [foldr (\p fm' -> addToFM fm' (packageName p) p) fm ps']
+        in foldr (\p fm' -> addToFM fm' (packageName p) p) fm ps' : ls
 
 -- 
 -- | generate a PkgEnv from the system package.conf
