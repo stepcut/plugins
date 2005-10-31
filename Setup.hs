@@ -3,9 +3,9 @@ import Distribution.Setup   ( ConfigFlags (..) )
 import System.Directory     ( findExecutable )
 
 main = defaultMainWithHooks (defaultUserHooks { postConf = defaultPostConf })
-    where defaultPostConf args flags lbi
+    where defaultPostConf args flags lbi xxx
               = do args' <- fmap (args++) (configToArgs flags)
-                   (postConf defaultUserHooks) args' flags lbi
+                   (postConf defaultUserHooks) args' flags lbi xxx
 
 configToArgs :: ConfigFlags -> IO [String]
 configToArgs (ConfigFlags { configHcPath = Just hcPath })
