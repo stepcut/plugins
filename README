@@ -25,9 +25,10 @@ Read the documentation in doc/ for more.
 ------------------------------------------------------------------------
 
 BUILDING:
-        $ runhaskell Setup.hs configure --prefix=/usr/local
-        $ runhaskell Setup.hs build
-        $ runhaskell Setup.hs install
+        $ chmod +x Setup.lhs configure
+        $ ./Setup.hs configure --prefix=/usr/local
+        $ ./Setup.hs build
+        $ ./Setup.hs install
 
 ------------------------------------------------------------------------
 
@@ -48,7 +49,7 @@ DEPENDENCIES:
    To get hs-plugins to use HSX, use: 
 
         $ mv plugins.cabal.hsx plugins.cabal
-        $ runhaskell Setup.hs configure --enable-hsx
+        $ ./Setup.lhs configure --enable-hsx
 
    Make sure to install HSX first though :)
 
