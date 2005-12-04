@@ -26,9 +26,9 @@ Read the documentation in doc/ for more.
 
 BUILDING:
         $ chmod +x Setup.lhs configure
-        $ ./Setup.hs configure --prefix=/usr/local
-        $ ./Setup.hs build
-        $ ./Setup.hs install
+        $ ./Setup.lhs configure --prefix=/usr/local
+        $ ./Setup.lhs build
+        $ ./Setup.lhs install
 
 ------------------------------------------------------------------------
 
