@@ -1,6 +1,8 @@
 For 0.1
 ----------
 
++ version numbers in package loads are annyoing
+
 + .hi file parser is broken on Itanium, again.
 
 + build way=p and way=''

@@ -547,7 +547,8 @@ loadPackage p = do
         (libs,dlls) <- lookupPkg p
         mapM_ (\l -> loadObject l (Package (mkModid l))) libs
 #if DEBUG
-        putStr (' ':show dlls)
+        putStr (' ':show libs) >> hFlush stdout
+        putStr (' ':show dlls) >> hFlush stdout
 #endif
 	mapM_ loadShared dlls
 
