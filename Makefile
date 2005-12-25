@@ -27,7 +27,7 @@ EXTRA_CLEANS+=*.conf.inplace* *.conf.in *.h autom4te.cache \
 
 clean:
 	cd docs && $(MAKE) clean
-	runhaskell Setup.hs clean 2> /dev/null || true
+	runhaskell Setup.lhs clean 2> /dev/null || true
 	rm -rf $(CLEAN_FILES)
 	find testsuite -name '*.a' -exec rm {} \;
 	find testsuite -name '*~' -exec rm {} \;
