@@ -1548,8 +1548,8 @@ echo "${ECHO_T}no" >&6
 fi
 
 if test -z "$TEX" ; then
-	{ echo "$as_me:$LINENO: WARNING: You'll need tex if you wish to build the documentation" >&5
-echo "$as_me: WARNING: You'll need tex if you wish to build the documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: tex is needed to build some of the documentation" >&5
+echo "$as_me: WARNING: tex is needed to build some of the documentation" >&2;}
 fi
 # Extract the first word of "tex2page", so it can be a program name with args.
 set dummy tex2page; ac_word=$2
@@ -1587,10 +1587,10 @@ echo "${ECHO_T}no" >&6
 fi
 
 if test -z "$TEX2PAGE" ; then
-	{ echo "$as_me:$LINENO: WARNING: You'll need tex2page if you wish to build the
-		    documentation: http://www.ccs.neu.edu/home/dorai/tex2page/tex2page-doc.html" >&5
-echo "$as_me: WARNING: You'll need tex2page if you wish to build the
-		    documentation: http://www.ccs.neu.edu/home/dorai/tex2page/tex2page-doc.html" >&2;}
+    { echo "$as_me:$LINENO: WARNING: tex2page is needed to build some of the documentation
+		    http://www.ccs.neu.edu/home/dorai/tex2page/tex2page-doc.html" >&5
+echo "$as_me: WARNING: tex2page is needed to build some of the documentation
+		    http://www.ccs.neu.edu/home/dorai/tex2page/tex2page-doc.html" >&2;}
 fi
 
 ac_ext=c
