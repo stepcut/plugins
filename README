@@ -14,8 +14,8 @@ automagically and for combining the user's .hs file with a stub of
 standard declarations and syntax, saving the user from having to write
 standard code themselves.
 
-It provides an eval() function, for generating new, well-typed,
-compiled code from a Haskell source string.
+It provides an `eval' function, for generating new, well-typed, compiled
+code from a Haskell source string.
 
 It also provides a new variation of printf for Haskell-- a runtime
 generated, dynamically-typed printf.
@@ -68,7 +68,7 @@ DEPENDENCIES:
 
 * If you need to regenerate ./configure you need >= autoreconf-2.53
 
-* The documentation relies on latex, dvips, tex2page:
+* The documentation relies on haddock, latex, dvips, tex2page:
 
         $ cd doc && make
 
