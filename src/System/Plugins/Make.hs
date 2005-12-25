@@ -292,13 +292,14 @@ build :: FilePath          -- ^ path to .hs source
 build src obj extra_opts = do
 
     let odir = dirname obj -- always put the .hi file next to the .o file
+                           -- does this work in the presence of hier plugins?
+                           -- won't handle hier names properly.
 
     let ghc_opts = [ "-Onot" ]
         output   = [ "-o", obj, "-odir", odir, 
                      "-hidir", odir, "-i" ++ odir ]
 
     let flags = ghc_opts ++ output ++ extra_opts ++ [src]
-
 
 #if DEBUG
     -- env.
@@ -354,8 +355,8 @@ mergeTo src stb out = rawMerge src stb out False
 -- directory.
 mergeToDir :: FilePath -> FilePath -> FilePath -> IO MergeStatus
 mergeToDir src stb dir = do
-	out <- mkUniqueIn dir
-	rawMerge src stb out True
+    out <- mkUniqueIn dir
+    rawMerge src stb out True
 
 -- ---------------------------------------------------------------------
 -- Conditional on file modification times, merge a src file with a

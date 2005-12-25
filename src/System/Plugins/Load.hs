@@ -258,14 +258,13 @@ unify obj incs args ty sym = do
         let nm  = mkModid (basename tmpf) 
             src = mkTest nm (hierize' . mkModid . hierize $ obj)
                                 (fst $ break (=='.') ty) ty sym
-            is  = map (\s -> "-i"++s) incs      -- api
+            is  = map ("-i"++) incs             -- api
             i   = "-i" ++ dirname obj           -- plugin
 
         hWrite hdl src
 
         e <- build tmpf tmpf1 (i:is++args++["-fno-code","-ohi "++tmpf1])
-        -- removeFile tmpf 
-        removeFile tmpf1
+        mapM_ removeFile [tmpf,tmpf1]
         return e
 
         where
