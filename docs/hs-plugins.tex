@@ -44,18 +44,18 @@ h2      {font-size: 15pt}
 \medskip
 %
 {\htmlonly \textbf{Download \endhtmlonly 
-\urlh{ftp://ftp.cse.unsw.edu.au/pub/users/dons/hs-plugins/hs-plugins-0.9.10.tar.gz}
-     {version 0.9.10}}
+\urlh{ftp://ftp.cse.unsw.edu.au/pub/users/dons/hs-plugins/hs-plugins-1.0.tar.gz}
+     {version 1.0}}
 %
 \medskip
 
 \hsplugins{} is a library for loading code written in Haskell into an
 application at runtime, in the form of plugins. It also provides a
 mechanism for (re-)compiling Haskell source at runtime. Thirdly, a
-combination of runtime compilation and dynamic loading provides a set
-of \code{eval} functions-- a form of runtime metaprogramming. Values
+combination of runtime compilation and dynamic loading provides a set of
+\code{eval} functions-- a form of runtime metaprogramming. Values
 exported by Haskell plugins are transparently available to Haskell host
-applications, and bindings exist to use Haskell plugins from at least C
+applications, and bindings exist to use Haskell dynamically in C, Perl
 and Objective C programs. \hsplugins{} requires GHC 6.4 or later.
 
 \medskip
@@ -72,7 +72,7 @@ and Objective C programs. \hsplugins{} requires GHC 6.4 or later.
 
 \item
 Download the latest stable release:\\
-\url{ftp://ftp.cse.unsw.edu.au/pub/users/dons/hs-plugins/hs-plugins-0.9.10.tar.gz}
+\url{ftp://ftp.cse.unsw.edu.au/pub/users/dons/hs-plugins/hs-plugins-1.0.tar.gz}
 
 \item
 Darcs repository of the latest code:\\
@@ -107,19 +107,27 @@ Windows.
 \section{History}
 
 \begin{itemize}
+        \item Jan 2006, v1.0
+        \begin{itemize}
+        \item Cabalised build system
+        \item Behave better on 64 bit platforms
+        \item Haddock documentation of the API.
+        \item A couple of bug fixes
+        \end{itemize}
+
         \item June 2005, v0.9.10
         \begin{itemize}
-                \item Support for GHC 6.4, with help from Sean
-                                Seefried for the package.conf parser.
-                \item Ported to Windows of various flavours thanks to Vivian McPhail and Shelarcy
-                \item Removed posix and unix dependencies
-                \item Now uses HSX parser, thanks to Niklas Broberg
-                \item Extended load interface, thanks to Lemmih
-                \item Source now in a darcs repository
-                \item Supports building with GNU make -jN
-                \item Simplified module hierarchy, moved under System.* namespace
-                \item pdynload clarifications, thanks to Alistair Bayley 
-                \item Miscellaneous bug fixes
+        \item Support for GHC 6.4, with help from Sean
+                        Seefried for the package.conf parser.
+        \item Ported to Windows of various flavours thanks to Vivian McPhail and Shelarcy
+        \item Removed posix and unix dependencies
+        \item Now uses HSX parser, thanks to Niklas Broberg
+        \item Extended load interface, thanks to Lemmih
+        \item Source now in a darcs repository
+        \item Supports building with GNU make -jN
+        \item Simplified module hierarchy, moved under System.* namespace
+        \item pdynload clarifications, thanks to Alistair Bayley 
+        \item Miscellaneous bug fixes
         \end{itemize}
 
 	\item February 2005, v0.9.8
@@ -287,10 +295,11 @@ The compilation manager fills this role. It is particularly useful in
 the implementation of \code{eval}.
 
 The \emph{evaluator}, \code{eval}, utilizes the loader and compilation
-manager. When passed a string of Haskell code, it compiles the string to
-object code, loads the result, and returns a Haskell value representing
-the compiled string to the caller. It can be considered a Haskell
-interpreter, implemented as a library.
+manager. When passed a string containing a Haskell expression, it
+compiles the string to object code, loads the result, and returns a
+Haskell value representing the compiled string to the caller. It can be
+considered a Haskell interpreter, implemented as a library, and can be
+used to embed Haskell evaluation facilities in an application.
 
 \section{Dynamic Loader}
 
@@ -324,8 +333,8 @@ load_ :: FilePath
 
 \scm{
 data LoadStatus a
-        = LoadSuccess Module a 
-	| LoadFailure Errors
+    = LoadSuccess Module a 
+    | LoadFailure Errors
 }
 \end{quote}
 %
@@ -352,8 +361,7 @@ failure, or an abstract representation of the module (for calls to
 \code{unload} or \code{reload}) with the symbol as a Haskell value. The
 value returned must be given an explicit type signature, or provided
 with appropriate type constraints such that GHC can determine the
-expected type returned by \code{load}, as the return type is notionally
-polymorphic.
+expected type returned by \code{load}.
 
 \code{load\_} is provided for the common situation where no user-defined
 package.conf files are required.
@@ -383,7 +391,6 @@ do mv <- dynload "Plugin.o" ["api"] ["plugins.conf.inplace"] "resource"
 \code{dynload} is a safer form of \code{load}. It uses dynamic types
 to perform a check on the value returned by \code{load} at runtime, to
 ensure that it has the type the application expects it to have.
-\code{pdynload} is on average 7\% slower than an unchecked load.
 
 In order to use \code{dynload}, the symbol the plugin exports must be
 of type \code{AltData.Dynamic:Dynamic}. (See the \code{AltData} library
@@ -409,8 +416,8 @@ wrapped inside a rank-N type to hide the polymorphism from the
 typechecker. This is a bit cumbersome. An alternative typesafe
 \code{load} is available via the \code{pdynload} interface, which is
 able to enforce the type of the plugin using GHC's type inference
-mechanism, and is not restricted in its expressiveness (at the cost of greater load
-times):
+mechanism, and is not restricted in its expressiveness (at the cost of
+greater load times):
 
 \begin{quote}
 \scm{
@@ -554,7 +561,7 @@ Examples:
 \begin{quote}
 \scm{
 do loadPackageWith "yi" ["yi.conf"]
-   unloadPackage "yi"
+   unloadPackage "yi-0.1"
 }
 \end{quote}
 
@@ -895,64 +902,59 @@ mkHsValues :: (Show a) => Data.Map String a -> String
 }
 \end{quote}
 \end{itemize}
-\subsection{Foreign Eval}
-
-A preliminary binding to \code{eval} has been implemented to allow C
-(and Objective C) programs access to the evaluator. Foreign bindings
-to the compilation manager and dynamic loader are yet to be
-implemented, but shouldn't be too hard. An foreign binding to a
-Haskell module that wraps up calls to \code{make} and \code{load}
-would be fairly trivial.
- 
-At the moment we have an ad-hoc binding to \code{eval}, so that C
-programmers who know the type of value that will be returned by
-Haskell can call the appropriate hook into the evaluator. If they get
-the type wrong, a nullPtr will be returned (so calling Haskell is
-still typesafe). The foreign bindings to \code{eval} all return
-\code{NULL} if an error occurred, otherwise a pointer to the value is
-returned.
-
-\begin{quote}
-\scm{
-foreign export ccall hs_eval_b :: CString -> IO (Ptr CInt)
-
-foreign export ccall hs_eval_c :: CString -> IO (Ptr CChar)
-  
-foreign export ccall hs_eval_i :: CString -> IO (Ptr CInt)
-
-foreign export ccall hs_eval_s :: CString -> IO CString
-}
-\end{quote}
-
-An example C program for compiling and evaluating Haskell code at
-runtime follows. This program calculates a fibonacci number, returning
-it as a \code{CString} to the C program:
-%
-\begin{quote}
-\begin{verbatim}
-#include "EvalHaskell.h"
-#include <stdio.h>
-
-int main(int argc, char *argv[])
-{
-  char *p;
-  hs_init(&argc, &argv);
-  p = hs_eval_s("show $ let fibs = 1:1:zipWith (+) fibs (tail fibs) in fibs !! 20");
-  if (p != NULL)
-     printf("%s\n",p);
-  else
-     printf("error in code\n");
-  hs_exit();
-  return 0;
-}
-\end{verbatim}
-\end{quote}
-
-\subsection{Notes}
-
-Be careful if you're calling eval from a forked thread. This can
-introduce races between the thread and the forked process used by eval
-to compile its code.
+% \subsection{Foreign Eval}
+% 
+% A preliminary binding to \code{eval} has been implemented to allow C
+% (and Objective C) programs access to the evaluator. Foreign bindings
+% to the compilation manager and dynamic loader are yet to be
+% implemented, but shouldn't be too hard. An foreign binding to a
+% Haskell module that wraps up calls to \code{make} and \code{load}
+% would be fairly trivial.
+%  
+% At the moment we have an ad-hoc binding to \code{eval}, so that C
+% programmers who know the type of value that will be returned by
+% Haskell can call the appropriate hook into the evaluator. If they get
+% the type wrong, a nullPtr will be returned (so calling Haskell is
+% still typesafe). The foreign bindings to \code{eval} all return
+% \code{NULL} if an error occurred, otherwise a pointer to the value is
+% returned.
+% 
+% \begin{quote}
+% \scm{
+% foreign export ccall hs_eval_b :: CString -> IO (Ptr CInt)
+% 
+% foreign export ccall hs_eval_c :: CString -> IO (Ptr CChar)
+%   
+% foreign export ccall hs_eval_i :: CString -> IO (Ptr CInt)
+% 
+% foreign export ccall hs_eval_s :: CString -> IO CString
+% }
+% \end{quote}
+% 
+% An example C program for compiling and evaluating Haskell code at
+% runtime follows. This program calculates a fibonacci number, returning
+% it as a \code{CString} to the C program:
+% %
+% \begin{quote}
+% \begin{verbatim}
+% #include "EvalHaskell.h"
+% #include <stdio.h>
+% 
+% int main(int argc, char *argv[])
+% {
+%   char *p;
+%   hs_init(&argc, &argv);
+%   p = hs_eval_s("show $ let fibs = 1:1:zipWith (+) fibs (tail fibs) in fibs !! 20");
+%   if (p != NULL)
+%      printf("%s\n",p);
+%   else
+%      printf("error in code\n");
+%   hs_exit();
+%   return 0;
+% }
+% \end{verbatim}
+% \end{quote}
+% 
 
 \section{RTS Binding}
 
@@ -1657,7 +1659,7 @@ This library is distributed under the terms of the LGPL:
 
 \begin{quote}
 
-Copyright 2004, Don Stewart - \url{http://www.cse.unsw.edu.au/~dons}
+Copyright 2003-5, Don Stewart - \url{http://www.cse.unsw.edu.au/~dons}
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
