@@ -5,8 +5,6 @@ License-file:   LICENSE
 author:         Don Stewart
 maintainer:     dons@cse.unsw.edu.au
 exposed-modules:
-        AltData.Dynamic,
-        AltData.Typeable,
         Language.Hi.Binary,
         Language.Hi.FastMutInt,
         Language.Hi.FastString,

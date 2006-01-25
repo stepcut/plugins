@@ -67,8 +67,8 @@ import System.Plugins.LoadTypes
 
 import Language.Hi.Parser
 
-import AltData.Dynamic          ( fromDynamic, Dynamic )
-import AltData.Typeable         ( Typeable )
+import Data.Dynamic          ( fromDynamic, Dynamic )
+import Data.Typeable         ( Typeable )
 
 import Data.List                ( isSuffixOf, nub, nubBy )
 import Control.Monad            ( when, filterM, liftM )

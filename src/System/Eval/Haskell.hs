@@ -48,8 +48,8 @@ import System.Eval.Utils
 import System.Plugins.Make
 import System.Plugins.Load
 
-import AltData.Dynamic             ( Dynamic )
-import AltData.Typeable            ( Typeable )
+import Data.Dynamic             ( Dynamic )
+import Data.Typeable            ( Typeable )
 
 import Data.Either
 import Data.Map as Map
