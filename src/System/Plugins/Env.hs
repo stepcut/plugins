@@ -40,6 +40,8 @@ module System.Plugins.Env (
         addMerge,
         addPkgConf,
         union,
+        addStaticPkg,
+        isStaticPkg,
         grabDefaultPkgConf,
         readPackageConf,
         lookupPkg
@@ -71,12 +73,11 @@ import System.IO.Error          ( catch, ioError, isDoesNotExistError )
 
 import Control.Concurrent.MVar  ( MVar(), newMVar, withMVar )
 
-#if __GLASGOW_HASKELL__ < 604
-import Data.FiniteMap
+import Distribution.Package
+import Text.ParserCombinators.ReadP
 
-#else
 import qualified Data.Map as M
-
+import qualified Data.Set as S
 --
 -- and map Data.Map terms to FiniteMap terms
 --
@@ -93,8 +94,6 @@ delFromFM = flip M.delete
 
 lookupFM :: (Ord key) => FiniteMap key elt -> key -> Maybe elt
 lookupFM  = flip M.lookup
-
-#endif
 
 --
 -- | We need to record what modules and packages we have loaded, so if
@@ -132,6 +131,8 @@ type DepEnv = FiniteMap Module [Module]
 -- represents a package.conf file
 type PkgEnv  = FiniteMap PackageName PackageConfig
 
+type StaticPkgEnv = S.Set PackageName
+
 -- record dependencies between (src,stub) -> merged modid
 type MergeEnv = FiniteMap (FilePath,FilePath) FilePath
 
@@ -142,6 +143,7 @@ type Env = (MVar (),
             IORef ModEnv,
             IORef DepEnv,  
             IORef PkgEnvs,
+            IORef StaticPkgEnv,
             IORef MergeEnv)
 
 --
@@ -155,8 +157,9 @@ env = unsafePerformIO $ do
                 ref2  <- newIORef emptyFM
                 p     <- grabDefaultPkgConf
                 ref3  <- newIORef p               -- package.conf info
-                ref4  <- newIORef emptyFM         -- merged files
-                return (mvar, ref1, ref2, ref3, ref4)
+                ref4  <- newIORef (S.fromList ["base","Cabal","haskell-src"])
+                ref5  <- newIORef emptyFM         -- merged files
+                return (mvar, ref1, ref2, ref3, ref4, ref5)
 {-# NOINLINE env #-}
 
 -- -----------------------------------------------------------
@@ -168,12 +171,14 @@ env = unsafePerformIO $ do
 withModEnv  :: Env -> (ModEnv   -> IO a) -> IO a
 withDepEnv  :: Env -> (DepEnv   -> IO a) -> IO a
 withPkgEnvs :: Env -> (PkgEnvs  -> IO a) -> IO a
+withStaticPkgEnv :: Env -> (StaticPkgEnv -> IO a) -> IO a
 withMerged  :: Env -> (MergeEnv -> IO a) -> IO a
 
-withModEnv  (mvar,ref,_,_,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
-withDepEnv  (mvar,_,ref,_,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
-withPkgEnvs (mvar,_,_,ref,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
-withMerged  (mvar,_,_,_,ref) f = withMVar mvar (\_ -> readIORef ref >>= f)
+withModEnv  (mvar,ref,_,_,_,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
+withDepEnv  (mvar,_,ref,_,_,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
+withPkgEnvs (mvar,_,_,ref,_,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
+withStaticPkgEnv (mvar,_,_,_,ref,_) f = withMVar mvar (\_ -> readIORef ref >>= f)
+withMerged  (mvar,_,_,_,_,ref) f = withMVar mvar (\_ -> readIORef ref >>= f)
 
 -- -----------------------------------------------------------
 --
@@ -183,12 +188,14 @@ withMerged  (mvar,_,_,_,ref) f = withMVar mvar (\_ -> readIORef ref >>= f)
 modifyModEnv :: Env -> (ModEnv   -> IO ModEnv)  -> IO ()
 modifyDepEnv :: Env -> (DepEnv   -> IO DepEnv)  -> IO ()
 modifyPkgEnv :: Env -> (PkgEnvs  -> IO PkgEnvs) -> IO ()
+modifyStaticPkgEnv :: Env -> (StaticPkgEnv  -> IO StaticPkgEnv) -> IO ()
 modifyMerged :: Env -> (MergeEnv -> IO MergeEnv)-> IO ()
 
-modifyModEnv (mvar,ref,_,_,_) f = lockAndWrite mvar ref f 
-modifyDepEnv (mvar,_,ref,_,_) f = lockAndWrite mvar ref f 
-modifyPkgEnv (mvar,_,_,ref,_) f = lockAndWrite mvar ref f 
-modifyMerged (mvar,_,_,_,ref) f = lockAndWrite mvar ref f
+modifyModEnv (mvar,ref,_,_,_,_) f = lockAndWrite mvar ref f 
+modifyDepEnv (mvar,_,ref,_,_,_) f = lockAndWrite mvar ref f 
+modifyPkgEnv (mvar,_,_,ref,_,_) f = lockAndWrite mvar ref f 
+modifyStaticPkgEnv (mvar,_,_,_,ref,_) f = lockAndWrite mvar ref f 
+modifyMerged (mvar,_,_,_,_,ref) f = lockAndWrite mvar ref f
 
 -- private
 lockAndWrite mvar ref f = withMVar mvar (\_->readIORef ref>>=f>>=writeIORef ref)
@@ -311,6 +318,18 @@ readPackageConf f = do
       expand s | "$libdir" `isPrefixOf` s = ghcLibraryPath ++ drop 7 s
       expand s = s
 
+-- -----------------------------------------------------------
+-- Static package management stuff. A static package is linked with the base
+-- application and we should therefore not link with any of the DLLs it requires.
+
+addStaticPkg :: PackageName -> IO ()
+addStaticPkg pkg = modifyStaticPkgEnv env $ \set -> return $ S.insert pkg set
+
+isStaticPkg :: PackageName -> IO Bool
+isStaticPkg pkg
+    = case readP_to_S parsePackageName pkg of
+        ((pkgName,_):_) -> withStaticPkgEnv env $ \set -> return $ S.member pkgName set
+        [] -> return False
 
 --
 -- Package path, given a package name, look it up in the environment and
@@ -333,10 +352,12 @@ readPackageConf f = do
 lookupPkg :: PackageName -> IO ([FilePath],[FilePath])
 lookupPkg p = do 
         t <- lookupPkg' p
-        case t of ([],(f,g)) -> return (f,g)
+        static <- isStaticPkg p
+        case t of ([],(f,g)) -> return (f,if static then [] else g)
                   (ps,(f,g)) -> do gss <- mapM lookupPkg ps
 				   let (f',g') = unzip gss
-				   return $ (nub $ (concat f') ++ f,nub $ (concat g') ++ g)
+				   return $ (nub $ (concat f') ++ f
+                                            ,if static then [] else nub $ (concat g') ++ g)
 
 data LibrarySpec
    = DLL String         -- -lLib
@@ -382,7 +403,7 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                 let    hslibs  = hsLibraries package
                        extras' = extraLibraries package
                        cbits   = filter (\e -> reverse (take (length "_cbits") (reverse e)) == "_cbits") extras'
-                       extras  = filter (not . flip elem (cbits++["m","gmp"])) extras'
+                       extras  = filter (flip notElem cbits) extras'
                        ldopts  = ldOptions package
                        deppkgs = packageDeps package
                 ldInput <- mapM classifyLdInput ldopts
