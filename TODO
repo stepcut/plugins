@@ -1,6 +1,9 @@
 For 1.0
 ----------
 
++ hs-plugins doesn't know to look for packages in the user packages,
+only in the global packages
+
 + version numbers in package loads are annyoing
 
 + .hi file parser is broken on Itanium, again.
