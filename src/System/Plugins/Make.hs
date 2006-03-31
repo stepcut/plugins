@@ -66,9 +66,9 @@ import System.Plugins.Env              ( lookupMerged, addMerge
                                        , getModuleDeps)
 
 #if DEBUG
-import System.IO (hFlush, stdout, openFile, IOMode(..),hClose, hPutStr)
+import System.IO (hFlush, stdout, openFile, IOMode(..),hClose, hPutStr, hGetContents)
 #else
-import System.IO (openFile, IOMode(..),hClose,hPutStr)
+import System.IO (openFile, IOMode(..),hClose,hPutStr, hGetContents)
 #endif
 
 import System.Directory         ( doesFileExist, removeFile
@@ -391,8 +391,8 @@ rawMerge src stb out always_merge = do
     ;if not do_merge && not always_merge
      then return $ MergeSuccess NotReq [] out
      else do
-        src_str <- readFile src
-        stb_str <- readFile stb
+        src_str <- readFile' src
+        stb_str <- readFile' stb
 
         let (a,a') = parsePragmas src_str
             (b,b') = parsePragmas stb_str
@@ -440,4 +440,11 @@ rm_f f = handleJust doesntExist (\_->return ()) (removeFile f)
                 | isDoesNotExistError ioe = Just ()
                 | otherwise               = Nothing
         doesntExist _ = Nothing
+
+readFile' f = do
+    h <- openFile f ReadMode
+    s <- hGetContents h
+    length s `seq` return ()
+    hClose h
+    return s
 
