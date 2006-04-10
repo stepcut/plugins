@@ -235,8 +235,8 @@ dynwrap expr nm mods =
         "module "++nm++ "( resource ) where\n" ++ 
          concatMap (\m-> "import "++m++"\n") mods ++
         "import AltData.Dynamic\n" ++
-        "resource = let { v = \n" ++
-        "{-# LINE 1 \"<eval>\" #-}\n" ++ expr ++ ";} in toDyn v"
+        "resource = let { yhjulwwiefzojcbxybbruweejw = \n" ++
+        "{-# LINE 1 \"<eval>\" #-}\n" ++ expr ++ ";} in toDyn yhjulwwiefzojcbxybbruweejw"
 
 -- ---------------------------------------------------------------------
 -- unsafe wrapper
@@ -245,8 +245,13 @@ wrap :: String -> String -> [Import] -> String
 wrap expr nm mods =
         "module "++nm++ "( resource ) where\n" ++ 
         concatMap (\m-> "import "++m++"\n") mods ++
-        "resource = let { v = \n" ++
-        "{-# LINE 1 \"<Plugins.Eval>\" #-}\n" ++ expr ++ ";} in v"
+        "resource = let { yhjulwwiefzojcbxybbruweejw = \n" ++
+        "{-# LINE 1 \"<Plugins.Eval>\" #-}\n" ++ expr ++ ";} in yhjulwwiefzojcbxybbruweejw"
+
+-- what is this big variable name?
+-- its a random value, so that it won't clash if  the accidently mistype
+-- an unbound 'x' or 'v' in their code.. it won't reveal the internal
+-- structure of the wrapper, which is annoying in irc use by lambdabot
 
 {-
 ------------------------------------------------------------------------
