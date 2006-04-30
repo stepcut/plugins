@@ -1,6 +1,14 @@
 For 1.0
 ----------
 
++ broken on mac.
+symbols with suspiciously many _ chars
+
++ Add verbose versions of the load functions, to avoid -DDEBUG
+
++ mention that you need .o archives, not .a ones. Use Cabal, ghc-pkg -u
+    or ld -r --whole-archive
+
 + hs-plugins doesn't know to look for packages in the user packages,
 only in the global packages
 
