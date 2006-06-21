@@ -1,21 +1,21 @@
--- 
+--
 -- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
--- 
+--
 -- This library is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU Lesser General Public
 -- License as published by the Free Software Foundation; either
 -- version 2.1 of the License, or (at your option) any later version.
--- 
+--
 -- This library is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 -- Lesser General Public License for more details.
--- 
+--
 -- You should have received a copy of the GNU Lesser General Public
 -- License along with this library; if not, write to the Free Software
 -- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 -- USA
--- 
+--
 
 --
 -- | Evaluate Haskell at runtime, using runtime compilation and dynamic
@@ -25,7 +25,7 @@
 -- for plugins to be compiled at runtime.
 --
 
-module System.Eval.Haskell ( 
+module System.Eval.Haskell (
         eval,
         eval_,
         unsafeEval,
@@ -40,7 +40,7 @@ module System.Eval.Haskell (
         hs_eval_s,      -- return a CString
 -}
 
-        module System.Eval.Utils, 
+        module System.Eval.Utils,
 
     ) where
 
@@ -68,7 +68,7 @@ import System.IO.Unsafe
 -- 'String' argument to 'eval' is a Haskell source fragment to evaluate
 -- at rutime. @imps@ are a list of module names to use in the context of
 -- the compiled value.
--- 
+--
 -- The value returned by 'eval' is constrained to be 'Typeable' --
 -- meaning we can perform a /limited/ runtime typecheck, using the
 -- 'dynload' function. One consequence of this is that the code must
@@ -96,7 +96,7 @@ eval src imps = do
     tmpf               <- mkUniqueWith dynwrap src imps
     status             <- make tmpf cmdline
     m_rsrc <- case status of
-        MakeSuccess _ obj -> do 
+        MakeSuccess _ obj -> do
            m_v <- dynload obj [pwd] loadpath symbol
            case m_v of LoadFailure _      -> return Nothing
                        LoadSuccess _ rsrc -> return $ Just rsrc
@@ -118,13 +118,13 @@ eval_ :: Typeable a =>
       -> [FilePath]       -- ^ include paths load is to search in
       -> IO (Either [String] (Maybe a)) -- ^ either errors, or maybe a well typed value
 
-eval_ src mods args ldflags incs = do 
+eval_ src mods args ldflags incs = do
     pwd                <- getCurrentDirectory
     (cmdline,loadpath) <- getPaths      -- find path to altdata
     tmpf               <- mkUniqueWith dynwrap src mods
     status             <- make tmpf $ ["-Onot"] ++ cmdline ++ args
     m_rsrc <- case status of
-        MakeSuccess _ obj -> do 
+        MakeSuccess _ obj -> do
            m_v <- dynload obj (pwd:incs) (loadpath++ldflags) symbol
            return $ case m_v of LoadFailure e      -> Left e
                                 LoadSuccess _ rsrc -> Right (Just rsrc)
@@ -149,7 +149,7 @@ eval_ src mods args ldflags incs = do
 --
 -- Note that if you get the proof wrong, your program will likely
 -- segfault.
--- 
+--
 -- Example:
 --
 -- > do s <- unsafeEval "map toUpper \"haskell\"" ["Data.Char"]
@@ -182,12 +182,12 @@ unsafeEval_ :: String           -- ^ code to compile
             -> [FilePath]       -- ^ include paths load is to search in
             -> IO (Either [String] a)
 
-unsafeEval_ src mods args ldflags incs = do 
+unsafeEval_ src mods args ldflags incs = do
     pwd  <- getCurrentDirectory
     tmpf <- mkUniqueWith wrap src mods
     status <- make tmpf args
     e_rsrc <- case status of
-        MakeSuccess _ obj  -> do 
+        MakeSuccess _ obj  -> do
            m_v <- load obj (pwd:incs) ldflags symbol
            case m_v of LoadFailure e      -> return $ Left e
                        LoadSuccess _ rsrc -> return $ Right rsrc
@@ -204,8 +204,8 @@ unsafeEval_ src mods args ldflags incs = do
 --
 mkHsValues :: (Show a) => Map.Map String a -> String
 mkHsValues values = concat $ elems $ Map.mapWithKey convertToHs values
-	where convertToHs :: (Show a) => String -> a -> String
-	      convertToHs name value = name ++ " = " ++ show value ++ "\n"
+        where convertToHs :: (Show a) => String -> a -> String
+              convertToHs name value = name ++ " = " ++ show value ++ "\n"
 ------------------------------------------------------------------------
 --
 -- | Return a compiled value's type, by using Dynamic to get a
@@ -218,9 +218,9 @@ typeOf src mods = do
     tmpf               <- mkUniqueWith dynwrap src mods
     status             <- make tmpf cmdline
     ty <- case status of
-        MakeSuccess _ obj -> do 
+        MakeSuccess _ obj -> do
             m_v <- load obj [pwd] loadpath symbol :: IO (LoadStatus Dynamic)
-            case m_v of 
+            case m_v of
                 LoadFailure _   -> return "<failure>"
                 LoadSuccess _ v -> return $ (init . tail) $ show v
 
@@ -235,7 +235,7 @@ typeOf src mods = do
 --
 dynwrap :: String -> String -> [Import] -> String
 dynwrap expr nm mods =
-        "module "++nm++ "( resource ) where\n" ++ 
+        "module "++nm++ "( resource ) where\n" ++
          concatMap (\m-> "import "++m++"\n") mods ++
         "import AltData.Dynamic\n" ++
         "resource = let { "++x++" = \n" ++
@@ -251,7 +251,7 @@ ident () = unsafePerformIO $
 --
 wrap :: String -> String -> [Import] -> String
 wrap expr nm mods =
-        "module "++nm++ "( resource ) where\n" ++ 
+        "module "++nm++ "( resource ) where\n" ++
         concatMap (\m-> "import "++m++"\n") mods ++
         "resource = let { "++x++" = \n" ++
         "{-# LINE 1 \"<Plugins.Eval>\" #-}\n" ++ expr ++ ";} in "++x
@@ -274,7 +274,7 @@ wrap expr nm mods =
 --
 -- return NULL pointer if an error occured.
 --
-  
+
 foreign export ccall hs_eval_b  :: CString -> IO (Ptr CInt)
 foreign export ccall hs_eval_c  :: CString -> IO (Ptr CChar)
 foreign export ccall hs_eval_i  :: CString -> IO (Ptr CInt)
@@ -288,25 +288,25 @@ foreign export ccall hs_eval_s  :: CString -> IO CString
 
 hs_eval_b :: CString -> IO (Ptr CInt)
 hs_eval_b s = do m_v <- eval_cstring s
-                 case m_v of Nothing -> return nullPtr 
+                 case m_v of Nothing -> return nullPtr
                              Just v  -> new (fromBool v)
 
 hs_eval_c :: CString -> IO (Ptr CChar)
 hs_eval_c s = do m_v <- eval_cstring s
-                 case m_v of Nothing -> return nullPtr 
+                 case m_v of Nothing -> return nullPtr
                              Just v  -> new (castCharToCChar v)
 
 -- should be Integral
 hs_eval_i :: CString -> IO (Ptr CInt)
 hs_eval_i s = do m_v <- eval_cstring s :: IO (Maybe Int)
-                 case m_v of Nothing -> return nullPtr 
+                 case m_v of Nothing -> return nullPtr
                              Just v  -> new (fromIntegral v :: CInt)
 
 hs_eval_s :: CString -> IO CString
 hs_eval_s s = do m_v <- eval_cstring s
-                 case m_v of Nothing -> return nullPtr 
+                 case m_v of Nothing -> return nullPtr
                              Just v  -> newCString v
- 
+
 --
 -- convenience
 --
