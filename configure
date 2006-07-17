@@ -1339,7 +1339,7 @@ fi
 
 
 case $Platform in
-powerpc-apple-darwin*)
+*-apple-darwin*)
         MACOSX=yes
 
 cat >>confdefs.h <<_ACEOF

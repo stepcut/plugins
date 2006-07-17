@@ -35,7 +35,7 @@ fi
 AC_SUBST(PREFIX)
 
 case $Platform in
-powerpc-apple-darwin*)
+*-apple-darwin*)
         MACOSX=yes
         AC_DEFINE_UNQUOTED(MACOSX, [1], [Defined if compiling on the mac])
         LEADING_UNDERSCORE=1
