@@ -358,6 +358,14 @@ mkSOName root = root
 mkSOName root = "lib" ++ root ++ ".so"
 #endif
 
+#if defined(MACOSX)
+mkDynPkgName root = mkSOName (root ++ "_dyn")
+#else
+mkDynPkgName root = mkSOName root
+#endif
+
+data HSLib = Static FilePath | Dynamic FilePath
+
 --
 -- return any stuff to load for this package, plus the list of packages
 -- this package depends on. which includes stuff we have to then load
@@ -386,7 +394,9 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 #else
                     libdirs = libraryDirs package ++ ldOptsPaths
 #endif
-                libs <- mapM (findHSlib libdirs) (hslibs ++ cbits)
+		-- If we're loading dynamic libs we need the cbits to appear before the
+		-- real packages.
+                libs <- mapM (findHSlib libdirs) (cbits ++ hslibs)
 #if defined(CYGWIN) || defined(__MINGW32__)
                 windowsos <- catch (getEnv "OS")
 			   (\e -> if isDoesNotExistError e then return "Windows_98" else ioError e)
@@ -401,7 +411,9 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 #else
 		libs' <- mapM (findDLL libdirs) dlls
 #endif
-                return (deppkgs, (filterRight libs,map (either id id) libs') )
+		let slibs = [ lib | Right (Static lib)  <- libs ]
+		    dlibs = [ lib | Right (Dynamic lib) <- libs ]
+                return (deppkgs, (slibs,map (either id id) libs' ++ dlibs) )
 
 #if defined(CYGWIN) || defined(__MINGW32__)
         -- replace $topdir
@@ -422,16 +434,31 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 
         --
         -- Check that a path to a library actually reaches a library
-        -- Problem: sysPkgSuffix  is ".o", but extra libraries could be
-        -- ".so" -- what to do?
-        --
-        findHSlib :: [FilePath] -> String -> IO (Either String FilePath)
-        findHSlib [] lib         = return (Left lib)
-        findHSlib (dir:dirs) lib = do
-                  let l = dir </> lib ++ sysPkgSuffix
+        findHSlib' :: [FilePath] -> String -> IO (Maybe FilePath)
+        findHSlib' [] _           = return Nothing
+        findHSlib' (dir:dirs) lib = do
+                  let l = dir </> lib
                   b <- doesFileExist l
-                  if b then return $ Right l     -- found it!
-                       else findHSlib dirs lib
+                  if b then return $ Just l     -- found it!
+                       else findHSlib' dirs lib
+
+	findHSslib dirs lib = findHSlib' dirs $ lib ++ sysPkgSuffix
+	findHSdlib dirs lib = findHSlib' dirs $ mkDynPkgName lib
+
+        -- Problem: sysPkgSuffix  is ".o", but extra libraries could be
+        -- ".so"
+        -- Solution: first look for static library, if we don't find it
+	-- look for a dynamic version.
+	findHSlib :: [FilePath] -> String -> IO (Either String HSLib)
+	findHSlib dirs lib = do
+	    static <- findHSslib dirs lib
+	    case static of
+		Just file -> return $ Right $ Static file
+		Nothing	  -> do
+		    dynamic <- findHSdlib dirs lib
+		    case dynamic of
+			Just file -> return $ Right $ Dynamic file
+			Nothing	  -> return $ Left lib
 
         findDLL :: [FilePath] -> String -> IO (Either String FilePath)
 	findDLL [] lib         = return (Left lib)
