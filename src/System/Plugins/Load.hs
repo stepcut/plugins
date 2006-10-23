@@ -675,7 +675,7 @@ getImports m = do
 -- ---------------------------------------------------------------------
 -- C interface
 --
-foreign import ccall unsafe "lookupSymbol"
+foreign import ccall threadsafe "lookupSymbol"
    c_lookupSymbol :: CString -> IO (Ptr a)
 
 foreign import ccall unsafe "loadObj"

@@ -37,12 +37,13 @@ type Type        = String
 type Errors      = [String]
 type PackageConf = FilePath
 
-data Module = Module { path  :: !FilePath 
-                     , mname :: !String 
-                     , kind  :: !ObjType 
+data Module = Module { path  :: !FilePath
+                     , mname :: !String
+                     , kind  :: !ObjType
                      , iface :: Iface    -- cache the iface
                      , key   :: Key
                      }
+
 instance Ord Module where
     compare m1 m2 = mname m1 `compare` mname m2
 
