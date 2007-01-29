@@ -1,5 +1,4 @@
-interface "Main" Main
+interface "main" Main
 module dependencies: A, B
-package dependencies: base, haskell98, hi
-import A
-import B
+package dependencies: base, plugins-1.0
+

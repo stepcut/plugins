@@ -11,7 +11,7 @@
 #include "../../../config.h"
 
 import System.Eval
-import AltData.Dynamic
+import Data.Dynamic
 
 main = do
     a <- return $ toDyn (3::Integer)
@@ -19,7 +19,7 @@ main = do
     -- so, we try to compile a function that takes a dyn.
     -- looks like with GHC 6.4, we need to make sure the package.confs work:
     m_b <- unsafeEval_ "\\dyn -> fromDyn dyn (7 :: Integer)"
-                ["AltData.Dynamic"]
+                ["Data.Dynamic"]
                 [ ]
                 [ ]
                 []

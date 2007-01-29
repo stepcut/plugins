@@ -7,7 +7,7 @@ INCLUDES=   -I$(TOP)
 # compile with GHC to save us setting all the necessary include and
 # lib flags. use ghc -v to find out what these are if you wish to go
 # via gcc.
-BIN=./a.out
+BIN=./Main
 SRC=main.c
 
 BINDIR=		"."

@@ -3,12 +3,12 @@
 include $(TOP)/config.mk
 include $(TOP)/testsuite/check.mk
 
-BIN= 		prog/a.out
+BIN= 		prog/Main
 OBJ=		prog/Main.o
 SRC=		prog/Main.hs
 
 BINDIR=		prog
-REALBIN=	./a.out
+REALBIN=	./Main
 
 API_OBJ=	api/API.o
 
@@ -32,7 +32,7 @@ $(BIN) : $(PRIOR_OBJS) $(API_OBJ) $(SRC) $(EXTRA_OBJS)
 clean:
 	find . -name '*~' -exec rm {} \;
 	rm -rf *.{o,hi,dep}
-	rm -rf */*.{hi,o,old} */a.out
+	rm -rf */*.{hi,o,old} */Main
 	rm -rf */*core
 	rm -rf */*.a
 	rm -rf */package.conf

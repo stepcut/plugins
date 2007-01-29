@@ -1,7 +1,7 @@
 include $(TOP)/config.mk
 include $(TOP)/testsuite/check.mk
 
-BIN=a.out
+BIN=Main
 SRC=Main.hs
 
 BINDIR=		"."

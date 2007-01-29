@@ -9,6 +9,10 @@ module TestIO ( resource, resource_dyn )  where
 import API
 import Data.Dynamic
 
+import Distribution.Package
+import Language.Haskell.Parser
+import Network.HxWeb
+
 import System.IO
 import System.Posix.Types   ( ProcessID, Fd )
 import System.Posix.Process ( forkProcess, executeFile, getProcessID )

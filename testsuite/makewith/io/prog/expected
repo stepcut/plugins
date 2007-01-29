@@ -3,4 +3,4 @@ merge failed:
 parse error in ../TestIO.conf
 line: 17, col: 1
 
-a.out: failed
+Main: failed
