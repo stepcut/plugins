@@ -70,9 +70,9 @@ instance Binary Iface where
             build_tag <- get bh :: IO String     -- 'way' flag
 
 #if __GLASGOW_HASKELL__ >= 604
+            pkg_name  <- get bh :: IO FastString
             mod_name  <- get bh :: IO FastString
             _is_boot  <- get bh :: IO Bool
-            let pkg_name = mkFastString "unknown"  -- >=604 has no package field
 #elif CABAL == 1 && __GLASGOW_HASKELL__ == 603
             mod_name <- get bh :: IO FastString
             let pkg_name = mkFastString "unknown"
