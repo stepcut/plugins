@@ -237,7 +237,7 @@ dynwrap :: String -> String -> [Import] -> String
 dynwrap expr nm mods =
         "module "++nm++ "( resource ) where\n" ++
          concatMap (\m-> "import "++m++"\n") mods ++
-        "import AltData.Dynamic\n" ++
+        "import Data.Dynamic\n" ++
         "resource = let { "++x++" = \n" ++
         "{-# LINE 1 \"<eval>\" #-}\n" ++ expr ++ ";} in toDyn "++x
     where
