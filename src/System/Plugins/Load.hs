@@ -413,7 +413,7 @@ loadFunction_ :: String
               -> String
               -> IO (Maybe a)
 loadFunction_ m valsym
-   = do let symbol = prefixUnderscore++m++"_"++(encode valsym)++"_closure"
+   = do let symbol = prefixUnderscore++encode m++"_"++(encode valsym)++"_closure"
 #if DEBUG
         putStrLn $ "Looking for <<"++symbol++">>"
 #endif

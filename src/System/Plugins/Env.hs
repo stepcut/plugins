@@ -157,7 +157,7 @@ env = unsafePerformIO $ do
                 ref2  <- newIORef emptyFM
                 p     <- grabDefaultPkgConf
                 ref3  <- newIORef p               -- package.conf info
-                ref4  <- newIORef (S.fromList ["base","Cabal","haskell-src"])
+                ref4  <- newIORef (S.fromList ["base","Cabal-1.1.6","haskell-src-1.0"]) -- FIXME
                 ref5  <- newIORef emptyFM         -- merged files
                 return (mvar, ref1, ref2, ref3, ref4, ref5)
 {-# NOINLINE env #-}
@@ -284,7 +284,9 @@ addPkgConf f = do
 union :: PkgEnvs -> [PackageConfig] -> PkgEnvs
 union ls ps' = 
         let fm = emptyFM -- new FM for this package.conf
-        in foldr (\p fm' -> addToFM fm' (packageName p) p) fm ps' : ls
+        in foldr (\p fm' -> if packageName_ p == "base"
+                            then addToFM fm' (packageName_ p) p
+                            else addToFM fm' (packageName p) p) fm ps' : ls
 
 -- 
 -- | generate a PkgEnv from the system package.conf
