@@ -284,7 +284,8 @@ addPkgConf f = do
 union :: PkgEnvs -> [PackageConfig] -> PkgEnvs
 union ls ps' = 
         let fm = emptyFM -- new FM for this package.conf
-        in foldr (\p fm' -> if packageName_ p == "base"
+        in foldr (\p fm' -> if packageName_ p == "base" -- ghc doesn't supply a version with 'base'
+                                                        -- for some reason.
                             then addToFM fm' (packageName_ p) p
                             else addToFM fm' (packageName p) p) fm ps' : ls
 
