@@ -63,7 +63,7 @@ AC_DEFINE_UNQUOTED(LEADING_UNDERSCORE, $LEADING_UNDERSCORE,
 
 # Find pwd, in a cygwin friendly way. 
 # Suggested by: http://www.haskell.org/ghc/docs/latest/html/users_guide/ch11s04.html
-TOP=`echo "Directory.getCurrentDirectory >>= putStrLn.init.tail.show " | ghc --interactive -ignore-dot-ghci -v0`
+TOP=`echo "Directory.getCurrentDirectory >>= putStrLn.init.tail.show " | ghc --interactive -ignore-dot-ghci -v0 | tr -d '\r'`
 
 AC_DEFINE_UNQUOTED(TOP, "$TOP", [Path to top of build tree])
 AC_SUBST(TOP)
@@ -100,7 +100,7 @@ AC_SUBST(GLASGOW_HASKELL)
 # find path to GHC libs, for runtime_loader
 if test -n "$GHC" ; then
     AC_MSG_CHECKING([for ghc library directory])
-    GHC_LIB_PATH=`$GHC --print-libdir`
+    GHC_LIB_PATH=`$GHC --print-libdir | tr -d '\r'`
     AC_MSG_RESULT([$GHC_LIB_PATH])
 fi
 AC_DEFINE_UNQUOTED(GHC_LIB_PATH, "$GHC_LIB_PATH", [Path to ghc libraries])
