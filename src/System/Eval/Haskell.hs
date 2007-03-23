@@ -228,11 +228,6 @@ typeOf src mods = do
     makeCleaner tmpf
     return ty
 
---
--- note that the wrapper uses our altdata library for dynamic typing.
--- hence it needs to see the path to the altdata package. grr. is it
--- installed or not? what path does it have?
---
 dynwrap :: String -> String -> [Import] -> String
 dynwrap expr nm mods =
         "module "++nm++ "( resource ) where\n" ++
