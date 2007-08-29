@@ -43,6 +43,7 @@ module System.Plugins.Load (
       , loadModule      -- load a vanilla .o
       , loadFunction    -- retrieve a function from an object
       , loadFunction_   -- retrieve a function from an object
+      , loadPackageFunction
       , loadPackage     -- load a ghc library and its cbits
       , unloadPackage   -- unload a ghc library and its cbits
       , loadPackageWith -- load a pkg using the package.conf provided
@@ -412,8 +413,15 @@ loadFunction (Module { iface = i }) valsym
 loadFunction_ :: String
               -> String
               -> IO (Maybe a)
-loadFunction_ m valsym
-   = do let symbol = prefixUnderscore++encode m++"_"++(encode valsym)++"_closure"
+loadFunction_ = loadFunction__ Nothing
+
+loadFunction__ :: Maybe String
+              -> String
+              -> String
+              -> IO (Maybe a)
+loadFunction__ pkg m valsym
+   = do let symbol = prefixUnderscore++(maybe "" (\p -> encode p++"_") pkg)
+                     ++encode m++"_"++(encode valsym)++"_closure"
 #if DEBUG
         putStrLn $ "Looking for <<"++symbol++">>"
 #endif
@@ -424,6 +432,16 @@ loadFunction_ m valsym
                 (# hval #) -> return ( Just hval )
 
 
+-- | Loads a function from a package module, given the package name,
+--   module name and symbol name.
+loadPackageFunction :: String -- ^ Package name, including version number.
+                    -> String -- ^ Module name
+                    -> String -- ^ Symbol to lookup in the module
+                    -> IO (Maybe a)
+loadPackageFunction pkgName moduleName functionName =
+    do loadPackage pkgName
+       resolveObjs (unloadPackage pkgName)
+       loadFunction__ (Just pkgName) moduleName functionName
 
 --
 -- | Load a GHC-compiled Haskell vanilla object file.
