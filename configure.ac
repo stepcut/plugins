@@ -122,15 +122,15 @@ AC_ARG_ENABLE(hsx,
 
 AC_SUBST(HASKELL_SRC)
 
-AC_CHECK_PROG(TEX,tex,tex)
-if test -z "$TEX" ; then
-    AC_MSG_WARN(tex is needed to build some of the documentation)
-fi
-AC_CHECK_PROG(TEX2PAGE,tex2page,tex2page)
-if test -z "$TEX2PAGE" ; then
-    AC_MSG_WARN(tex2page is needed to build some of the documentation
-		    http://www.ccs.neu.edu/home/dorai/tex2page/tex2page-doc.html)
-fi
+#AC_CHECK_PROG(TEX,tex,tex)
+#if test -z "$TEX" ; then
+#    AC_MSG_WARN(tex is needed to build some of the documentation)
+#fi
+#AC_CHECK_PROG(TEX2PAGE,tex2page,tex2page)
+#if test -z "$TEX2PAGE" ; then
+#    AC_MSG_WARN(tex2page is needed to build some of the documentation
+#		    http://www.ccs.neu.edu/home/dorai/tex2page/tex2page-doc.html)
+#fi
 
 AC_CHECK_FUNCS(arc4random)
 
