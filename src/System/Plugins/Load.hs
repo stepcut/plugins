@@ -72,8 +72,6 @@ import HscTypes
 import Module (moduleName, moduleNameString)
 import PackageConfig (packageIdString)
 import HscMain (newHscEnv)
-import PrelInfo                ( wiredInThings, basicKnownKeyNames )
-import Name		( Name, NamedThing(..) )
 import TcRnMonad (initTcRnIf)
 
 import Data.Dynamic          ( fromDynamic, Dynamic )
@@ -100,12 +98,6 @@ readBinIface' hi_path = do
     -- kludgy as hell
     e <- newHscEnv undefined
     initTcRnIf 'r' e undefined undefined (readBinIface hi_path)
-
-knownKeyNames :: [Name]	-- Put here to avoid loops involving DsMeta,
-			-- where templateHaskellNames are defined
-knownKeyNames = map getName wiredInThings 
-	      ++ basicKnownKeyNames
-
 
 -- TODO need a loadPackage p package.conf :: IO () primitive
 
@@ -460,10 +452,10 @@ loadPackageFunction :: String -- ^ Package name, including version number.
                     -> String -- ^ Module name
                     -> String -- ^ Symbol to lookup in the module
                     -> IO (Maybe a)
-loadPackageFunction pkgName moduleName functionName =
+loadPackageFunction pkgName modName functionName =
     do loadPackage pkgName
        resolveObjs (unloadPackage pkgName)
-       loadFunction__ (Just pkgName) moduleName functionName
+       loadFunction__ (Just pkgName) modName functionName
 
 --
 -- | Load a GHC-compiled Haskell vanilla object file.
