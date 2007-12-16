@@ -28,7 +28,9 @@ module System.Plugins.LoadTypes
     , ObjType (..)
     ) where
 
-import Language.Hi.Parser
+-- import Language.Hi.Parser
+
+import HscTypes
 
 data Key = Object String | Package String
 
@@ -40,7 +42,7 @@ type PackageConf = FilePath
 data Module = Module { path  :: !FilePath
                      , mname :: !String
                      , kind  :: !ObjType
-                     , iface :: Iface    -- cache the iface
+                     , iface :: ModIface    -- cache the iface
                      , key   :: Key
                      }
 

@@ -66,7 +66,15 @@ import System.Plugins.Utils
 import System.Plugins.Consts           ( sysPkgSuffix, hiSuf, prefixUnderscore )
 import System.Plugins.LoadTypes
 
-import Language.Hi.Parser
+-- import Language.Hi.Parser
+import BinIface
+import HscTypes
+import Module (moduleName, moduleNameString)
+import PackageConfig (packageIdString)
+import HscMain (newHscEnv)
+import PrelInfo                ( wiredInThings, basicKnownKeyNames )
+import Name		( Name, NamedThing(..) )
+import TcRnMonad (initTcRnIf)
 
 import Data.Dynamic          ( fromDynamic, Dynamic )
 import Data.Typeable         ( Typeable )
@@ -84,6 +92,20 @@ import GHC.Prim                 ( unsafeCoerce# )
 import System.IO                ( hFlush, stdout )
 #endif
 import System.IO                ( hClose )
+
+ifaceModuleName = moduleNameString . moduleName . mi_module
+
+readBinIface' :: FilePath -> IO ModIface
+readBinIface' hi_path = do
+    -- kludgy as hell
+    e <- newHscEnv undefined
+    initTcRnIf 'r' e undefined undefined (readBinIface hi_path)
+
+knownKeyNames :: [Name]	-- Put here to avoid loops involving DsMeta,
+			-- where templateHaskellNames are defined
+knownKeyNames = map getName wiredInThings 
+	      ++ basicKnownKeyNames
+
 
 -- TODO need a loadPackage p package.conf :: IO () primitive
 
@@ -138,10 +160,10 @@ load obj incpaths pkgconfs sym = do
 
     -- why is this the package name?
 #if DEBUG
-    putStr (' ':(decode $ mi_module hif)) >> hFlush stdout
+    putStr (' ':(decode $ ifaceModuleName hif)) >> hFlush stdout
 #endif
 
-    m' <- loadObject obj (Object (mi_module hif))
+    m' <- loadObject obj . Object . ifaceModuleName $ hif
     let m = m' { iface = hif }
     resolveObjs (mapM_ unloadAll (m:moduleDeps))
 
@@ -366,7 +388,7 @@ reload m@(Module{path = p, iface = hi}) sym = do
 #if DEBUG
         putStr ("Reloading "++(mname m)++" ... ") >> hFlush stdout
 #endif
-        m_ <- loadObject p (Object $ mi_module hi)   -- load object at path p
+        m_ <- loadObject p . Object . ifaceModuleName $ hi   -- load object at path p
         let m' = m_ { iface = hi }
     
         resolveObjs (unloadAll m)
@@ -408,7 +430,7 @@ loadFunction :: Module          -- ^ The module the value is in
              -> String          -- ^ Symbol name of value
              -> IO (Maybe a)    -- ^ The value you want
 loadFunction (Module { iface = i }) valsym
-    = loadFunction_ (mi_module i) valsym
+    = loadFunction_ (ifaceModuleName i) valsym
 
 loadFunction_ :: String
               -> String
@@ -487,7 +509,7 @@ loadObject' p ky k
          addModule k (emptyMod p)   -- needs to Z-encode module name
          return (emptyMod p)
 
-    where emptyMod q = Module q (mkModid q) Vanilla emptyIface ky
+    where emptyMod q = Module q (mkModid q) Vanilla undefined ky
 
 --
 -- load a single object. no dependencies. You should know what you're
@@ -499,8 +521,8 @@ loadModule obj = do
     exists <- doesFileExist hifile
     if (not exists)
         then error $ "No .hi file found for "++show obj
-        else do hiface <- readIface hifile
-                loadObject obj (Object (mi_module hiface))
+        else do hiface <- readBinIface' hifile
+                loadObject obj (Object (ifaceModuleName hiface))
 
 --
 -- | Load a generic .o file, good for loading C objects.
@@ -542,7 +564,7 @@ loadShared str = do
 #endif
     maybe_errmsg <- withCString str $ \dll -> c_addDLL dll
     if maybe_errmsg == nullPtr 
-        then return (Module str (mkModid str) Shared emptyIface (Package (mkModid str)))
+        then return (Module str (mkModid str) Shared undefined (Package (mkModid str)))
         else do e <- peekCString maybe_errmsg
                 panic $ "loadShared: couldn't load `"++str++"\' because "++e
 
@@ -627,7 +649,7 @@ loadPackageWith p pkgconfs = do
 -- the modenv fm. We need a canonical form for the keys -- is basename
 -- good enough?
 --
-loadDepends :: FilePath -> [FilePath] -> IO (Iface,[Module])
+loadDepends :: FilePath -> [FilePath] -> IO (ModIface,[Module])
 loadDepends obj incpaths = do
     let hifile = replaceSuffix obj hiSuf
     exists <- doesFileExist hifile
@@ -636,13 +658,13 @@ loadDepends obj incpaths = do
 #if DEBUG
                 putStrLn "No .hi file found." >> hFlush stdout
 #endif
-                return (emptyIface,[])   -- could be considered fatal
+                return (undefined,[])   -- could be considered fatal
 
-        else do hiface <- readIface hifile
+        else do hiface <- readBinIface' hifile
                 let ds = mi_deps hiface
 
                 -- remove ones that we've already loaded
-                ds' <- filterM loaded (dep_mods ds)
+                ds' <- filterM loaded . map (moduleNameString . fst) . dep_mods $ ds
 
                 -- now, try to generate a path to the actual .o file
                 -- fix up hierachical names
@@ -662,7 +684,7 @@ loadDepends obj incpaths = do
 
                 -- and find some packages to load, as well.
                 let ps = dep_pkgs ds
-                ps' <- filterM loaded (nub ps)
+                ps' <- filterM loaded . map packageIdString . nub $ ps
 
 #if DEBUG
                 when (not (null ps')) $
@@ -687,8 +709,8 @@ loadDepends obj incpaths = do
 --
 getImports :: String -> IO [String]
 getImports m = do
-        hi <- readIface (m ++ hiSuf)
-        return $ dep_mods (mi_deps hi)
+        hi <- readBinIface' (m ++ hiSuf)
+        return . map (moduleNameString . fst) . dep_mods . mi_deps $ hi
 
 -- ---------------------------------------------------------------------
 -- C interface

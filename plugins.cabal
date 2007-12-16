@@ -5,12 +5,6 @@ License-file:   LICENSE
 author:         Don Stewart
 maintainer:     dons@cse.unsw.edu.au
 exposed-modules:
-        Language.Hi.Binary,
-        Language.Hi.FastMutInt,
-        Language.Hi.FastString,
-        Language.Hi.Parser,
-        Language.Hi.PrimPacked,
-        Language.Hi.Syntax,
         System.Eval,
         System.Eval.Haskell,
         System.Eval.Utils,
@@ -27,10 +21,8 @@ exposed-modules:
         System.Plugins.Parser,
         System.Plugins.Process,
         System.Plugins.Utils
-c-sources:
-        src/Language/Hi/hschooks.c
 includes:             Linker.h
 extensions:           CPP, ForeignFunctionInterface
-Build-Depends:        base, Cabal, haskell-src
+Build-Depends:        base, Cabal, haskell-src, containers, array, directory, random, process, ghc
 ghc-options:          -Wall -O -fasm -funbox-strict-fields -fno-warn-missing-signatures
-hs-source-dir: src
+hs-source-dirs: src
