@@ -34,7 +34,7 @@ library
             System.Plugins.Utils
     includes:             Linker.h
     extensions:           CPP, ForeignFunctionInterface
-    ghc-options:          -Wall -O -fasm -funbox-strict-fields -fno-warn-missing-signatures
+    ghc-options:          -Wall -funbox-strict-fields -fno-warn-missing-signatures
     hs-source-dirs:       src
     build-depends:        base  >= 3.0,
                           Cabal >= 1.2.3,
