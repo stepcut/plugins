@@ -1,5 +1,5 @@
 name:               plugins
-version:            1.1
+version:            1.2
 homepage:           http://code.haskell.org/~dons/code/hs-plugins
 synopsis:           Dynamic linking for Haskell and C objects
 description:        Dynamic linking and runtime evaluation of Haskell,
