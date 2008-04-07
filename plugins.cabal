@@ -14,8 +14,10 @@ author:             Don Stewart
 maintainer:         Don Stewart <dons@galois.com>
 cabal-version:      >= 1.2
 build-type:         Configure
-extra-source-files: config.guess config.h.in config.mk.in config.sub configure
-                    configure.ac install.sh Makefile
+extra-source-files: config.guess, config.h.in, config.mk.in, config.sub,
+                    configure, configure.ac, install.sh, Makefile,
+                    testsuite/makewith/io/TestIO.conf.in,
+                    testsuite/makewith/unsafeio/Unsafe.conf.in
 
 library
     exposed-modules:
