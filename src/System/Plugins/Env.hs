@@ -61,13 +61,14 @@ import System.Plugins.Consts           ( ghcLibraryPath, sysPkgConf, sysPkgSuffi
 
 import Data.IORef               ( writeIORef, readIORef, newIORef, IORef() )
 import Data.Maybe               ( isJust, isNothing, fromMaybe )
-import Data.List                ( isPrefixOf, nub )
+import Data.List                ( isPrefixOf, isInfixOf, nub )
 
 import System.IO.Unsafe         ( unsafePerformIO )
+import System.IO                ( hGetContents )
 import System.Directory         ( doesFileExist )
+import System.Process           ( waitForProcess, runInteractiveCommand )
 #if defined(CYGWIN) || defined(__MINGW32__)
 import Prelude hiding ( catch, ioError )
-import System.Environment       ( getEnv )
 import System.IO.Error          ( catch, ioError, isDoesNotExistError )
 #endif
 
@@ -297,9 +298,11 @@ union ls ps' =
 --
 
 grabDefaultPkgConf :: IO PkgEnvs
+
 grabDefaultPkgConf = do
-        pkgs <- readPackageConf $ ghcLibraryPath </> sysPkgConf
-        return $ union [] pkgs
+        pkg_confs <- get_ghc_configs
+        packages <- mapM readPackageConf pkg_confs
+        return $ foldl union [] packages
 
 --
 -- parse a source file, expanding any $libdir we see.
@@ -514,3 +517,26 @@ addMerge a b z = modifyMerged env $ \fm -> return $ addToFM fm (a,b) z
 (</>) :: FilePath -> FilePath -> FilePath
 [] </> b = b
 a  </> b = a ++ "/" ++ b
+
+-------------------------------------------------------------------------
+--
+-- 'run_cmd' executes command and returns it's standard output
+-- as 'String'
+
+run_cmd :: String -> IO String
+run_cmd cmd = do (_hI, hO, _hE, hProcess) <- runInteractiveCommand cmd
+                 output <- hGetContents hO
+                 _exitCode <- waitForProcess hProcess
+                 return output
+--
+-- 'get_ghc_configs' returns list of strings of packages.conf files in system
+
+get_ghc_configs :: IO [String]
+get_ghc_configs = do ghc_out <- run_cmd "ghc-pkg list"
+                     let configs = map (reverse.strip_trash.reverse) $
+                                   filter (isInfixOf sysPkgConf) $ lines ghc_out
+                     return configs
+                         -- | strip ":\r?" from string head
+                         where strip_trash [] = []
+                               strip_trash xs@(x:xs') | x `elem` ":\r" = strip_trash xs'
+                                                      | otherwise      = xs
