@@ -661,7 +661,7 @@ loadDepends obj incpaths = do
                 -- now, try to generate a path to the actual .o file
                 -- fix up hierachical names
                 let mods_ = map (\s -> (s, map (\c -> 
-                        if c == '.' then '/' else c) $ decode s)) ds'
+                        if c == '.' then '/' else c) $ s)) ds'
 
                 -- construct a list of possible dependent modules to load
                 let mods = concatMap (\p -> 
@@ -691,7 +691,7 @@ loadDepends obj incpaths = do
 #if DEBUG
                 when (not (null ps')) $ putStrLn "done" 
                 putStr "Loading object" 
-                mapM_ (\(m,_) -> putStr (" "++(decode m)) >> hFlush stdout) mods''
+                mapM_ (\(m,_) -> putStr (" "++ m) >> hFlush stdout) mods''
 #endif
                 moduleDeps <- mapM (\(hi,m) -> loadObject m (Object hi)) mods''
                 return (hiface,moduleDeps)
