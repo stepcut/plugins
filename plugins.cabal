@@ -1,5 +1,5 @@
 name:               plugins
-version:            1.2
+version:            1.3
 homepage:           http://code.haskell.org/~dons/code/hs-plugins
 synopsis:           Dynamic linking for Haskell and C objects
 description:        Dynamic linking and runtime evaluation of Haskell,
@@ -10,7 +10,7 @@ description:        Dynamic linking and runtime evaluation of Haskell,
 category:           System
 license:            BSD3
 License-file:       LICENSE
-author:             Don Stewart
+author:             Don Stewart 2004-2008
 maintainer:         Don Stewart <dons@galois.com>
 cabal-version:      >= 1.2
 build-type:         Configure
