@@ -40,7 +40,7 @@ module System.Plugins.PackageAPI (
 
 #if CABAL == 1 || __GLASGOW_HASKELL__ >= 604
 import Distribution.InstalledPackageInfo
-import Distribution.Package
+import Distribution.Package hiding (depends, packageName)
 #else
 import System.Plugins.Package
 #endif

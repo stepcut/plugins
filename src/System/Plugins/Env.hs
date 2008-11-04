@@ -74,7 +74,7 @@ import System.IO.Error          ( catch, ioError, isDoesNotExistError )
 
 import Control.Concurrent.MVar  ( MVar(), newMVar, withMVar )
 
-import Distribution.Package
+import Distribution.Package hiding (packageName)
 import Text.ParserCombinators.ReadP
 
 import qualified Data.Map as M

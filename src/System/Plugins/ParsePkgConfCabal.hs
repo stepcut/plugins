@@ -6,7 +6,7 @@ module System.Plugins.ParsePkgConfCabal (
   ) where
 
 import Distribution.InstalledPackageInfo
-import Distribution.Package
+import Distribution.Package hiding (depends)
 import Distribution.Version
 
 import Data.Char             ( isSpace, isAlpha, isAlphaNum, isUpper, isDigit )
