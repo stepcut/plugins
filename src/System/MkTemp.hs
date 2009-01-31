@@ -48,9 +48,7 @@ import System.IO.Error          ( isAlreadyExistsError )
 import System.IO.Error          ( isAlreadyExistsError, isAlreadyInUseError, isPermissionError )
 #endif
 
-import GHC.IOBase               ( IOException(IOError), 
-                                  Exception(IOException), 
-                                  IOErrorType(AlreadyExists) )
+import GHC.IOBase                (IOException(..), IOErrorType(AlreadyExists) )
 
 #ifndef __MINGW32__
 import qualified System.Posix.Internals ( c_getpid )
@@ -185,20 +183,18 @@ tweak i s
 
 -- ---------------------------------------------------------------------
 
-alreadyExists :: Exception -> Maybe Exception
-alreadyExists e@(IOException ioe) 
-        | isAlreadyExistsError ioe = Just e
+alreadyExists :: IOError -> Maybe IOError
+alreadyExists ioe
+        | isAlreadyExistsError ioe = Just ioe
         | otherwise                = Nothing
-alreadyExists _ = Nothing
 
-isInUse :: Exception -> Maybe ()
+isInUse :: IOError -> Maybe ()
 #ifndef __MINGW32__
-isInUse (IOException ioe) 
+isInUse ioe 
         | isAlreadyExistsError ioe = Just ()
         | otherwise                = Nothing
-isInUse _ = Nothing
 #else
-isInUse (IOException ioe) 
+isInUse ioe
         | isAlreadyInUseError  ioe = Just ()
         | isPermissionError    ioe = Just ()
         | isAlreadyExistsError ioe = Just ()    -- we throw this

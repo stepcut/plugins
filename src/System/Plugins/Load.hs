@@ -69,8 +69,7 @@ import System.Plugins.LoadTypes
 -- import Language.Hi.Parser
 import BinIface
 import HscTypes
-import Module (moduleName, moduleNameString)
-import PackageConfig (packageIdString)
+import Module (moduleName, moduleNameString, packageIdString)
 import HscMain (newHscEnv)
 import TcRnMonad (initTcRnIf)
 
@@ -97,7 +96,7 @@ readBinIface' :: FilePath -> IO ModIface
 readBinIface' hi_path = do
     -- kludgy as hell
     e <- newHscEnv undefined
-    initTcRnIf 'r' e undefined undefined (readBinIface hi_path)
+    initTcRnIf 'r' e undefined undefined (readBinIface IgnoreHiWay QuietBinIFaceReading hi_path)
 
 -- TODO need a loadPackage p package.conf :: IO () primitive
 

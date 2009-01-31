@@ -75,7 +75,6 @@ import System.Directory         ( doesFileExist, removeFile
                                 , getModificationTime )
 
 import Control.Exception        ( handleJust )
-import GHC.IOBase               ( Exception(IOException) )
 
 #if __GLASGOW_HASKELL__ >= 604
 import System.IO.Error          ( isDoesNotExistError )
@@ -148,7 +147,7 @@ make src args = rawMake src ("-c":args)  True
 --
 makeAll :: FilePath -> [Arg] -> IO MakeStatus
 makeAll src args = 
-    rawMake src ( "--make":"-no-hs-main":"-no-link":"-v0":args ) False
+    rawMake src ( "--make":"-no-hs-main":"-c":"-v0":args ) False
 
 -- | This is a variety of 'make' that first calls 'merge' to
 -- combine the plugin source with a syntax stub. The result is then
@@ -295,7 +294,7 @@ build src obj extra_opts = do
                            -- does this work in the presence of hier plugins?
                            -- won't handle hier names properly.
 
-    let ghc_opts = [ "-Onot" ]
+    let ghc_opts = [ "-O0" ]
         output   = [ "-o", obj, "-odir", odir, 
                      "-hidir", odir, "-i" ++ odir ]
 
@@ -436,10 +435,9 @@ makeCleaner f = makeClean f >> rm_f (dropSuffix f <> hsSuf)
 --
 rm_f f = handleJust doesntExist (\_->return ()) (removeFile f)
     where
-        doesntExist (IOException ioe)
+        doesntExist ioe
                 | isDoesNotExistError ioe = Just ()
                 | otherwise               = Nothing
-        doesntExist _ = Nothing
 
 readFile' f = do
     h <- openFile f ReadMode

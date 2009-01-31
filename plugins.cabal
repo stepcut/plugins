@@ -41,13 +41,14 @@ library
     extensions:           CPP, ForeignFunctionInterface
     ghc-options:          -Wall -funbox-strict-fields -fno-warn-missing-signatures
     hs-source-dirs:       src
-    build-depends:        base  >= 3 && < 4,
-                          Cabal >= 1.4 && < 1.5,
+    build-depends:        base  >= 4,
+                          Cabal >= 1.6,
                           haskell-src,
                           containers,
                           array,
                           directory,
                           random,
                           process,
-                          ghc >= 6.8
+                          ghc >= 6.10,
+                          ghc-prim
 

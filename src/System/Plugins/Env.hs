@@ -52,11 +52,6 @@ module System.Plugins.Env (
 
 import System.Plugins.LoadTypes (Module)
 import System.Plugins.PackageAPI  {- everything -}
-#if CABAL == 1 || __GLASGOW_HASKELL__ >= 604
-import System.Plugins.ParsePkgConfCabal( parsePkgConf )
-#else
-import System.Plugins.ParsePkgConfLite ( parsePkgConf )
-#endif
 import System.Plugins.Consts           ( ghcLibraryPath, sysPkgConf, sysPkgSuffix )
 
 import Data.IORef               ( writeIORef, readIORef, newIORef, IORef() )
@@ -74,8 +69,14 @@ import System.IO.Error          ( catch, ioError, isDoesNotExistError )
 
 import Control.Concurrent.MVar  ( MVar(), newMVar, withMVar )
 
-import Distribution.Package hiding (packageName)
-import Text.ParserCombinators.ReadP
+import Distribution.InstalledPackageInfo
+-- import Distribution.Package hiding (packageName, PackageName(..))
+import Distribution.Simple.Compiler
+import Distribution.Simple.GHC
+import Distribution.Simple.PackageIndex
+import Distribution.Simple.Program
+import Distribution.Text
+import Distribution.Verbosity
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -146,6 +147,7 @@ type Env = (MVar (),
             IORef PkgEnvs,
             IORef StaticPkgEnv,
             IORef MergeEnv)
+
 
 --
 -- our environment, contains a set of loaded objects, and a map of known
@@ -285,9 +287,9 @@ addPkgConf f = do
 union :: PkgEnvs -> [PackageConfig] -> PkgEnvs
 union ls ps' = 
         let fm = emptyFM -- new FM for this package.conf
-        in foldr (\p fm' -> if packageName_ p == "base" -- ghc doesn't supply a version with 'base'
-                                                        -- for some reason.
-                            then addToFM (addToFM fm' (packageName_ p) p) (packageName p) p
+        in foldr (\p fm' -> if (display $ package p) == "base" -- ghc doesn't supply a version with 'base'
+                                                       -- for some reason.
+                            then addToFM (addToFM fm' (display $ package p) p) (packageName p) p
                             else addToFM fm' (packageName p) p) fm ps' : ls
 
 -- 
@@ -309,9 +311,14 @@ grabDefaultPkgConf = do
 --
 readPackageConf :: FilePath -> IO [PackageConfig]
 readPackageConf f = do
-        s <- readFile f
-        let p = parsePkgConf s
-        return $! map expand_libdir p
+--        s <- readFile f
+--        let p = map parseInstalledPackageInfo $ splitPkgs s
+--        return $ flip map p $ \p' -> case p' of
+--          ParseFailed e -> error  $ show e
+--          ParseOk _ c   -> expand_libdir c
+    pc <- configureAllKnownPrograms silent defaultProgramConfiguration
+    pkgIndex <- getInstalledPackages silent (SpecificPackageDB f) pc
+    return $ allPackages pkgIndex
 
   where
       expand_libdir :: PackageConfig -> PackageConfig
@@ -324,6 +331,15 @@ readPackageConf f = do
       expand s | "$libdir" `isPrefixOf` s = ghcLibraryPath ++ drop 7 s
       expand s = s
 
+      splitPkgs :: String -> [String]
+      splitPkgs = map unlines . splitWith ("---" ==) . lines
+        where
+          splitWith :: (a -> Bool) -> [a] -> [[a]]
+          splitWith p xs = ys : case zs of
+                             []   -> []
+                             _:ws -> splitWith p ws
+            where (ys,zs) = break p xs
+
 -- -----------------------------------------------------------
 -- Static package management stuff. A static package is linked with the base
 -- application and we should therefore not link with any of the DLLs it requires.
@@ -332,10 +348,7 @@ addStaticPkg :: PackageName -> IO ()
 addStaticPkg pkg = modifyStaticPkgEnv env $ \set -> return $ S.insert pkg set
 
 isStaticPkg :: PackageName -> IO Bool
-isStaticPkg pkg
-    = case readP_to_S parsePackageName pkg of
-        ((pkgName,_):_) -> withStaticPkgEnv env $ \set -> return $ S.member pkgName set
-        [] -> return False
+isStaticPkg pkg = withStaticPkgEnv env $ \set -> return $ S.member pkg set
 
 --
 -- Package path, given a package name, look it up in the environment and
@@ -405,21 +418,21 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
         go (fm:fms) q = case lookupFM fm q of
             Nothing -> go fms q     -- look in other pkgs
 
-            Just package -> do
-                let    hslibs  = hsLibraries package
-                       extras' = extraLibraries package
+            Just pkg -> do
+                let    hslibs  = hsLibraries pkg
+                       extras' = extraLibraries pkg
                        cbits   = filter (\e -> reverse (take (length "_cbits") (reverse e)) == "_cbits") extras'
                        extras  = filter (flip notElem cbits) extras'
-                       ldopts  = ldOptions package
-                       deppkgs = packageDeps package
+                       ldopts  = ldOptions pkg
+                       deppkgs = packageDeps pkg
                 ldInput <- mapM classifyLdInput ldopts
                 let ldOptsLibs  = [ path | Just (DLL path) <- ldInput ]
                     ldOptsPaths = [ path | Just (DLLPath path) <- ldInput ]
                     dlls        = map mkSOName (extras ++ ldOptsLibs)
 #if defined(CYGWIN) || defined(__MINGW32__)
-                    libdirs = fix_topdir (libraryDirs package) ++ ldOptsPaths
+                    libdirs = fix_topdir (libraryDirs pkg) ++ ldOptsPaths
 #else
-                    libdirs = libraryDirs package ++ ldOptsPaths
+                    libdirs = libraryDirs pkg ++ ldOptsPaths
 #endif
 		-- If we're loading dynamic libs we need the cbits to appear before the
 		-- real packages.
@@ -454,10 +467,10 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 	replace_topdir (x:xs)       = x : replace_topdir xs
 #endif
         -- a list elimination form for the Maybe type
-        filterRight :: [Either left right] -> [right]
-        filterRight []           = []
-        filterRight (Right x:xs) = x:filterRight xs
-        filterRight (Left _:xs)  =   filterRight xs
+        --filterRight :: [Either left right] -> [right]
+        --filterRight []           = []
+        --filterRight (Right x:xs) = x:filterRight xs
+        --filterRight (Left _:xs)  =   filterRight xs
 
         --
         -- Check that a path to a library actually reaches a library

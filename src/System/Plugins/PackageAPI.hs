@@ -40,7 +40,8 @@ module System.Plugins.PackageAPI (
 
 #if CABAL == 1 || __GLASGOW_HASKELL__ >= 604
 import Distribution.InstalledPackageInfo
-import Distribution.Package hiding (depends, packageName)
+import Distribution.Package hiding (depends, packageName, PackageName(..))
+import Distribution.Text
 #else
 import System.Plugins.Package
 #endif
@@ -57,9 +58,9 @@ type PackageName = String
 
 type PackageConfig = InstalledPackageInfo
 
-packageName = showPackageId . package
+packageName = display . package
 packageName_ = pkgName . package
-packageDeps = (map showPackageId) . depends
+packageDeps = (map display) . depends
 
 updImportDirs f pk@(InstalledPackageInfo { importDirs = idirs }) =
         pk { importDirs = f idirs }
