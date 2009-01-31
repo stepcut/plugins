@@ -14,7 +14,7 @@ import Control.Concurrent       (forkIO)
 import qualified Posix as P
 #endif
 
-import qualified Control.Exception
+import qualified Control.OldException as E
 
 --
 -- slight wrapper over popen for calls that don't care about stdin to the program
@@ -38,7 +38,7 @@ type ProcessID = ProcessHandle
 --
 popen :: FilePath -> [String] -> Maybe String -> IO (String,String,ProcessID)
 popen file args minput =
-    Control.Exception.handle (\e -> return ([],show e,error (show e))) $ do
+    E.handle (\e -> return ([],show e, error (show e))) $ do
 
     (inp,out,err,pid) <- runInteractiveProcess file args Nothing Nothing
 
@@ -55,8 +55,8 @@ popen file args minput =
     -- data gets pulled as it becomes available. you have to force the
     -- output strings before waiting for the process to terminate.
     --
-    forkIO (Control.Exception.evaluate (length output) >> return ())
-    forkIO (Control.Exception.evaluate (length errput) >> return ())
+    forkIO (E.evaluate (length output) >> return ())
+    forkIO (E.evaluate (length errput) >> return ())
 
     -- And now we wait. We must wait after we read, unsurprisingly.
     exitCode <- waitForProcess pid -- blocks without -threaded, you're warned.
@@ -79,7 +79,7 @@ popen file args minput =
 --
 popen :: FilePath -> [String] -> Maybe String -> IO (String,String,P.ProcessID)
 popen f s m = 
-        Control.Exception.handle (\e -> return ([], show e, error $ show e )) $ do
+        E.handle (\e -> return ([], show e, error $ show e )) $ do
             x@(_,_,pid) <- P.popen f s m 
             b <- P.getProcessStatus True False pid  -- wait
             return $ case b of    

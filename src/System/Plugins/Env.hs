@@ -52,11 +52,11 @@ module System.Plugins.Env (
 
 import System.Plugins.LoadTypes (Module)
 import System.Plugins.PackageAPI  {- everything -}
-import System.Plugins.Consts           ( ghcLibraryPath, sysPkgConf, sysPkgSuffix )
+import System.Plugins.Consts           ( sysPkgConf, sysPkgSuffix )
 
 import Data.IORef               ( writeIORef, readIORef, newIORef, IORef() )
 import Data.Maybe               ( isJust, isNothing, fromMaybe )
-import Data.List                ( isPrefixOf, isInfixOf, nub )
+import Data.List                ( isInfixOf, nub )
 
 import System.IO.Unsafe         ( unsafePerformIO )
 import System.IO                ( hGetContents )
@@ -311,34 +311,9 @@ grabDefaultPkgConf = do
 --
 readPackageConf :: FilePath -> IO [PackageConfig]
 readPackageConf f = do
---        s <- readFile f
---        let p = map parseInstalledPackageInfo $ splitPkgs s
---        return $ flip map p $ \p' -> case p' of
---          ParseFailed e -> error  $ show e
---          ParseOk _ c   -> expand_libdir c
     pc <- configureAllKnownPrograms silent defaultProgramConfiguration
     pkgIndex <- getInstalledPackages silent (SpecificPackageDB f) pc
     return $ allPackages pkgIndex
-
-  where
-      expand_libdir :: PackageConfig -> PackageConfig
-      expand_libdir pk =
-        let pk'   = updImportDirs  (\idirs -> map expand idirs) pk
-            pk''  = updLibraryDirs (\ldirs -> map expand ldirs) pk'
-        in  pk''
-
-      expand :: FilePath -> FilePath
-      expand s | "$libdir" `isPrefixOf` s = ghcLibraryPath ++ drop 7 s
-      expand s = s
-
-      splitPkgs :: String -> [String]
-      splitPkgs = map unlines . splitWith ("---" ==) . lines
-        where
-          splitWith :: (a -> Bool) -> [a] -> [[a]]
-          splitWith p xs = ys : case zs of
-                             []   -> []
-                             _:ws -> splitWith p ws
-            where (ys,zs) = break p xs
 
 -- -----------------------------------------------------------
 -- Static package management stuff. A static package is linked with the base
