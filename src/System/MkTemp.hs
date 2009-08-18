@@ -40,6 +40,7 @@ import Data.List
 import Data.Char                ( chr, ord, isDigit )
 import Control.Monad            ( liftM )
 import Control.Exception        ( handleJust )
+import System.FilePath          ( splitFileName, (</>) )
 import System.Directory         ( doesDirectoryExist, doesFileExist, createDirectory )
 import System.IO
 #ifndef __MINGW32__
@@ -90,8 +91,9 @@ gettemp path doopen domkdir slen = do
     -- firstly, break up the path and extract the template
     --
     let (pref,tmpl,suff) = let (r,s) = splitAt (length path - slen) path
-                               (p,t) = break (== 'X') r
-                           in (p,t,s)
+                               (d,f) = splitFileName r 
+                               (p,t) = break (== 'X') f
+                           in (d </> p,t,s)
     --
     -- an error if there is only a suffix, it seems
     --
