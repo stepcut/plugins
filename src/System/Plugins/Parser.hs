@@ -28,7 +28,7 @@ module System.Plugins.Parser (
 
 import Data.List 
 import Data.Char
-import Data.Either
+import Data.Either ( )
 
 #if defined(WITH_HSX)
 import Language.Haskell.Hsx

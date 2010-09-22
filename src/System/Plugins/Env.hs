@@ -52,16 +52,16 @@ module System.Plugins.Env (
 
 import System.Plugins.LoadTypes (Module)
 import System.Plugins.PackageAPI  {- everything -}
-import System.Plugins.Consts           ( sysPkgConf, sysPkgSuffix )
+import System.Plugins.Consts           ( sysPkgSuffix )
+
+import Control.Monad            ( liftM )
 
 import Data.IORef               ( writeIORef, readIORef, newIORef, IORef() )
 import Data.Maybe               ( isJust, isNothing, fromMaybe )
-import Data.List                ( isInfixOf, nub )
+import Data.List                ( nub )
 
 import System.IO.Unsafe         ( unsafePerformIO )
-import System.IO                ( hGetContents )
 import System.Directory         ( doesFileExist )
-import System.Process           ( waitForProcess, runInteractiveCommand )
 #if defined(CYGWIN) || defined(__MINGW32__)
 import Prelude hiding ( catch, ioError )
 import System.IO.Error          ( catch, ioError, isDoesNotExistError )
@@ -90,6 +90,10 @@ emptyFM   = M.empty
 
 addToFM :: (Ord key) => FiniteMap key elt -> key -> elt -> FiniteMap key elt
 addToFM   = \m k e -> M.insert k e m
+
+addWithFM :: (Ord key) 
+          => (elt -> elt -> elt) -> FiniteMap key elt -> key -> elt -> FiniteMap key elt
+addWithFM   = \comb m k e -> M.insertWith comb k e m
 
 delFromFM :: (Ord key) => FiniteMap key elt -> key -> FiniteMap key elt
 delFromFM = flip M.delete
@@ -160,7 +164,9 @@ env = unsafePerformIO $ do
                 ref2  <- newIORef emptyFM
                 p     <- grabDefaultPkgConf
                 ref3  <- newIORef p               -- package.conf info
-                ref4  <- newIORef (S.fromList ["base","Cabal-1.1.6","haskell-src-1.0"]) -- FIXME
+                ref4  <- newIORef (S.fromList ["base","Cabal","haskell-src", "containers",
+                                               "arrays", "directory", "random", "process",
+                                               "ghc", "ghc-prim"])
                 ref5  <- newIORef emptyFM         -- merged files
                 return (mvar, ref1, ref2, ref3, ref4, ref5)
 {-# NOINLINE env #-}
@@ -282,16 +288,26 @@ addPkgConf f = do
     modifyPkgEnv env $ \ls -> return $ union ls ps
 
 --
--- | add a new FM for the package.conf to the list of existing ones
+-- | add a new FM for the package.conf to the list of existing ones; if a package occurs multiple
+-- times, pick the one with the higher version number as the default (e.g., important for base in
+-- GHC 6.12)
 --
 union :: PkgEnvs -> [PackageConfig] -> PkgEnvs
 union ls ps' = 
         let fm = emptyFM -- new FM for this package.conf
-        in foldr (\p fm' -> if (display $ package p) == "base" -- ghc doesn't supply a version with 'base'
-                                                       -- for some reason.
-                            then addToFM (addToFM fm' (display $ package p) p) (packageName p) p
-                            else addToFM fm' (packageName p) p) fm ps' : ls
+        in foldr addOnePkg fm ps' : ls
+    where 
+      -- we add each package with and without it's version number
+      addOnePkg p fm' = addToPkgEnvs (addToPkgEnvs fm' (display $ sourcePackageId p) p)
+                                     (packageName p) p
+      
+      -- if no version number specified, pick the higher version
+      addToPkgEnvs = addWithFM higherVersion
 
+      higherVersion pkgconf1 pkgconf2 
+        | installedPackageId pkgconf1 >= installedPackageId pkgconf2 = pkgconf1
+        | otherwise                                                  = pkgconf2
+        
 -- 
 -- | generate a PkgEnv from the system package.conf
 -- The path to the default package.conf was determined by /configure/
@@ -300,11 +316,10 @@ union ls ps' =
 --
 
 grabDefaultPkgConf :: IO PkgEnvs
-
 grabDefaultPkgConf = do
-        pkg_confs <- get_ghc_configs
-        packages <- mapM readPackageConf pkg_confs
-        return $ foldl union [] packages
+        pc <- configureAllKnownPrograms silent defaultProgramConfiguration
+        pkgIndex <- getInstalledPackages silent [GlobalPackageDB, UserPackageDB] pc
+        return $ [] `union` allPackages pkgIndex
 
 --
 -- parse a source file, expanding any $libdir we see.
@@ -312,7 +327,7 @@ grabDefaultPkgConf = do
 readPackageConf :: FilePath -> IO [PackageConfig]
 readPackageConf f = do
     pc <- configureAllKnownPrograms silent defaultProgramConfiguration
-    pkgIndex <- getInstalledPackages silent (SpecificPackageDB f) pc
+    pkgIndex <- getInstalledPackages silent [GlobalPackageDB, UserPackageDB, SpecificPackageDB f] pc
     return $ allPackages pkgIndex
 
 -- -----------------------------------------------------------
@@ -345,13 +360,10 @@ isStaticPkg pkg = withStaticPkgEnv env $ \set -> return $ S.member pkg set
 --
 lookupPkg :: PackageName -> IO ([FilePath],[FilePath])
 lookupPkg p = do 
-        t <- lookupPkg' p
+        (ps, (f, g)) <- lookupPkg' p
         static <- isStaticPkg p
-        case t of ([],(f,g)) -> return (f,if static then [] else g)
-                  (ps,(f,g)) -> do gss <- mapM lookupPkg ps
-				   let (f',g') = unzip gss
-				   return $ (nub $ (concat f') ++ f
-                                            ,if static then [] else nub $ (concat g') ++ g)
+        (f', g') <- liftM unzip $ mapM lookupPkg ps
+        return $ (nub $ (concat f') ++ f, if static then [] else nub $ (concat g') ++ g)
 
 data LibrarySpec
    = DLL String         -- -lLib
@@ -506,25 +518,3 @@ addMerge a b z = modifyMerged env $ \fm -> return $ addToFM fm (a,b) z
 [] </> b = b
 a  </> b = a ++ "/" ++ b
 
--------------------------------------------------------------------------
---
--- 'run_cmd' executes command and returns it's standard output
--- as 'String'
-
-run_cmd :: String -> IO String
-run_cmd cmd = do (_hI, hO, _hE, hProcess) <- runInteractiveCommand cmd
-                 output <- hGetContents hO
-                 _exitCode <- waitForProcess hProcess
-                 return output
---
--- 'get_ghc_configs' returns list of strings of packages.conf files in system
-
-get_ghc_configs :: IO [String]
-get_ghc_configs = do ghc_out <- run_cmd "ghc-pkg list"
-                     let configs = map (reverse.strip_trash.reverse) $
-                                   filter (isInfixOf sysPkgConf) $ lines ghc_out
-                     return configs
-                         -- | strip ":\r?" from string head
-                         where strip_trash [] = []
-                               strip_trash xs@(x:xs') | x `elem` ":\r" = strip_trash xs'
-                                                      | otherwise      = xs

@@ -1,7 +1,7 @@
 module Plugin where
 
 import API
-import AltData.Dynamic
+import Data.Dynamic
 
 my_fun = plugin { 
                 equals = \x y -> (x /= y)  -- a strange equals function :)

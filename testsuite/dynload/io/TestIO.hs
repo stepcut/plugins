@@ -7,7 +7,7 @@
 module TestIO ( resource_dyn )  where
 
 import API
-import AltData.Dynamic
+import Data.Dynamic
 
 import System.IO
 import System.Posix.Types   ( ProcessID, Fd )

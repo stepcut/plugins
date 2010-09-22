@@ -2,7 +2,7 @@
 module Plugin where
 
 import API
-import AltData.Dynamic
+import Data.Dynamic
 
 v :: Int
 v = 0xdeadbeef

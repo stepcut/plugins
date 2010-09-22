@@ -2,7 +2,7 @@
 module Plugin where
 
 import API
-import AltData.Dynamic
+import Data.Dynamic
 
 my_fun = plugin { function = "plugin says \"hello\"" }
 

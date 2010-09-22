@@ -9,8 +9,7 @@ import System.Plugins
 import API
 import Modules.Flags as Flags
 
-
-rec = Flags.FlagRec { Flags.f1 = 4, Flags.f2 = 10 }
+record = Flags.FlagRec { Flags.f1 = 4, Flags.f2 = 10 }
 
 
 main = do
@@ -18,4 +17,4 @@ main = do
         case status of
                 LoadFailure _ -> error "load failed"
                 LoadSuccess _ v -> do let func = dbFunc v
-                                      print (func rec)
+                                      print (func record)

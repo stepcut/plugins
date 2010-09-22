@@ -51,11 +51,11 @@ import System.Plugins.Load
 import Data.Dynamic             ( Dynamic )
 import Data.Typeable            ( Typeable )
 
-import Data.Either
+import Data.Either              ( )
 import Data.Map as Map
 import Data.Char
 
-import System.IO
+import System.IO                ( )
 import System.Directory
 import System.Random
 import System.IO.Unsafe
@@ -122,7 +122,7 @@ eval_ src mods args ldflags incs = do
     pwd                <- getCurrentDirectory
     (cmdline,loadpath) <- getPaths      -- find path to altdata
     tmpf               <- mkUniqueWith dynwrap src mods
-    status             <- make tmpf $ ["-Onot"] ++ cmdline ++ args
+    status             <- make tmpf $ ["-O0"] ++ cmdline ++ args
     m_rsrc <- case status of
         MakeSuccess _ obj -> do
            m_v <- dynload obj (pwd:incs) (loadpath++ldflags) symbol

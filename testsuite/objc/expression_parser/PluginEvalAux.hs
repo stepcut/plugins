@@ -15,7 +15,7 @@ symbol = "resource"
 
 evalWithStringResult :: FilePath -> String -> IO String
 evalWithStringResult srcFile s = do
-  status <- make srcFile ["-Onot"]
+  status <- make srcFile ["-O0"]
   case status of
       MakeFailure err   -> putStrLn "error occured" >> return (show err)
       MakeSuccess _ obj -> load' obj

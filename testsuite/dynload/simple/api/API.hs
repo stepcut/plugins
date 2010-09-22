@@ -2,7 +2,7 @@
 
 module API where
 
-import AltData.Typeable
+import Data.Typeable
 
 data Interface = Interface { 
         function :: String

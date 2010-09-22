@@ -1,5 +1,5 @@
 name:               plugins
-version:            1.4.1
+version:            1.5.1
 homepage:           http://code.haskell.org/~dons/code/hs-plugins
 synopsis:           Dynamic linking for Haskell and C objects
 description:        Dynamic linking and runtime evaluation of Haskell,
@@ -14,6 +14,7 @@ author:             Don Stewart 2004-2009
 maintainer:         Don Stewart <dons@galois.com>
 cabal-version:      >= 1.6
 build-type:         Configure
+Tested-with:        GHC >= 6.12.1
 extra-source-files: config.guess, config.h.in, config.mk.in, config.sub,
                     configure, configure.ac, install.sh, Makefile,
                     testsuite/makewith/io/TestIO.conf.in,
@@ -46,6 +47,7 @@ library
                           containers,
                           array,
                           directory,
+                          filepath,
                           random,
                           process,
                           ghc >= 6.10,

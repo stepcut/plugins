@@ -1,4 +1,4 @@
-GHCFLAGS=   -Onot $(GHC_EXTRA_OPTS)
+GHCFLAGS=   -O0 $(GHC_EXTRA_OPTS)
 PKGFLAGS=   -package posix
 PKGFLAGS+=  -package plugins
 

@@ -1,7 +1,7 @@
 {-# OPTIONS -cpp -fglasgow-exts #-} 
 module Poly where
 
-import AltData.Typeable
+import Data.Typeable
 
 data Fn = Fn {fn :: forall t. Eq t => t -> t -> Bool}
 

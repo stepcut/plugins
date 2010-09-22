@@ -58,8 +58,8 @@ type PackageName = String
 
 type PackageConfig = InstalledPackageInfo
 
-packageName = display . package
-packageName_ = pkgName . package
+packageName = display . pkgName . sourcePackageId
+packageName_ = pkgName . sourcePackageId
 packageDeps = (map display) . depends
 
 updImportDirs f pk@(InstalledPackageInfo { importDirs = idirs }) =

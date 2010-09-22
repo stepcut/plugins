@@ -81,6 +81,7 @@ import Control.Monad            ( when, filterM, liftM )
 import System.Directory         ( doesFileExist, removeFile )
 import Foreign.C.String         ( CString, withCString, peekCString )
 
+import GHC                      ( defaultCallbacks )
 import GHC.Ptr                  ( Ptr(..), nullPtr )
 import GHC.Exts                 ( addrToHValue# )
 import GHC.Prim                 ( unsafeCoerce# )
@@ -95,7 +96,7 @@ ifaceModuleName = moduleNameString . moduleName . mi_module
 readBinIface' :: FilePath -> IO ModIface
 readBinIface' hi_path = do
     -- kludgy as hell
-    e <- newHscEnv undefined
+    e <- newHscEnv defaultCallbacks undefined
     initTcRnIf 'r' e undefined undefined (readBinIface IgnoreHiWay QuietBinIFaceReading hi_path)
 
 -- TODO need a loadPackage p package.conf :: IO () primitive
@@ -438,7 +439,7 @@ loadFunction__ pkg m valsym
 #if DEBUG
         putStrLn $ "Looking for <<"++symbol++">>"
 #endif
-        ptr@(~(Ptr addr)) <- withCString symbol c_lookupSymbol
+        ptr@(Ptr addr) <- withCString symbol c_lookupSymbol
         if (ptr == nullPtr)
             then return Nothing
             else case addrToHValue# addr of
@@ -706,7 +707,7 @@ getImports m = do
 -- ---------------------------------------------------------------------
 -- C interface
 --
-foreign import ccall threadsafe "lookupSymbol"
+foreign import ccall safe "lookupSymbol"
    c_lookupSymbol :: CString -> IO (Ptr a)
 
 foreign import ccall unsafe "loadObj"

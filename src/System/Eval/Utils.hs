@@ -71,7 +71,7 @@ escape s = concatMap (\c -> showLitChar c $ "") s
 --
 getPaths :: IO ([String],[String])
 getPaths = do
-        let make_line = ["-Onot","-fglasgow-exts","-package","plugins"]
+        let make_line = ["-O0","-fglasgow-exts","-package","plugins"]
         return (make_line,[])
 
 -- ---------------------------------------------------------------------

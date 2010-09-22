@@ -36,7 +36,7 @@ module System.MkTemp (
 
   ) where
 
-import Data.List
+import Data.List                ( )
 import Data.Char                ( chr, ord, isDigit )
 import Control.Monad            ( liftM )
 import Control.Exception        ( handleJust )
@@ -44,12 +44,11 @@ import System.FilePath          ( splitFileName, (</>) )
 import System.Directory         ( doesDirectoryExist, doesFileExist, createDirectory )
 import System.IO
 #ifndef __MINGW32__
-import System.IO.Error          ( isAlreadyExistsError )
+import System.IO.Error          ( mkIOError, alreadyExistsErrorType,
+                                  isAlreadyExistsError )
 #else
 import System.IO.Error          ( isAlreadyExistsError, isAlreadyInUseError, isPermissionError )
 #endif
-
-import GHC.IOBase                (IOException(..), IOErrorType(AlreadyExists) )
 
 #ifndef __MINGW32__
 import qualified System.Posix.Internals ( c_getpid )
@@ -216,7 +215,7 @@ open0600 f = do
         if b then ioError err   -- race
              else openFile f ReadWriteMode
     where
-        err = IOError Nothing AlreadyExists "open0600" "already exists" Nothing
+        err = mkIOError alreadyExistsErrorType "op0600" Nothing (Just f)
 
 {-
 -- open(path, O_CREAT|O_EXCL|O_RDWR, 0600)

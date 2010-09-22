@@ -13,7 +13,7 @@ REALBIN=	./Main
 API_OBJ=	api/API.o
 
 INCLUDES=   	-i$(TOP)/testsuite/$(TEST)/api
-GHCFLAGS=   	-Onot -cpp -fglasgow-exts
+GHCFLAGS=   	-O0 -cpp -fglasgow-exts
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s
 

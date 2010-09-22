@@ -36,7 +36,7 @@ main = do
 
         () <- if (not $ all isJust ts)
               then putStrLn $ "mkstemp couldn't create all expected files"
-              else putStrLn $ "mkstemp:	created "++(show $ length $ catMaybes ts)++" files"
+              else putStrLn $ "mkstemp: created "++(show $ length $ catMaybes ts)++" files"
         rmAll ts
 
         ------------------------------------------------------------------------
@@ -47,7 +47,7 @@ main = do
                                      _ -> return v ) [1..2000]
         () <- if (not $ all isJust ts)
               then putStrLn $ "mkstemps couldn't create all expected files"
-              else putStrLn $ "mkstemps:	created "++(show $ length $ catMaybes ts)++" files"
+              else putStrLn $ "mkstemps: created "++(show $ length $ catMaybes ts)++" files"
         rmAll ts
 
         ------------------------------------------------------------------------
@@ -55,8 +55,8 @@ main = do
         --
         ts <- mapM (\_ -> mkdtemp "t/XXXXXXXXXX") [1..2000]
         () <- if (not $ all isJust ts)
-              then putStrLn $ "mkdtemp:	couldn't create all expected directories"
-              else putStrLn $ "mkdtemp:	created "++(show $ length $ catMaybes ts)++" directories"
+              then putStrLn $ "mkdtemp: couldn't create all expected directories"
+              else putStrLn $ "mkdtemp: created "++(show $ length $ catMaybes ts)++" directories"
         rmAllDirs ts
     
         ------------------------------------------------------------------------
