@@ -1,4 +1,5 @@
 {-# OPTIONS -fglasgow-exts #-}
+{-# LANGUAGE CPP #-}
 {-# OPTIONS -w #-}
 
 module System.Plugins.ParsePkgConfCabal ( 

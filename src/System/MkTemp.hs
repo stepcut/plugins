@@ -1,6 +1,5 @@
-{-# OPTIONS -fglasgow-exts #-}
---
--- glaexts for I# ops
+{-# LANGUAGE CPP        #-}
+{-# LANGUAGE MagicHash  #-}
 -- 
 -- Copyright (c) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 

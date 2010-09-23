@@ -1,4 +1,7 @@
-{-# OPTIONS -fglasgow-exts #-}
+{-# LANGUAGE CPP                        #-}
+{-# LANGUAGE MagicHash                  #-}
+{-# LANGUAGE UnboxedTuples              #-}
+{-# LANGUAGE ForeignFunctionInterface   #-}
 --
 -- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 
@@ -392,8 +395,8 @@ reload m@(Module{path = p, iface = hi}) sym = do
                 Nothing -> LoadFailure ["load: couldn't find symbol <<"++sym++">>"]
                 Just a  -> LoadSuccess m' a
 
--- ---------------------------------------------------------------------
--- This is a stripped-down version of André Pang's runtime_loader,
+--
+-- This is a stripped-down version of Andre Pang's runtime_loader,
 -- which in turn is based on GHC's ghci\/ObjLinker.lhs binding
 --
 --  Load and unload\/Haskell modules at runtime.  This is not really
@@ -406,7 +409,7 @@ reload m@(Module{path = p, iface = hi}) sym = do
 --
 -- read $fptools\/ghc\/compiler\/ghci\/ObjLinker.lhs for how to use this stuff
 --
-------------------------------------------------------------------------
+
 
 -- | Call the initLinker function first, before calling any of the other
 -- functions in this module - otherwise you\'ll get unresolved symbols.

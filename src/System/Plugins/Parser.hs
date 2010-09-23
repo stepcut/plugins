@@ -1,4 +1,5 @@
-{-# OPTIONS -fglasgow-exts #-}
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE PatternGuards #-}
 -- 
 -- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 

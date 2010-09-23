@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 --
 -- | A Posix.popen compatibility mapping.
 --
