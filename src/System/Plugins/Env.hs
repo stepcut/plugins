@@ -52,7 +52,6 @@ module System.Plugins.Env (
 #include "../../../config.h"
 
 import System.Plugins.LoadTypes (Module)
-import System.Plugins.PackageAPI  {- everything -}
 import System.Plugins.Consts           ( sysPkgSuffix )
 
 import Control.Monad            ( liftM )
@@ -70,13 +69,15 @@ import System.IO.Error          ( catch, ioError, isDoesNotExistError )
 
 import Control.Concurrent.MVar  ( MVar(), newMVar, withMVar )
 
+import Distribution.Package hiding (depends, packageName, PackageName(..))
+import Distribution.Text
+
 import Distribution.InstalledPackageInfo
 -- import Distribution.Package hiding (packageName, PackageName(..))
 import Distribution.Simple.Compiler
 import Distribution.Simple.GHC
 import Distribution.Simple.PackageIndex
 import Distribution.Simple.Program
-import Distribution.Text
 import Distribution.Verbosity
 
 import qualified Data.Map as M
@@ -519,3 +520,33 @@ addMerge a b z = modifyMerged env $ \fm -> return $ addToFM fm (a,b) z
 [] </> b = b
 a  </> b = a ++ "/" ++ b
 
+
+------------------------------------------------------------------------
+
+--
+-- We export an abstract interface to package conf`s because we have
+-- to handle either traditional or Cabal style package conf`s.
+--
+
+
+
+packageName    :: PackageConfig -> PackageName 
+packageDeps    :: PackageConfig -> [PackageName]
+-- updImportDirs  :: ([FilePath] -> [FilePath]) -> PackageConfig -> PackageConfig
+-- updLibraryDirs :: ([FilePath] -> [FilePath]) -> PackageConfig -> PackageConfig
+
+
+type PackageName = String
+
+type PackageConfig = InstalledPackageInfo
+
+packageName = display . pkgName . sourcePackageId
+-- packageName_ = pkgName . sourcePackageId
+packageDeps = (map display) . depends
+
+{-
+updImportDirs f pk@(InstalledPackageInfo { importDirs = idirs }) =
+        pk { importDirs = f idirs }
+updLibraryDirs f pk@(InstalledPackageInfo { libraryDirs = ldirs }) =
+        pk { libraryDirs = f ldirs }
+-}
