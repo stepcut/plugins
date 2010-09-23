@@ -5,8 +5,12 @@ synopsis:           Dynamic linking for Haskell and C objects
 description:        Dynamic linking and runtime evaluation of Haskell,
                     and C, including dependency chasing and package resolution.
                     .
-                    Described in the paper:
-                        /Plugging Haskell In/, <http://www.cse.unsw.edu.au/~dons/papers/PSSC04.html>
+                    Described in the papers:
+
+                     * /Plugging Haskell In/, <http://www.cse.unsw.edu.au/~dons/papers/PSSC04.html>
+                     * /Dynamic Applications from the Ground Up/, <http://www.cse.unsw.edu.au/~dons/papers/SC05.html>
+                     * /Dynamic Extension of Typed Functional Languages/.
+
 category:           System
 license:            BSD3
 License-file:       LICENSE
@@ -25,7 +29,6 @@ library
             System.Eval,
             System.Eval.Haskell,
             System.Eval.Utils,
-            System.MkTemp,
             System.Plugins,
             System.Plugins.Consts,
             System.Plugins.Env,

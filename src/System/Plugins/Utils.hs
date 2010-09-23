@@ -61,7 +61,7 @@ module System.Plugins.Utils (
 
 import System.Plugins.Env              ( isLoaded )
 import System.Plugins.Consts           ( objSuf, hiSuf, tmpDir )
-import qualified System.MkTemp ( mkstemps )
+-- import qualified System.MkTemp ( mkstemps )
 
 import Data.Char
 import Data.List
@@ -94,11 +94,11 @@ hWrite hdl src = hPutStr hdl src >> hClose hdl >> return ()
 -- mkstemps(3).
 --
 
-mkstemps :: String -> Int -> IO (String,Handle)
-mkstemps path slen = do
-        m_v <- System.MkTemp.mkstemps path slen
-        case m_v of Nothing -> error "mkstemps : couldn't create temp file"
-                    Just v' -> return v'
+-- mkstemps :: String -> Int -> IO (String,Handle)
+-- mkstemps path slen = do
+--         m_v <- System.MkTemp.mkstemps path slen
+--         case m_v of Nothing -> error "mkstemps : couldn't create temp file"
+--                     Just v' -> return v'
 
 {-
 
@@ -124,7 +124,9 @@ mkTemp = do tmpd  <- catch (getEnv "TMPDIR") (\_ -> return tmpDir)
 
 mkTempIn :: String -> IO (String, Handle)
 mkTempIn tmpd = do
-        (tmpf,hdl)  <- mkstemps (tmpd++"/MXXXXXXXXX.hs") 3
+ -- XXX    (tmpf,hdl)  <- mkstemps (tmpd++"/MXXXXXXXXX.hs") 3
+
+        (tmpf, hdl) <- openTempFile tmpd "MXXXXX.hs"
         let modname = mkModid $ dropSuffix tmpf
         if and $ map (\c -> isAlphaNum c && c /= '_') modname
                 then return (tmpf,hdl)
