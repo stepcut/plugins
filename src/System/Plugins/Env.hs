@@ -59,7 +59,6 @@ import Control.Monad            ( liftM )
 import Data.IORef               ( writeIORef, readIORef, newIORef, IORef() )
 import Data.Maybe               ( isJust, isNothing, fromMaybe )
 import Data.List                ( (\\), nub, )
-import qualified Data.List      as List
 
 import System.IO.Unsafe         ( unsafePerformIO )
 import System.Directory         ( doesFileExist )
