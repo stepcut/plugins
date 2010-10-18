@@ -58,7 +58,8 @@ import Control.Monad            ( liftM )
 
 import Data.IORef               ( writeIORef, readIORef, newIORef, IORef() )
 import Data.Maybe               ( isJust, isNothing, fromMaybe )
-import Data.List                ( nub )
+import Data.List                ( (\\), nub, )
+import qualified Data.List      as List
 
 import System.IO.Unsafe         ( unsafePerformIO )
 import System.Directory         ( doesFileExist )
@@ -299,8 +300,8 @@ union ls ps' =
         let fm = emptyFM -- new FM for this package.conf
         in foldr addOnePkg fm ps' : ls
     where 
-      -- we add each package with and without it's version number
-      addOnePkg p fm' = addToPkgEnvs (addToPkgEnvs fm' (display $ sourcePackageId p) p)
+      -- we add each package with and without it's version number and with the full installedPackageId
+      addOnePkg p fm' = addToPkgEnvs (addToPkgEnvs (addToPkgEnvs fm' (display $ sourcePackageId p) p) (display $ installedPackageId p) p)
                                      (packageName p) p
       
       -- if no version number specified, pick the higher version
@@ -361,10 +362,13 @@ isStaticPkg pkg = withStaticPkgEnv env $ \set -> return $ S.member pkg set
 -- up to loadObject not to load the same ones twice...
 --
 lookupPkg :: PackageName -> IO ([FilePath],[FilePath])
-lookupPkg p = do 
+lookupPkg pn = go [] pn
+    where
+      go :: [PackageName] -> PackageName -> IO ([FilePath],[FilePath])
+      go seen p = do 
         (ps, (f, g)) <- lookupPkg' p
         static <- isStaticPkg p
-        (f', g') <- liftM unzip $ mapM lookupPkg ps
+        (f', g') <- liftM unzip $ mapM (go (nub $ seen ++ ps)) (ps \\ seen)
         return $ (nub $ (concat f') ++ f, if static then [] else nub $ (concat g') ++ g)
 
 data LibrarySpec
