@@ -57,3 +57,7 @@ library
                           ghc >= 6.10,
                           ghc-prim
 
+    if impl(ghc >= 7.2)
+        build-depends:    ghc-paths
+
+

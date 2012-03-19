@@ -86,6 +86,10 @@ import Foreign.C.String         ( CString, withCString, peekCString )
 
 #if !MIN_VERSION_ghc(7,2,0)
 import GHC                      ( defaultCallbacks )
+#else
+import DynFlags                 (defaultDynFlags, initDynFlags)
+import GHC.Paths                (libdir)
+import SysTools                 (initSysTools)
 #endif
 import GHC.Ptr                  ( Ptr(..), nullPtr )
 #if !MIN_VERSION_ghc(7,4,1)
@@ -107,7 +111,9 @@ readBinIface' :: FilePath -> IO ModIface
 readBinIface' hi_path = do
     -- kludgy as hell
 #if MIN_VERSION_ghc(7,2,0)
-    e <- newHscEnv undefined
+    mySettings <- initSysTools (Just libdir) -- how should we really set the top dir?
+    dflags <- initDynFlags (defaultDynFlags mySettings)
+    e <- newHscEnv dflags
 #else
     e <- newHscEnv defaultCallbacks undefined
 #endif
