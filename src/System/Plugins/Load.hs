@@ -84,7 +84,9 @@ import Control.Monad            ( when, filterM, liftM )
 import System.Directory         ( doesFileExist, removeFile )
 import Foreign.C.String         ( CString, withCString, peekCString )
 
+#if !MIN_VERSION_ghc(7,2,0)
 import GHC                      ( defaultCallbacks )
+#endif
 import GHC.Ptr                  ( Ptr(..), nullPtr )
 import GHC.Exts                 ( addrToHValue# )
 import GHC.Prim                 ( unsafeCoerce# )
@@ -99,7 +101,11 @@ ifaceModuleName = moduleNameString . moduleName . mi_module
 readBinIface' :: FilePath -> IO ModIface
 readBinIface' hi_path = do
     -- kludgy as hell
+#if MIN_VERSION_ghc(7,2,0)
+    e <- newHscEnv undefined
+#else
     e <- newHscEnv defaultCallbacks undefined
+#endif
     initTcRnIf 'r' e undefined undefined (readBinIface IgnoreHiWay QuietBinIFaceReading hi_path)
 
 -- TODO need a loadPackage p package.conf :: IO () primitive
@@ -679,7 +685,11 @@ loadDepends obj incpaths = do
 
                 -- and find some packages to load, as well.
                 let ps = dep_pkgs ds
+#if MIN_VERSION_ghc(7,2,0)
+                ps' <- filterM loaded . map packageIdString . nub $ map fst ps
+#else
                 ps' <- filterM loaded . map packageIdString . nub $ ps
+#endif
 
 #if DEBUG
                 when (not (null ps')) $
