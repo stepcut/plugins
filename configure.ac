@@ -63,7 +63,7 @@ AC_DEFINE_UNQUOTED(LEADING_UNDERSCORE, $LEADING_UNDERSCORE,
 
 # Find pwd, in a cygwin friendly way. 
 # Suggested by: http://www.haskell.org/ghc/docs/latest/html/users_guide/ch11s04.html
-TOP=`echo "Directory.getCurrentDirectory >>= putStrLn.init.tail.show " | ghc --interactive -ignore-dot-ghci -v0 | tr -d '\r'`
+TOP=`echo "System.Directory.getCurrentDirectory >>= putStrLn.init.tail.show " | ghc --interactive -ignore-dot-ghci -v0 | tr -d '\r'`
 
 AC_DEFINE_UNQUOTED(TOP, "$TOP", [Path to top of build tree])
 AC_SUBST(TOP)
