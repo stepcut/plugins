@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP, ScopedTypeVariables #-}
 -- 
 -- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- 
@@ -63,8 +63,10 @@ import System.Plugins.Env              ( isLoaded )
 import System.Plugins.Consts           ( objSuf, hiSuf, tmpDir )
 -- import qualified System.MkTemp ( mkstemps )
 
+import Control.Exception               (IOException, catch)
 import Data.Char
 import Data.List
+import Prelude hiding                  (catch)
 
 import System.IO
 import System.Environment           ( getEnv )
@@ -119,7 +121,7 @@ foreign import ccall unsafe "mkstemps" c_mkstemps :: CString -> CInt -> IO Fd
 -- bit like the mktemp shell utility
 --
 mkTemp :: IO (String,Handle)
-mkTemp = do tmpd  <- catch (getEnv "TMPDIR") (\_ -> return tmpDir)
+mkTemp = do tmpd  <- catch (getEnv "TMPDIR") (\ (_ :: IOException) -> return tmpDir)
             mkTempIn tmpd
 
 mkTempIn :: String -> IO (String, Handle)
