@@ -88,7 +88,12 @@ import Foreign.C.String         ( CString, withCString, peekCString )
 import GHC                      ( defaultCallbacks )
 #endif
 import GHC.Ptr                  ( Ptr(..), nullPtr )
+#if !MIN_VERSION_ghc(7,4,1)
 import GHC.Exts                 ( addrToHValue# )
+#else
+import GHC.Exts                 ( addrToAny# )
+#endif
+
 import GHC.Prim                 ( unsafeCoerce# )
 
 #if DEBUG
@@ -451,7 +456,11 @@ loadFunction__ pkg m valsym
         ptr@(Ptr addr) <- withCString symbol c_lookupSymbol
         if (ptr == nullPtr)
             then return Nothing
+#if !MIN_VERSION_ghc(7,4,1)
             else case addrToHValue# addr of
+#else
+            else case addrToAny# addr of
+#endif
                 (# hval #) -> return ( Just hval )
 
 
