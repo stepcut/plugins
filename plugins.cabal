@@ -1,5 +1,5 @@
 name:               plugins
-version:            1.5.2.2
+version:            1.5.2.3
 homepage:           http://patch-tag.com/r/stepcut/plugins
 synopsis:           Dynamic linking for Haskell and C objects
 description:        Dynamic linking and runtime evaluation of Haskell,
@@ -7,9 +7,9 @@ description:        Dynamic linking and runtime evaluation of Haskell,
                     .
                     Described in the papers:
 
-                     * /Plugging Haskell In/, <http://cgi.cse.unsw.edu.au/~sseefried/files/papers/hs-plugins.pdf>
+                     * /Plugging Haskell In/
 
-                     * /Dynamic Applications from the Ground Up/, <http://www.cse.unsw.edu.au/~dons/papers/PSSC04.html>
+                     * /Dynamic Applications from the Ground Up/
 
                      * /Dynamic Extension of Typed Functional Languages/.
 
