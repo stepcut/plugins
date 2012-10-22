@@ -70,7 +70,7 @@ import Prelude hiding                  (catch)
 
 import System.IO
 import System.Environment           ( getEnv )
-import System.Directory
+import System.Directory             ( doesFileExist, getModificationTime, removeFile )
 
 -- ---------------------------------------------------------------------
 -- some misc types we use
