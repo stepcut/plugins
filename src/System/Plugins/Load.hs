@@ -3,23 +3,23 @@
 {-# LANGUAGE UnboxedTuples              #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
 --
--- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
--- 
+-- Copyright (C) 2004-5 Don Stewart
+--
 -- This library is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU Lesser General Public
 -- License as published by the Free Software Foundation; either
 -- version 2.1 of the License, or (at your option) any later version.
--- 
+--
 -- This library is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 -- Lesser General Public License for more details.
--- 
+--
 -- You should have received a copy of the GNU Lesser General Public
 -- License along with this library; if not, write to the Free Software
 -- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 -- USA
--- 
+--
 
 -- | An interface to the GHC runtime's dynamic linker, providing runtime
 -- loading and linking of Haskell object files, commonly known as
@@ -34,7 +34,7 @@ module System.Plugins.Load (
       , load
       , load_
       , dynload
-      , pdynload 
+      , pdynload
       , pdynload_
       , unload
       , unloadAll
@@ -149,7 +149,7 @@ data LoadStatus a
 -- provided with appropriate type constraints such that Haskell compiler
 -- can determine the expected type returned by 'load', as the return
 -- type is notionally polymorphic.
--- 
+--
 -- Example:
 --
 -- > do mv <- load "Plugin.o" ["api"] [] "resource"
@@ -184,18 +184,21 @@ load obj incpaths pkgconfs sym = do
 #endif
     addModuleDeps m' moduleDeps
     v <- loadFunction m sym
-    return $ case v of 
+    return $ case v of
         Nothing -> LoadFailure ["load: couldn't find symbol <<"++sym++">>"]
         Just a  -> LoadSuccess m a
 
 --
 -- | Like load, but doesn't want a package.conf arg (they are rarely used)
 --
-load_ :: FilePath -> [FilePath] -> Symbol -> IO (LoadStatus a)
+load_ :: FilePath    -- ^ object file
+      -> [FilePath]  -- ^ any include paths
+      -> Symbol      -- ^ symbol to find
+      -> IO (LoadStatus a)
 load_ o i s = load o i [] s
 
---
--- A work-around for Dynamics. The keys used to compare two TypeReps are
+
+-- | A work-around for Dynamics. The keys used to compare two TypeReps are
 -- somehow not equal for the same type in hs-plugin's loaded objects.
 -- Solution: implement our own dynamics...
 --
@@ -204,8 +207,8 @@ load_ o i s = load o i [] s
 -- is not the case, we core dump. Use pdynload if you don't trust the
 -- user to supply you with a Dynamic
 --
-dynload :: Typeable a    
-        => FilePath  
+dynload :: Typeable a
+        => FilePath
         -> [FilePath]
         -> [PackageConf]
         -> Symbol
@@ -220,7 +223,8 @@ dynload obj incpaths pkgconfs sym = do
                         Nothing -> LoadFailure ["Mismatched types in interface"]
 
 ------------------------------------------------------------------------
---
+
+-- |
 -- The super-replacement for dynload
 --
 -- Use GHC at runtime so we get staged type inference, providing full
@@ -229,7 +233,6 @@ dynload obj incpaths pkgconfs sym = do
 --
 -- TODO where does the .hc file go in the call to build() ?
 --
-
 pdynload :: FilePath                    -- ^ object to load
          -> [FilePath]                  -- ^ include paths
          -> [PackageConf]               -- ^ package confs
@@ -237,7 +240,7 @@ pdynload :: FilePath                    -- ^ object to load
          -> Symbol                      -- ^ symbol
          -> IO (LoadStatus a)
 
-pdynload object incpaths pkgconfs ty sym = do 
+pdynload object incpaths pkgconfs ty sym = do
 #if DEBUG
         putStr "Checking types ... " >> hFlush stdout
 #endif
@@ -245,7 +248,7 @@ pdynload object incpaths pkgconfs ty sym = do
 #if DEBUG
         putStrLn "done"
 #endif
-        if null errors 
+        if null errors
                 then load object incpaths pkgconfs sym
                 else return $ LoadFailure errors
 
@@ -269,12 +272,12 @@ pdynload_ object incpaths pkgconfs args ty sym = do
 #if DEBUG
         putStrLn "done"
 #endif
-        if null errors 
+        if null errors
                 then load object incpaths pkgconfs sym
                 else return $ LoadFailure errors
 
 ------------------------------------------------------------------------
--- run the typechecker over the constraint file
+-- | run the typechecker over the constraint file
 --
 -- Problem: if the user depends on a non-auto package to build the
 -- module, then that package will not be in scope when we try to build
@@ -290,7 +293,7 @@ unify obj incs args ty sym = do
         (tmpf1,hdl1) <- mkTemp  -- and send .hi file here.
         hClose hdl1
 
-        let nm  = mkModid (basename tmpf) 
+        let nm  = mkModid (basename tmpf)
             src = mkTest nm (hierize' . mkModid . hierize $ obj)
                                 (fst $ break (=='.') ty) ty sym
             is  = map ("-i"++) incs             -- api
@@ -312,7 +315,7 @@ unify obj incs args ty sym = do
             hierize' ('\\':cs) = '.' : hierize' cs
             hierize' (c:cs)   = c    : hierize' cs
 
-mkTest modnm plugin api ty sym = 
+mkTest modnm plugin api ty sym =
        "module "++ modnm ++" where" ++
        "\nimport qualified " ++ plugin  ++
        "\nimport qualified " ++ api     ++
@@ -327,11 +330,11 @@ mkTest modnm plugin api ty sym =
 pdynload obj incpaths pkgconfs sym ty = do
         (m, v) <- load obj incpaths pkgconfs sym
         ty'    <- mungeIface sym obj
-        if ty == ty' 
+        if ty == ty'
                 then return $ Just (m, v)
                 else return Nothing             -- mismatched types
 
-   where 
+   where
         -- grab the iface output from GHC. find the line relevant to our
         -- symbol. grab the string rep of the type.
         mungeIface sym o = do
@@ -348,11 +351,11 @@ pdynload obj incpaths pkgconfs sym ty = do
 --
 -- a version of load the also unwraps and types a Dynamic object
 --
-dynload2 :: Typeable a => 
-           FilePath -> 
-           FilePath -> 
+dynload2 :: Typeable a =>
+           FilePath ->
+           FilePath ->
            Maybe [PackageConf] ->
-           Symbol ->  
+           Symbol ->
            IO (Module, a)
 
 dynload2 obj incpath pkgconfs sym = do
@@ -402,13 +405,13 @@ reload m@(Module{path = p, iface = hi}) sym = do
 #endif
         m_ <- loadObject p . Object . ifaceModuleName $ hi   -- load object at path p
         let m' = m_ { iface = hi }
-    
+
         resolveObjs (unloadAll m)
 #if DEBUG
         putStrLn "done" >> hFlush stdout
 #endif
         v <- loadFunction m' sym
-        return $ case v of 
+        return $ case v of
                 Nothing -> LoadFailure ["load: couldn't find symbol <<"++sym++">>"]
                 Just a  -> LoadSuccess m' a
 
@@ -493,31 +496,29 @@ loadPackageFunction pkgName modName functionName =
 -- NB the environment stores the *full path* to an object. So if you
 -- want to know if a module is already loaded, you need to supply the
 -- *path* to that object, not the name.
--- 
+--
 -- NB -- let's try just the module name.
 --
 -- loadObject loads normal .o objs, and packages too. .o objs come with
 -- a nice canonical Z-encoded modid. packages just have a simple name.
 -- Do we want to ensure they won't clash? Probably.
 --
-
+--
 --
 -- the second argument to loadObject is a string to use as the unique
 -- identifier for this object. For normal .o objects, it should be the
 -- Z-encoded modid from the .hi file. For archives\/packages, we can
 -- probably get away with the package name
 --
-
-
 loadObject :: FilePath -> Key -> IO Module
-loadObject p ky@(Object k)  = loadObject' p ky k 
-loadObject p ky@(Package k) = loadObject' p ky k 
+loadObject p ky@(Object k)  = loadObject' p ky k
+loadObject p ky@(Package k) = loadObject' p ky k
 
 loadObject' :: FilePath -> Key -> String -> IO Module
 loadObject' p ky k
     | ("HSrts"++sysPkgSuffix) `isSuffixOf` p = return (emptyMod p)
 
-    | otherwise 
+    | otherwise
     = do alreadyLoaded <- isLoaded k
          when (not alreadyLoaded) $ do
               r <- withCString p c_loadObj
@@ -527,7 +528,7 @@ loadObject' p ky k
 
     where emptyMod q = Module q (mkModid q) Vanilla undefined ky
 
---
+-- |
 -- load a single object. no dependencies. You should know what you're
 -- doing.
 --
@@ -560,11 +561,11 @@ resolveObjs unloadLoaded
 
 
 -- | Unload a module
-unloadObj :: Module -> IO () 
+unloadObj :: Module -> IO ()
 unloadObj (Module { path = p, kind = k, key = ky }) = case k of
         Vanilla -> withCString p $ \c_p -> do
                 removed <- rmModule name
-                when (removed) $ do r <- c_unloadObj c_p 
+                when (removed) $ do r <- c_unloadObj c_p
                                     when (not r) (panic "unloadObj: failed")
         Shared  -> return () -- can't unload .so?
     where name = case ky of Object s -> s ; Package pk -> pk
@@ -579,14 +580,14 @@ loadShared str = do
     putStrLn $ " shared: " ++ str
 #endif
     maybe_errmsg <- withCString str $ \dll -> c_addDLL dll
-    if maybe_errmsg == nullPtr 
+    if maybe_errmsg == nullPtr
         then return (Module str (mkModid str) Shared undefined (Package (mkModid str)))
         else do e <- peekCString maybe_errmsg
                 panic $ "loadShared: couldn't load `"++str++"\' because "++e
 
 
 --
--- Load a -package that we might need, implicitly loading the cbits too
+-- | Load a -package that we might need, implicitly loading the cbits too
 -- The argument is the name of package (e.g.  \"concurrent\")
 --
 -- How to find a package is determined by the package.conf info we store
@@ -610,7 +611,7 @@ loadPackage p = do
 
 
 --
--- Unload a -package, that has already been loaded. Unload the cbits
+-- | Unload a -package, that has already been loaded. Unload the cbits
 -- too. The argument is the name of the package.
 --
 -- May need to check if it exists.
@@ -625,12 +626,12 @@ unloadPackage pkg = do
     let pkg' = takeWhile (/= '-') pkg   -- in case of *-0.1
     libs <- liftM (\(a,_) -> (filter (isSublistOf pkg') ) a) (lookupPkg pkg)
     flip mapM_ libs $ \p -> withCString p $ \c_p -> do
-                        r <- c_unloadObj c_p 
+                        r <- c_unloadObj c_p
                         when (not r) (panic "unloadObj: failed")
-                        rmModule (mkModid p)      -- unrecord this module 
+                        rmModule (mkModid p)      -- unrecord this module
 
 --
--- load a package using the given package.conf to help
+-- | load a package using the given package.conf to help
 -- TODO should report if it doesn't actually load the package, instead
 -- of mapM_ doing nothing like above.
 --
@@ -644,10 +645,10 @@ loadPackageWith p pkgconfs = do
 #if DEBUG
         putStrLn " done"
 #endif
-        
+
 
 -- ---------------------------------------------------------------------
--- module dependency loading
+-- | module dependency loading
 --
 -- given an Foo.o vanilla object file, supposed to be a plugin compiled
 -- by our library, find the associated .hi file. If this is found, load
@@ -684,11 +685,11 @@ loadDepends obj incpaths = do
 
                 -- now, try to generate a path to the actual .o file
                 -- fix up hierachical names
-                let mods_ = map (\s -> (s, map (\c -> 
+                let mods_ = map (\s -> (s, map (\c ->
                         if c == '.' then '/' else c) $ s)) ds'
 
                 -- construct a list of possible dependent modules to load
-                let mods = concatMap (\p -> 
+                let mods = concatMap (\p ->
                             map (\(hi,m) -> (hi,p </> m++".o")) mods_) incpaths
 
                 -- remove modules that don't exist
@@ -717,15 +718,15 @@ loadDepends obj incpaths = do
 #endif
                 resolveObjs (mapM_ unloadPackage ps')
 #if DEBUG
-                when (not (null ps')) $ putStrLn "done" 
-                putStr "Loading object" 
+                when (not (null ps')) $ putStrLn "done"
+                putStr "Loading object"
                 mapM_ (\(m,_) -> putStr (" "++ m) >> hFlush stdout) mods''
 #endif
                 moduleDeps <- mapM (\(hi,m) -> loadObject m (Object hi)) mods''
                 return (hiface,moduleDeps)
 
 -- ---------------------------------------------------------------------
--- Nice interface to .hi parser
+-- | Nice interface to .hi parser
 --
 getImports :: String -> IO [String]
 getImports m = do
