@@ -301,7 +301,7 @@ unify obj incs args ty sym = do
 
         hWrite hdl src
 
-        e <- build tmpf tmpf1 (i:is++args++["-fno-code","-ohi "++tmpf1])
+        e <- build tmpf tmpf1 (i:is++args++["-fno-code","-c","-ohi "++tmpf1])
         mapM_ removeFile [tmpf,tmpf1]
         return e
 
