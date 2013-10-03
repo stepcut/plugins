@@ -1,27 +1,27 @@
--- 
+--
 -- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
--- 
+--
 -- This library is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU Lesser General Public
 -- License as published by the Free Software Foundation; either
 -- version 2.1 of the License, or (at your option) any later version.
--- 
+--
 -- This library is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 -- Lesser General Public License for more details.
--- 
+--
 -- You should have received a copy of the GNU Lesser General Public
 -- License along with this library; if not, write to the Free Software
 -- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 -- USA
--- 
+--
 
 --
 -- compile and run haskell strings at runtime.
 --
 
-module System.Eval.Utils ( 
+module System.Eval.Utils (
 
         Import,
         symbol,
@@ -44,10 +44,10 @@ import System.Directory
 
 import Data.Char
 
--- 
+--
 -- we export these so that eval() users have a nice time
 --
-import Data.Maybe 
+import Data.Maybe
 import Control.Monad
 
 --
@@ -71,15 +71,15 @@ escape s = concatMap (\c -> showLitChar c $ "") s
 --
 getPaths :: IO ([String],[String])
 getPaths = do
-        let make_line = ["-O0","-fglasgow-exts","-package","plugins"]
+        let make_line = ["-O0","-package","plugins"]
         return (make_line,[])
 
 -- ---------------------------------------------------------------------
 -- create the tmp file, and write source into it, using wrapper to
 -- create extra .hs src.
 --
-mkUniqueWith :: (String -> String -> [Import] -> String) 
-             -> String 
+mkUniqueWith :: (String -> String -> [Import] -> String)
+             -> String
              -> [Import] -> IO FilePath
 
 mkUniqueWith wrapper src mods = do
