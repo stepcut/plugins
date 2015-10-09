@@ -59,3 +59,7 @@ library
 
     if impl(ghc >= 7.2)
         build-depends:    ghc-paths
+
+source-repository head
+  type:             git
+  location:         https://github.com/stepcut/plugins

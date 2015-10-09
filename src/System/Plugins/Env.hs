@@ -1,22 +1,22 @@
 {-# LANGUAGE CPP #-}
 --
 -- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
--- 
+--
 -- This library is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU Lesser General Public
 -- License as published by the Free Software Foundation; either
 -- version 2.1 of the License, or (at your option) any later version.
--- 
+--
 -- This library is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 -- Lesser General Public License for more details.
--- 
+--
 -- You should have received a copy of the GNU Lesser General Public
 -- License along with this library; if not, write to the Free Software
 -- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 -- USA
--- 
+--
 
 module System.Plugins.Env (
         env,
@@ -69,11 +69,14 @@ import System.IO.Error          ( catch, ioError, isDoesNotExistError )
 
 import Control.Concurrent.MVar  ( MVar(), newMVar, withMVar )
 
-import Distribution.Package hiding (depends, packageName, PackageName(..))
+import Distribution.Package hiding (depends, packageName, PackageName(..)
+#if MIN_VERSION_ghc(7,10,0)
+                                   , installedPackageId
+#endif
+  )
 import Distribution.Text
 
 import Distribution.InstalledPackageInfo
--- import Distribution.Package hiding (packageName, PackageName(..))
 import Distribution.Simple.Compiler
 import Distribution.Simple.GHC
 import Distribution.Simple.PackageIndex
@@ -93,7 +96,7 @@ emptyFM   = M.empty
 addToFM :: (Ord key) => FiniteMap key elt -> key -> elt -> FiniteMap key elt
 addToFM   = \m k e -> M.insert k e m
 
-addWithFM :: (Ord key) 
+addWithFM :: (Ord key)
           => (elt -> elt -> elt) -> FiniteMap key elt -> key -> elt -> FiniteMap key elt
 addWithFM   = \comb m k e -> M.insertWith comb k e m
 
@@ -147,9 +150,9 @@ type MergeEnv = FiniteMap (FilePath,FilePath) FilePath
 -- multiple package.conf's kept in separate namespaces
 type PkgEnvs = [PkgEnv]
 
-type Env = (MVar (), 
+type Env = (MVar (),
             IORef ModEnv,
-            IORef DepEnv,  
+            IORef DepEnv,
             IORef PkgEnvs,
             IORef StaticPkgEnv,
             IORef MergeEnv)
@@ -160,7 +163,7 @@ type Env = (MVar (),
 -- packages and their informations. Initially all we know is the default
 -- package.conf information.
 --
-env = unsafePerformIO $ do 
+env = unsafePerformIO $ do
                 mvar  <- newMVar ()
                 ref1  <- newIORef emptyFM         -- loaded objects
                 ref2  <- newIORef emptyFM
@@ -202,10 +205,10 @@ modifyPkgEnv :: Env -> (PkgEnvs  -> IO PkgEnvs) -> IO ()
 modifyStaticPkgEnv :: Env -> (StaticPkgEnv  -> IO StaticPkgEnv) -> IO ()
 modifyMerged :: Env -> (MergeEnv -> IO MergeEnv)-> IO ()
 
-modifyModEnv (mvar,ref,_,_,_,_) f = lockAndWrite mvar ref f 
-modifyDepEnv (mvar,_,ref,_,_,_) f = lockAndWrite mvar ref f 
-modifyPkgEnv (mvar,_,_,ref,_,_) f = lockAndWrite mvar ref f 
-modifyStaticPkgEnv (mvar,_,_,_,ref,_) f = lockAndWrite mvar ref f 
+modifyModEnv (mvar,ref,_,_,_,_) f = lockAndWrite mvar ref f
+modifyDepEnv (mvar,_,ref,_,_,_) f = lockAndWrite mvar ref f
+modifyPkgEnv (mvar,_,_,ref,_,_) f = lockAndWrite mvar ref f
+modifyStaticPkgEnv (mvar,_,_,_,ref,_) f = lockAndWrite mvar ref f
 modifyMerged (mvar,_,_,_,_,ref) f = lockAndWrite mvar ref f
 
 -- private
@@ -285,7 +288,7 @@ rmModuleDeps m = modifyDepEnv env $ \fm -> return $ delFromFM fm m
 -- stored in the environment.
 --
 addPkgConf :: FilePath -> IO ()
-addPkgConf f = do 
+addPkgConf f = do
     ps <- readPackageConf f
     modifyPkgEnv env $ \ls -> return $ union ls ps
 
@@ -295,22 +298,22 @@ addPkgConf f = do
 -- GHC 6.12)
 --
 union :: PkgEnvs -> [PackageConfig] -> PkgEnvs
-union ls ps' = 
+union ls ps' =
         let fm = emptyFM -- new FM for this package.conf
         in foldr addOnePkg fm ps' : ls
-    where 
+    where
       -- we add each package with and without it's version number and with the full installedPackageId
       addOnePkg p fm' = addToPkgEnvs (addToPkgEnvs (addToPkgEnvs fm' (display $ sourcePackageId p) p) (display $ installedPackageId p) p)
                                      (packageName p) p
-      
+
       -- if no version number specified, pick the higher version
       addToPkgEnvs = addWithFM higherVersion
 
-      higherVersion pkgconf1 pkgconf2 
+      higherVersion pkgconf1 pkgconf2
         | installedPackageId pkgconf1 >= installedPackageId pkgconf2 = pkgconf1
         | otherwise                                                  = pkgconf2
-        
--- 
+
+--
 -- | generate a PkgEnv from the system package.conf
 -- The path to the default package.conf was determined by /configure/
 -- This imposes a constraint that you must build your plugins with the
@@ -364,7 +367,7 @@ lookupPkg :: PackageName -> IO ([FilePath],[FilePath])
 lookupPkg pn = go [] pn
     where
       go :: [PackageName] -> PackageName -> IO ([FilePath],[FilePath])
-      go seen p = do 
+      go seen p = do
         (ps, (f, g)) <- lookupPkg' p
         static <- isStaticPkg p
         (f', g') <- liftM unzip $ mapM (go (nub $ seen ++ ps)) (ps \\ seen)
@@ -453,7 +456,7 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 	fix_topdir (x:xs)    = replace_topdir x : fix_topdir xs
 
         replace_topdir []           = []
-	replace_topdir ('$':xs) 
+	replace_topdir ('$':xs)
 	    | take 6 xs == "topdir" = ghcLibraryPath ++ (drop 6 xs)
 	    | otherwise             = '$' : replace_topdir xs
 	replace_topdir (x:xs)       = x : replace_topdir xs
@@ -533,7 +536,7 @@ a  </> b = a ++ "/" ++ b
 
 
 
-packageName    :: PackageConfig -> PackageName 
+packageName    :: PackageConfig -> PackageName
 packageDeps    :: PackageConfig -> [PackageName]
 -- updImportDirs  :: ([FilePath] -> [FilePath]) -> PackageConfig -> PackageConfig
 -- updLibraryDirs :: ([FilePath] -> [FilePath]) -> PackageConfig -> PackageConfig
