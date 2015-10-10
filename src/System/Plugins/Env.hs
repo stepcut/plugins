@@ -429,37 +429,37 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 #else
                     libdirs = libraryDirs pkg ++ ldOptsPaths
 #endif
-		-- If we're loading dynamic libs we need the cbits to appear before the
-		-- real packages.
+                -- If we're loading dynamic libs we need the cbits to appear before the
+                -- real packages.
                 libs <- mapM (findHSlib libdirs) (cbits ++ hslibs)
 #if defined(CYGWIN) || defined(__MINGW32__)
                 windowsos <- catch (getEnv "OS")
-			   (\e -> if isDoesNotExistError e then return "Windows_98" else ioError e)
+                           (\e -> if isDoesNotExistError e then return "Windows_98" else ioError e)
                 windowsdir <-
                     if windowsos == "Windows_9X" -- I don't know Windows 9X has OS system variable
                       then return "C:/windows"
                       else return "C:/winnt"
                 sysroot <- catch (getEnv "SYSTEMROOT")
-			   (\e -> if isDoesNotExistError e then return windowsdir else ioError e) -- guess at a reasonable default
-		let syslibdir = sysroot ++ (if windowsos == "Windows_9X" then "/SYSTEM" else "/SYSTEM32")
-		libs' <- mapM (findDLL $ syslibdir : libdirs) dlls
+                           (\e -> if isDoesNotExistError e then return windowsdir else ioError e) -- guess at a reasonable default
+                let syslibdir = sysroot ++ (if windowsos == "Windows_9X" then "/SYSTEM" else "/SYSTEM32")
+                libs' <- mapM (findDLL $ syslibdir : libdirs) dlls
 #else
-		libs' <- mapM (findDLL libdirs) dlls
+                libs' <- mapM (findDLL libdirs) dlls
 #endif
-		let slibs = [ lib | Right (Static lib)  <- libs ]
-		    dlibs = [ lib | Right (Dynamic lib) <- libs ]
+                let slibs = [ lib | Right (Static lib)  <- libs ]
+                    dlibs = [ lib | Right (Dynamic lib) <- libs ]
                 return (deppkgs, (slibs,map (either id id) libs' ++ dlibs) )
 
 #if defined(CYGWIN) || defined(__MINGW32__)
         -- replace $topdir
-	fix_topdir []        = []
-	fix_topdir (x:xs)    = replace_topdir x : fix_topdir xs
+        fix_topdir []        = []
+        fix_topdir (x:xs)    = replace_topdir x : fix_topdir xs
 
         replace_topdir []           = []
-	replace_topdir ('$':xs)
-	    | take 6 xs == "topdir" = ghcLibraryPath ++ (drop 6 xs)
-	    | otherwise             = '$' : replace_topdir xs
-	replace_topdir (x:xs)       = x : replace_topdir xs
+        replace_topdir ('$':xs)
+            | take 6 xs == "topdir" = ghcLibraryPath ++ (drop 6 xs)
+            | otherwise             = '$' : replace_topdir xs
+        replace_topdir (x:xs)       = x : replace_topdir xs
 #endif
         -- a list elimination form for the Maybe type
         --filterRight :: [Either left right] -> [right]
@@ -477,31 +477,31 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                   if b then return $ Just l     -- found it!
                        else findHSlib' dirs lib
 
-	findHSslib dirs lib = findHSlib' dirs $ lib ++ sysPkgSuffix
-	findHSdlib dirs lib = findHSlib' dirs $ mkDynPkgName lib
+        findHSslib dirs lib = findHSlib' dirs $ lib ++ sysPkgSuffix
+        findHSdlib dirs lib = findHSlib' dirs $ mkDynPkgName lib
 
         -- Problem: sysPkgSuffix  is ".o", but extra libraries could be
         -- ".so"
         -- Solution: first look for static library, if we don't find it
-	-- look for a dynamic version.
-	findHSlib :: [FilePath] -> String -> IO (Either String HSLib)
-	findHSlib dirs lib = do
-	    static <- findHSslib dirs lib
-	    case static of
-		Just file -> return $ Right $ Static file
-		Nothing	  -> do
-		    dynamic <- findHSdlib dirs lib
-		    case dynamic of
-			Just file -> return $ Right $ Dynamic file
-			Nothing	  -> return $ Left lib
+        -- look for a dynamic version.
+        findHSlib :: [FilePath] -> String -> IO (Either String HSLib)
+        findHSlib dirs lib = do
+            static <- findHSslib dirs lib
+            case static of
+                Just file -> return $ Right $ Static file
+                Nothing   -> do
+                    dynamic <- findHSdlib dirs lib
+                    case dynamic of
+                        Just file -> return $ Right $ Dynamic file
+                        Nothing   -> return $ Left lib
 
         findDLL :: [FilePath] -> String -> IO (Either String FilePath)
-	findDLL [] lib         = return (Left lib)
-	findDLL (dir:dirs) lib = do
-		 let l = dir </> lib
-		 b <- doesFileExist l
-		 if b then return $ Right l
-		      else findDLL dirs lib
+        findDLL [] lib         = return (Left lib)
+        findDLL (dir:dirs) lib = do
+                 let l = dir </> lib
+                 b <- doesFileExist l
+                 if b then return $ Right l
+                      else findDLL dirs lib
 
 ------------------------------------------------------------------------
 -- do we have a Module name for this merge?

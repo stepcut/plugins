@@ -1,25 +1,25 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE PatternGuards #-}
--- 
+--
 -- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
--- 
+--
 -- This program is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU General Public License as
 -- published by the Free Software Foundation; either version 2 of
 -- the License, or (at your option) any later version.
--- 
+--
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 -- General Public License for more details.
--- 
+--
 -- You should have received a copy of the GNU General Public License
 -- along with this program; if not, write to the Free Software
 -- Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 -- 02111-1307, USA.
--- 
+--
 
-module System.Plugins.Parser ( 
+module System.Plugins.Parser (
         parse, mergeModules, pretty, parsePragmas,
         HsModule(..) ,
         replaceModName
@@ -27,7 +27,7 @@ module System.Plugins.Parser (
 
 #include "../../../config.h"
 
-import Data.List 
+import Data.List
 import Data.Char
 import Data.Either ( )
 
@@ -41,12 +41,12 @@ import Language.Haskell.Pretty
 
 --
 -- | parse a file (as a string) as Haskell src
--- 
+--
 parse :: FilePath                -- ^ module name
       -> String                  -- ^ haskell src
       -> Either String HsModule  -- ^ abstract syntax
 
-parse f fsrc = 
+parse f fsrc =
 #if defined(WITH_HSX)
     case parseFileContentsWithMode (ParseMode f) fsrc of
 #else
@@ -55,8 +55,8 @@ parse f fsrc =
         ParseOk src       -> Right src
         ParseFailed loc _ -> Left $ srcmsg loc
   where
-    srcmsg loc = "parse error in " ++ f ++ "\n" ++ 
-                  "line: "  ++ (show $ srcLine loc) ++ 
+    srcmsg loc = "parse error in " ++ f ++ "\n" ++
+                  "line: "  ++ (show $ srcLine loc) ++
                   ", col: " ++ (show $ srcColumn loc)++ "\n"
 
 --
@@ -88,23 +88,23 @@ mergeModules :: HsModule ->    -- Configure module
 
 mergeModules (HsModule l  _   _  is  ds )
              (HsModule _  m' es' is' ds')
-         = (HsModule l  m' es' 
-                        (mImps m' is is') 
+         = (HsModule l  m' es'
+                        (mImps m' is is')
                         (mDecl ds ds') )
 
--- 
+--
 -- | replace Module name with String.
 --
 replaceModName :: HsModule -> String -> HsModule
 replaceModName (HsModule l _ es is ds) nm = (HsModule l (Module nm) es is ds)
 
---  
+--
 -- | merge import declarations:
 --
 --  *   ensure that the config file doesn't import the stub name
 --  *   merge import lists uniquely, and when they match, merge their decls
 --
--- TODO * we don't merge imports of the same module from both files. 
+-- TODO * we don't merge imports of the same module from both files.
 --      We should, and then merge the decls in their import list
 --      * rename args, too confusing.
 --
@@ -115,9 +115,9 @@ mImps :: Module ->              -- plugin module name
         [HsImportDecl] ->       -- stub file imports
         [HsImportDecl]
 
-mImps plug_mod cimps timps = 
+mImps plug_mod cimps timps =
     case filter (!~ self) cimps of cimps' -> unionBy (=~) cimps' timps
-  where 
+  where
     self = ( HsImportDecl undefined plug_mod undefined undefined undefined )
 
 --
@@ -152,7 +152,7 @@ class SynEq a where
     (=~) :: a -> a -> Bool
     (!~) :: a -> a -> Bool
     n !~ m = not (n =~ m)
-        
+
 instance SynEq HsDecl where
     (HsPatBind _ (HsPVar n) _ _) =~ (HsPatBind _ (HsPVar m) _ _) = n == m
     (HsTypeSig _ (n:_) _)        =~ (HsTypeSig _ (m:_) _)        = n == m
@@ -170,7 +170,7 @@ instance SynEq HsImportDecl where
 -- handle -package options, and other /static/ flags. This is more than
 -- GHC.
 --
--- GHC user's guide : 
+-- GHC user's guide :
 --
 -- >    OPTIONS pragmas are only looked for at the top of your source
 -- >    files, up to the first (non-literate,non-empty) line not

@@ -1,24 +1,24 @@
 {-# LANGUAGE CPP, ScopedTypeVariables #-}
--- 
+--
 -- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
--- 
+--
 -- This library is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU Lesser General Public
 -- License as published by the Free Software Foundation; either
 -- version 2.1 of the License, or (at your option) any later version.
--- 
+--
 -- This library is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 -- Lesser General Public License for more details.
--- 
+--
 -- You should have received a copy of the GNU Lesser General Public
 -- License along with this library; if not, write to the Free Software
 -- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 -- USA
--- 
+--
 
-module System.Plugins.Utils ( 
+module System.Plugins.Utils (
     Arg,
 
     hWrite,
@@ -104,7 +104,7 @@ hWrite hdl src = hPutStr hdl src >> hClose hdl >> return ()
 
 {-
 
-mkstemps path slen = do 
+mkstemps path slen = do
     withCString path $ \ ptr -> do
         let c_slen = fromIntegral $ slen+1
         fd   <- throwErrnoIfMinus1 "mkstemps" $ c_mkstemps ptr c_slen
@@ -148,18 +148,18 @@ mkUnique = do (t,h) <- hMkUnique
 hMkUnique :: IO (FilePath,Handle)
 hMkUnique = do (t,h) <- mkTemp
                alreadyLoaded <- isLoaded t -- not unique!
-               if alreadyLoaded 
+               if alreadyLoaded
                         then hClose h >> removeFile t >> hMkUnique
                         else return (t,h)
 
 mkUniqueIn :: FilePath -> IO FilePath
 mkUniqueIn dir = do (t,h) <- hMkUniqueIn dir
-		    hClose h >> return t
+                    hClose h >> return t
 
 hMkUniqueIn :: FilePath -> IO (FilePath,Handle)
 hMkUniqueIn dir = do (t,h) <- mkTempIn dir
                      alreadyLoaded <- isLoaded t -- not unique!
-                     if alreadyLoaded 
+                     if alreadyLoaded
                         then hClose h >> removeFile t >> hMkUniqueIn dir
                         else return (t,h)
 
@@ -307,7 +307,7 @@ isPathSeparator ch =
 --
 replaceSuffix :: FilePath -> String -> FilePath
 replaceSuffix [] _ = [] -- ?
-replaceSuffix f suf = 
+replaceSuffix f suf =
     case reverse $ dropWhile (/= '.') $ reverse f of
         [] -> f  ++ suf                 -- no '.' in file name
         f' -> f' ++ tail suf
@@ -316,7 +316,7 @@ replaceSuffix f suf =
 -- Normally we create the .hi and .o files next to the .hs files.
 -- For some uses this is annoying (i.e. true EDSL users don't actually
 -- want to know that their code is compiled at all), and for hmake-like
--- applications. 
+-- applications.
 --
 -- This code checks if "-o foo" or "-odir foodir" are supplied as args
 -- to make(), and if so returns a modified file path, otherwise it
@@ -337,7 +337,7 @@ outFilePath src args =
         | otherwise
         -> (mk_o src, mk_hi src)
     }
-    where 
+    where
           outpath = "-o"
           outdir  = "-odir"
 
@@ -414,7 +414,7 @@ decode_upper 'N' = ']'
 decode_upper 'C' = ':'
 decode_upper 'Z' = 'Z'
 decode_upper ch  = error $ "decode_upper can't handle this char `"++[ch]++"'"
-            
+
 decode_lower 'z' = 'z'
 decode_lower 'a' = '&'
 decode_lower 'b' = '|'
@@ -505,4 +505,3 @@ isSublistOf _ [] = False
 isSublistOf x y@(_:ys)
     | isPrefixOf x y = True
     | otherwise      = isSublistOf x ys
-

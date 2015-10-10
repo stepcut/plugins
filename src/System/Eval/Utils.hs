@@ -93,4 +93,3 @@ mkUniqueWith wrapper src mods = do
 --
 cleanup :: String -> String -> IO ()
 cleanup a b = mapM_ removeFile [a, b, replaceSuffix b ".hi"]
-

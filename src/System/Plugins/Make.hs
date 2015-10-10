@@ -1,27 +1,27 @@
 {-# LANGUAGE CPP #-}
--- 
+--
 -- Copyright (C) 2004..2010 Don Stewart - http://www.cse.unsw.edu.au/~dons
--- 
+--
 -- This library is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU Lesser General Public
 -- License as published by the Free Software Foundation; either
 -- version 2.1 of the License, or (at your option) any later version.
--- 
+--
 -- This library is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 -- Lesser General Public License for more details.
--- 
+--
 -- You should have received a copy of the GNU Lesser General Public
 -- License along with this library; if not, write to the Free Software
 -- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
 -- USA
--- 
+--
 
 -- | An interface to a Haskell compiler, providing the facilities of a
 -- compilation manager.
 
-module System.Plugins.Make ( 
+module System.Plugins.Make (
 
         -- * The @MakeStatus@ type
         MakeStatus(..),
@@ -30,9 +30,9 @@ module System.Plugins.Make (
         MakeCode(..),
 
         -- * Compiling Haskell modules
-        make, 
+        make,
         makeAll,
-        makeWith, 
+        makeWith,
 
         -- * Handling reecompilation
         hasChanged,
@@ -40,12 +40,12 @@ module System.Plugins.Make (
         recompileAll,
         recompileAll',
 
-        -- * Merging together Haskell source files 
+        -- * Merging together Haskell source files
         MergeStatus(..),
         MergeCode,
         Args,
         Errors,
-        merge, 
+        merge,
         mergeTo,
         mergeToDir,
 
@@ -88,16 +88,16 @@ import System.IO.Error          ( isDoesNotExistError )
 -- messages produced by the compiler. @MakeSuccess@ returns a @MakeCode@
 -- value, and the path to the object file produced.
 --
-data MakeStatus 
+data MakeStatus
         = MakeSuccess MakeCode FilePath     -- ^ compilation was successful
         | MakeFailure Errors                -- ^ compilation failed
         deriving (Eq,Show)
 
 -- | The @MakeCode@ type is used when compilation is successful, to
--- distinguish two cases: 
+-- distinguish two cases:
 --  * The source file needed recompiling, and this was done
 --  * The source file was already up to date, recompilation was skipped
-data MakeCode   
+data MakeCode
     = ReComp    -- ^ recompilation was performed
     | NotReq    -- ^ recompilation was not required
         deriving (Eq,Show)
@@ -105,12 +105,12 @@ data MakeCode
 --
 -- | An equivalent status for the preprocessor phase
 --
-data MergeStatus 
+data MergeStatus
         = MergeSuccess MergeCode Args FilePath  -- ^ the merge was successful
         | MergeFailure Errors                   -- ^ failure, and any errors returned
         deriving (Eq,Show)
 
--- 
+--
 -- | Merging may be avoided if the source files are older than an
 -- existing merged result. The @MergeCode@ type indicates whether
 -- merging was performed, or whether it was unneccessary.
@@ -131,7 +131,7 @@ type Errors = [String]
 -- in the 'args' parameter, they will be appended to the argument list.
 -- @make@ always recompiles its target, whether or not it is out of
 -- date.
--- 
+--
 -- A side-effect of calling 'make' is to have GHC produce a @.hi@ file
 -- containing a list of package and objects that the source depends on.
 -- Subsequent calls to 'load' will use this interface file to load
@@ -147,7 +147,7 @@ make src args = rawMake src ("-c":args)  True
 -- the first argument.
 --
 makeAll :: FilePath -> [Arg] -> IO MakeStatus
-makeAll src args = 
+makeAll src args =
     rawMake src ( "--make":"-no-hs-main":"-c":"-v0":args ) False
 
 -- | This is a variety of 'make' that first calls 'merge' to
@@ -163,7 +163,7 @@ makeAll src args =
 -- > a = 1
 --
 -- and
--- 
+--
 -- > module B where
 -- > a :: Int
 --
@@ -176,7 +176,7 @@ makeAll src args =
 -- > a :: Int
 -- > {-# LINE 4 "A.hs" #-}
 -- > a = 1
---      
+--
 makeWith :: FilePath                           -- ^ a src file
          -> FilePath                           -- ^ a syntax stub file
          -> [Arg]                              -- ^ any required args
@@ -215,7 +215,7 @@ hasChanged' suffices m@(Module {path = p})
            _ -> return True
 
 --
--- | 'recompileAll' is like 'makeAll', but rather than relying on 
+-- | 'recompileAll' is like 'makeAll', but rather than relying on
 -- @ghc --make@, we explicitly check a module\'s dependencies using our
 -- internal map of module dependencies. Performance is thus better, and
 -- the result is more accurate.
@@ -265,16 +265,16 @@ rawMake src args docheck = do
         ; src_changed <- if docheck then src `newer` obj else return True
         ; if not src_changed
           then return $ MakeSuccess NotReq obj
-          else do 
-#if DEBUG    
+          else do
+#if DEBUG
                 putStr "Compiling object ... " >> hFlush stdout
 #endif
                 err <- build src obj args
-#if DEBUG    
+#if DEBUG
                 putStrLn "done"
 #endif
-                return $ if null err 
-                         then MakeSuccess ReComp obj 
+                return $ if null err
+                         then MakeSuccess ReComp obj
                          else MakeFailure err
         }
 
@@ -296,7 +296,7 @@ build src obj extra_opts = do
                            -- won't handle hier names properly.
 
     let ghc_opts = [ "-O0" ]
-        output   = [ "-o", obj, "-odir", odir, 
+        output   = [ "-o", obj, "-odir", odir,
                      "-hidir", odir, "-i" ++ odir ]
 
     let flags = ghc_opts ++ output ++ extra_opts ++ [src]
@@ -322,7 +322,7 @@ build src obj extra_opts = do
 -- syntax. An EDSL user then need not worry about declaring module
 -- names, or having required imports.  In this way, the stub file can
 -- also be used to provide syntax declarations that would be
--- inconvenient to require of the plugin author. 
+-- inconvenient to require of the plugin author.
 --
 -- 'merge' will include any import and export declarations written in
 -- the stub, as well as any module name, so that plugin author\'s need
@@ -337,7 +337,7 @@ build src obj extra_opts = do
 -- parse Haskell source files.
 --
 merge :: FilePath -> FilePath -> IO MergeStatus
-merge src stb = do 
+merge src stb = do
     m_mod <- lookupMerged src stb
     (out,domerge) <- case m_mod of
                 Nothing -> do out <- mkUnique
@@ -347,7 +347,7 @@ merge src stb = do
     rawMerge src stb out domerge
 
 -- | 'mergeTo' behaves like 'merge', but we can specify the file in
--- which to place output. 
+-- which to place output.
 mergeTo :: FilePath -> FilePath -> FilePath -> IO MergeStatus
 mergeTo src stb out = rawMerge src stb out False
 
@@ -378,12 +378,12 @@ rawMerge src stb out always_merge = do
     src_exists <- doesFileExist src
     stb_exists <- doesFileExist stb
     case () of {_
-        | not src_exists  -> return $ 
+        | not src_exists  -> return $
                 MergeFailure ["Source file does not exist : "++src]
-        | not stb_exists -> return $ 
+        | not stb_exists -> return $
                 MergeFailure ["Source file does not exist : "++stb]
         | otherwise -> do {
-    
+
     ;do_merge <- do src_changed <- src `newer` out
                     stb_changed <- stb `newer` out
                     return $ src_changed || stb_changed
@@ -400,7 +400,7 @@ rawMerge src stb out always_merge = do
 
         let e_src_syn = parse src src_str
             e_stb_syn = parse stb stb_str
-    
+
         -- check if there were parser errors
         case (e_src_syn,e_stb_syn) of
                 (Left e,  _)       -> return $ MergeFailure [e]
@@ -429,7 +429,7 @@ makeClean f = let f_hi = dropSuffix  f <> hiSuf
 
 makeCleaner :: FilePath -> IO ()
 makeCleaner f = makeClean f >> rm_f (dropSuffix f <> hsSuf)
-           
+
 -- internal:
 --      try to remove a file, ignoring if it didn't exist in the first place
 -- Doesn't seem to be able to remove all files in all circumstances, why?
@@ -446,4 +446,3 @@ readFile' f = do
     length s `seq` return ()
     hClose h
     return s
-

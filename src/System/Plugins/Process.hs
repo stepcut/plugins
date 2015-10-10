@@ -79,11 +79,11 @@ popen file args minput =
 -- generate 1000s of lines of output.
 --
 popen :: FilePath -> [String] -> Maybe String -> IO (String,String,P.ProcessID)
-popen f s m = 
+popen f s m =
         E.handle (\e -> return ([], show (e::IOException), error $ show e )) $ do
-            x@(_,_,pid) <- P.popen f s m 
+            x@(_,_,pid) <- P.popen f s m
             b <- P.getProcessStatus True False pid  -- wait
-            return $ case b of    
+            return $ case b of
                 Nothing -> ([], "process has disappeared", pid)
                 _       -> x
 

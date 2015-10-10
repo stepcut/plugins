@@ -610,7 +610,7 @@ loadPackage p = do
         putStr (' ':show libs) >> hFlush stdout
         putStr (' ':show dlls) >> hFlush stdout
 #endif
-	mapM_ loadShared dlls
+        mapM_ loadShared dlls
 
 
 
