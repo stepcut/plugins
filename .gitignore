@@ -1,0 +1,9 @@
+/config.h
+/config.log
+/config.mk
+/config.status
+/testsuite/hier/hier2/A/B/C/Module.hi
+/testsuite/hier/hier2/A/B/C/Module.o
+/testsuite/makewith/io/TestIO.conf
+/testsuite/makewith/unsafeio/Unsafe.conf
+/.stack-work/

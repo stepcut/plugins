@@ -72,7 +72,11 @@ import System.Plugins.LoadTypes
 -- import Language.Hi.Parser
 import BinIface
 import HscTypes
+#if MIN_VERSION_ghc(7,10,0)
+import Module (moduleName, moduleNameString, packageKeyString)
+#else
 import Module (moduleName, moduleNameString, packageIdString)
+#endif
 import HscMain (newHscEnv)
 import TcRnMonad (initTcRnIf)
 
@@ -701,7 +705,9 @@ loadDepends obj incpaths = do
 
                 -- and find some packages to load, as well.
                 let ps = dep_pkgs ds
-#if MIN_VERSION_ghc(7,2,0)
+#if MIN_VERSION_ghc(7,10,0)
+                ps' <- filterM loaded . map packageKeyString . nub $ map fst ps
+#elif MIN_VERSION_ghc(7,2,0)
                 ps' <- filterM loaded . map packageIdString . nub $ map fst ps
 #else
                 ps' <- filterM loaded . map packageIdString . nub $ ps
