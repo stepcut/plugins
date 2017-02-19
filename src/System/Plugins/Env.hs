@@ -323,7 +323,14 @@ union ls ps' =
 grabDefaultPkgConf :: IO PkgEnvs
 grabDefaultPkgConf = do
         pc <- configureAllKnownPrograms silent defaultProgramConfiguration
+#if MIN_VERSION_Cabal(1,24,0)
+        (compiler, _platform, _programConfiguration)
+           <- configure silent Nothing Nothing pc
+        pkgIndex <- getInstalledPackages silent compiler
+                        [GlobalPackageDB, UserPackageDB] pc
+#else
         pkgIndex <- getInstalledPackages silent [GlobalPackageDB, UserPackageDB] pc
+#endif
         return $ [] `union` allPackages pkgIndex
 
 --
@@ -332,7 +339,13 @@ grabDefaultPkgConf = do
 readPackageConf :: FilePath -> IO [PackageConfig]
 readPackageConf f = do
     pc <- configureAllKnownPrograms silent defaultProgramConfiguration
+#if MIN_VERSION_Cabal(1,24,0)
+    (compiler, _platform, _programConfiguration)
+       <- configure silent Nothing Nothing pc
+    pkgIndex <- getInstalledPackages silent compiler [GlobalPackageDB, UserPackageDB, SpecificPackageDB f] pc
+#else
     pkgIndex <- getInstalledPackages silent [GlobalPackageDB, UserPackageDB, SpecificPackageDB f] pc
+#endif
     return $ allPackages pkgIndex
 
 -- -----------------------------------------------------------
