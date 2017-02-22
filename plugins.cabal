@@ -1,5 +1,5 @@
 name:               plugins
-version:            1.5.5.0
+version:            1.5.6.0
 homepage:           http://hub.darcs.net/stepcut/plugins
 synopsis:           Dynamic linking for Haskell and C objects
 description:        Dynamic linking and runtime evaluation of Haskell,
@@ -20,9 +20,7 @@ author:             Don Stewart 2004..2010
 maintainer:         Jeremy Shaw <jeremy@seereason.com>
 cabal-version:      >= 1.6
 build-type:         Configure
-Tested-with:        GHC == 7.0.*
--- not working                  , GHC == 7.2.*
-                  , GHC == 7.4.*
+Tested-with:        GHC == 7.4.*
                   , GHC == 7.6.*
                   , GHC == 7.8.*
                   , GHC == 7.10.*
