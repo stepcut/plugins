@@ -43,8 +43,8 @@ sysPkgConf = "package.conf"
 
 -- | This code is from runtime_loader:
 --   The extension used by system modules.
-sysPkgSuffix = ".o"
-objSuf       = sysPkgSuffix
+sysPkgSuffix = ".a"
+objSuf       = ".o"
 hiSuf        = ".hi"
 hsSuf        = ".hs"
 #if defined(CYGWIN) || defined(__MINGW32__)

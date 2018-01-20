@@ -13,7 +13,7 @@ REALBIN=	./Main
 API_OBJ=	api/API.o
 
 INCLUDES=   	-i$(TOP)/testsuite/$(TEST)/api
-GHCFLAGS=   	-O0 -cpp -fglasgow-exts
+GHCFLAGS=   	-rdynamic -O0 -cpp -fglasgow-exts
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s
 
@@ -26,7 +26,7 @@ $(BIN) : $(PRIOR_OBJS) $(API_OBJ) $(SRC) $(EXTRA_OBJS)
 # Standard suffix rules
 .o.hi:
 	@:
-.hs.o:
+.hs.o: $(API_OBJ)
 	@$(GHC) $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) -c $<
 
 clean:

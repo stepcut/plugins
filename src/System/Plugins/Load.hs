@@ -70,12 +70,17 @@ import System.Plugins.Consts           ( sysPkgSuffix, hiSuf, prefixUnderscore )
 import System.Plugins.LoadTypes
 
 -- import Language.Hi.Parser
+import Encoding (zEncodeString)
 import BinIface
 import HscTypes
 
 import Module (moduleName, moduleNameString)
 #if MIN_VERSION_ghc(8,0,0)
+#if MIN_VERSION_Cabal(2,0,0)
+import Module (installedUnitIdString)
+#else
 import Module (unitIdString)
+#endif
 #elif MIN_VERSION_ghc(7,10,0)
 import Module (packageKeyString)
 #else
@@ -91,6 +96,7 @@ import Data.Typeable         ( Typeable )
 import Data.List                ( isSuffixOf, nub, nubBy )
 import Control.Monad            ( when, filterM, liftM )
 import System.Directory         ( doesFileExist, removeFile )
+import Foreign.C                ( CInt(..) )
 import Foreign.C.String         ( CString, withCString, peekCString )
 
 #if !MIN_VERSION_ghc(7,2,0)
@@ -173,7 +179,7 @@ load :: FilePath                -- ^ object file
      -> IO (LoadStatus a)
 
 load obj incpaths pkgconfs sym = do
-    initLinker
+    initLinker_ $ fromIntegral 0
 
     -- load extra package information
     mapM_ addPkgConf pkgconfs
@@ -443,7 +449,8 @@ reload m@(Module{path = p, iface = hi}) sym = do
 -- | Call the initLinker function first, before calling any of the other
 -- functions in this module - otherwise you\'ll get unresolved symbols.
 
--- initLinker :: IO ()
+initLinker :: IO ()
+initLinker = initLinker_ $ fromIntegral 0
 -- our initLinker transparently calls the one in GHC
 
 --
@@ -466,8 +473,8 @@ loadFunction__ :: Maybe String
               -> String
               -> IO (Maybe a)
 loadFunction__ pkg m valsym
-   = do let symbol = prefixUnderscore++(maybe "" (\p -> encode p++"_") pkg)
-                     ++encode m++"_"++(encode valsym)++"_closure"
+   = do let symbol = prefixUnderscore++(maybe "" (\p -> zEncodeString p++"_") pkg)
+                     ++zEncodeString m++"_"++(zEncodeString valsym)++"_closure"
 #if DEBUG
         putStrLn $ "Looking for <<"++symbol++">>"
 #endif
@@ -525,17 +532,21 @@ loadObject p ky@(Package k) = loadObject' p ky k
 
 loadObject' :: FilePath -> Key -> String -> IO Module
 loadObject' p ky k
-    | ("HSrts"++sysPkgSuffix) `isSuffixOf` p = return (emptyMod p)
-
-    | otherwise
     = do alreadyLoaded <- isLoaded k
          when (not alreadyLoaded) $ do
-              r <- withCString p c_loadObj
-              when (not r) (panic $ "Could not load module `"++p++"'")
-         addModule k (emptyMod p)   -- needs to Z-encode module name
-         return (emptyMod p)
+              let ld = if sysPkgSuffix `isSuffixOf` p
+                       then c_loadArchive
+                       else c_loadObj
+              r <- withCString p ld
+              when (not r) (panic $ "Could not load module or package `"++p++"'")
+         let hifile = replaceSuffix p hiSuf
+         exists <- doesFileExist hifile
+         hiface <- if exists then readBinIface' hifile else return undefined
+         let m = emptyMod p hiface
+         addModule k m
+         return m
 
-    where emptyMod q = Module q (mkModid q) Vanilla undefined ky
+    where emptyMod q hiface = Module q (mkModid q) Vanilla hiface ky
 
 -- |
 -- load a single object. no dependencies. You should know what you're
@@ -711,7 +722,11 @@ loadDepends obj incpaths = do
                 -- and find some packages to load, as well.
                 let ps = dep_pkgs ds
 #if MIN_VERSION_ghc(8,0,0)
+#if MIN_VERSION_Cabal(2,0,0)
+                ps' <- filterM loaded . map installedUnitIdString . nub $ map fst ps
+#else
                 ps' <- filterM loaded . map unitIdString . nub $ map fst ps
+#endif
 #elif MIN_VERSION_ghc(7,10,0)
                 ps' <- filterM loaded . map packageKeyString . nub $ map fst ps
 #elif MIN_VERSION_ghc(7,2,0)
@@ -758,11 +773,14 @@ foreign import ccall unsafe "loadObj"
 foreign import ccall unsafe "unloadObj"
    c_unloadObj :: CString -> IO Bool
 
+foreign import ccall unsafe "loadArchive"
+   c_loadArchive :: CString -> IO Bool
+
 foreign import ccall unsafe "resolveObjs"
    c_resolveObjs :: IO Bool
 
 foreign import ccall unsafe "addDLL"
    c_addDLL :: CString -> IO CString
 
-foreign import ccall unsafe "initLinker"
-   initLinker :: IO ()
+foreign import ccall unsafe "initLinker_"
+   initLinker_ :: CInt -> IO ()
