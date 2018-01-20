@@ -1,7 +1,7 @@
 include $(TOP)/config.mk
 
 check: $(BIN)
-	@(cd $(BINDIR) ;\
+	(cd $(BINDIR) ;\
 	  expected="expected" ;\
           if [ -f "expected" -o -f "expected.$(GLASGOW_HASKELL)" ] ;\
 	  then \

@@ -12,14 +12,14 @@ REALBIN=	./$(BIN)
 all: $(BIN)
 
 $(BIN): $(SRC) $(OBJS)
-	@rm -f $@
-	@$(GHC) --make -fglasgow-exts $(GHCFLAGS) $(PKGFLAGS) $(EXTRAFLAGS) $(SRC)
+	rm -f $@
+	$(GHC) --make -fglasgow-exts $(GHCFLAGS) $(PKGFLAGS) $(EXTRAFLAGS) $(SRC)
 
 # Standard suffix rules
 .o.hi:
-	@:
+	:
 .hs.o:
-	@$(GHC) $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) -c $<
+	$(GHC) $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) -c $<
 
 clean: 
-	@rm -rf *.hi *.o *~ $(BIN)
+	rm -rf *.hi *.o *~ $(BIN)

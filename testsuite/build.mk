@@ -20,14 +20,14 @@ GHCFLAGS=   	-rdynamic -O0 -cpp -fglasgow-exts
 all: $(BIN)
 
 $(BIN) : $(PRIOR_OBJS) $(API_OBJ) $(SRC) $(EXTRA_OBJS)
-	@rm -f $@
-	@$(GHC) --make -o $@ $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) $(API) $(SRC)
+	rm -f $@
+	$(GHC) --make -o $@ $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) $(API) $(SRC)
 
 # Standard suffix rules
 .o.hi:
-	@:
+	:
 .hs.o: $(API_OBJ)
-	@$(GHC) $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) -c $<
+	$(GHC) $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) -c $<
 
 clean:
 	find . -name '*~' -exec rm {} \;
