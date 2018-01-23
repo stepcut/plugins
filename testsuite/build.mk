@@ -13,21 +13,21 @@ REALBIN=	./Main
 API_OBJ=	api/API.o
 
 INCLUDES=   	-i$(TOP)/testsuite/$(TEST)/api
-GHCFLAGS=   	-O0 -cpp -fglasgow-exts
+GHCFLAGS=   	-rdynamic -O0 -cpp -fglasgow-exts
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s
 
 all: $(BIN)
 
 $(BIN) : $(PRIOR_OBJS) $(API_OBJ) $(SRC) $(EXTRA_OBJS)
-	@rm -f $@
-	@$(GHC) --make -o $@ $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) $(API) $(SRC)
+	rm -f $@
+	$(GHC) --make -o $@ $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) $(API) $(SRC)
 
 # Standard suffix rules
 .o.hi:
-	@:
-.hs.o:
-	@$(GHC) $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) -c $<
+	:
+.hs.o: $(API_OBJ)
+	$(GHC) $(INCLUDES) $(PKGFLAGS) $(GHCFLAGS) $(EXTRAFLAGS) -c $<
 
 clean:
 	find . -name '*~' -exec rm {} \;

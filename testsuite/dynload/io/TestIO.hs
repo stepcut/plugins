@@ -1,4 +1,3 @@
-{-# OPTIONS -fglasgow-exts -cpp #-}
 --
 -- Copyright (c) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
 -- LGPL version 2.1 or later (see http://www.gnu.org/copyleft/lesser.html)
@@ -8,6 +7,8 @@ module TestIO ( resource_dyn )  where
 
 import API
 import Data.Dynamic
+
+import Control.Exception (SomeException, catch)
 
 import System.IO
 import System.Posix.Types   ( ProcessID, Fd )
@@ -26,7 +27,7 @@ resource = testio { field = date }
 -- call a shell command , returning it's output
 --
 date :: IO String
-date = do (hdl,_,_) <- catch (popen "/bin/date") (\_->error "popen failed")
+date = do (hdl,_,_) <- catch (popen "/bin/date") (\(_ :: SomeException)->error "popen failed")
           hGetLine hdl 
 
 ------------------------------------------------------------------------

@@ -57,20 +57,33 @@ module System.Plugins.Utils (
 
   ) where
 
+
 #include "../../../config.h"
 
 import System.Plugins.Env              ( isLoaded )
 import System.Plugins.Consts           ( objSuf, hiSuf, tmpDir )
--- import qualified System.MkTemp ( mkstemps )
+
+import Foreign.C (CInt(..), CString, withCString)
+import Foreign.C.Error (Errno, eEXIST, getErrno, errnoToIOError)
+import System.Posix.Internals
+import System.Posix.Types (CMode)
 
 import Control.Exception               (IOException, catch)
+import Data.Bits
 import Data.Char
 import Data.List
-import Prelude hiding                  (catch)
+import Prelude hiding (catch)
 
-import System.IO
+import System.IO hiding (openBinaryTempFile, openTempFile)
+import System.Random (randomRIO)
+
+import GHC.IO.Encoding (getLocaleEncoding)
+import GHC.IO.Handle.FD
+import qualified GHC.IO.FD as FD
 import System.Environment           ( getEnv )
 import System.Directory             ( doesFileExist, getModificationTime, removeFile )
+import System.FilePath (pathSeparator)
+
 
 -- ---------------------------------------------------------------------
 -- some misc types we use
@@ -90,31 +103,129 @@ hWrite hdl src = hPutStr hdl src >> hClose hdl >> return ()
 
 
 -- ---------------------------------------------------------------------
--- | mkstemps.
+-- | openTempFile.
 --
--- We use the Haskell version now... it is faster than calling into
--- mkstemps(3).
+-- System.IO.openTempFile uses undesirable characters in its filenames, which
+-- breaks e.g. merge and other functions that try to compile Haskell source.
+-- Sadly, this means we must provide our own secure temporary file facility.
 --
 
--- mkstemps :: String -> Int -> IO (String,Handle)
--- mkstemps path slen = do
---         m_v <- System.MkTemp.mkstemps path slen
---         case m_v of Nothing -> error "mkstemps : couldn't create temp file"
---                     Just v' -> return v'
+openTempFile :: FilePath   -- ^ Directory in which to create the file
+             -> String     -- ^ File name prefix. If the prefix is \"fooie\",
+                           -- the full name will be \"fooie\" followed by six
+                           -- random alphanumeric characters followed by, if
+                           -- given, the suffix.  Should not contain any path
+                           -- separator characters.
+             -> String     -- ^ File name suffix.  Should not contain any path
+                           -- separator characters.
+             -> IO (FilePath, Handle)
+openTempFile tmp_dir pfx sfx
+    = openTempFile' "openTempFile" tmp_dir pfx sfx False 0o600
 
-{-
+-- | Like 'openTempFile', but opens the file in binary mode. See 'openBinaryFile' for more comments.
+openBinaryTempFile :: FilePath -> String -> String -> IO (FilePath, Handle)
+openBinaryTempFile tmp_dir pfx sfx
+    = openTempFile' "openBinaryTempFile" tmp_dir pfx sfx True 0o600
 
-mkstemps path slen = do
-    withCString path $ \ ptr -> do
-        let c_slen = fromIntegral $ slen+1
-        fd   <- throwErrnoIfMinus1 "mkstemps" $ c_mkstemps ptr c_slen
-        name <- peekCString ptr
-        hdl  <- fdToHandle fd
-        return (name, hdl)
+-- | Like 'openTempFile', but uses the default file permissions
+openTempFileWithDefaultPermissions :: FilePath -> String -> String
+                                   -> IO (FilePath, Handle)
+openTempFileWithDefaultPermissions tmp_dir pfx sfx
+    = openTempFile' "openTempFileWithDefaultPermissions" tmp_dir pfx sfx False 0o666
 
-foreign import ccall unsafe "mkstemps" c_mkstemps :: CString -> CInt -> IO Fd
+-- | Like 'openBinaryTempFile', but uses the default file permissions
+openBinaryTempFileWithDefaultPermissions :: FilePath -> String -> String
+                                         -> IO (FilePath, Handle)
+openBinaryTempFileWithDefaultPermissions tmp_dir pfx sfx
+    = openTempFile' "openBinaryTempFileWithDefaultPermissions" tmp_dir pfx sfx True 0o666
 
--}
+badfnmsg :: String
+badfnmsg = "openTempFile': Template string must not contain path separator characters: "
+
+openTempFile' :: String -> FilePath -> String -> String -> Bool -> CMode
+              -> IO (FilePath, Handle)
+openTempFile' loc tmp_dir pfx sfx binary mode
+    | pathSeparator `elem` pfx
+    = fail $ badfnmsg++pfx
+    | pathSeparator `elem` sfx
+    = fail $ badfnmsg++sfx
+    | otherwise = findTempName
+  where
+    findTempName = do
+      filename <- mkTempFileName tmp_dir pfx sfx
+      r <- openNewFile filename binary mode
+      case r of
+        FileExists -> findTempName
+        OpenNewError errno -> ioError (errnoToIOError loc errno Nothing (Just tmp_dir))
+        NewFileCreated fd -> do
+          (fD,fd_type) <- FD.mkFD fd ReadWriteMode Nothing{-no stat-}
+                          False{-is_socket-}
+                          True{-is_nonblock-}
+
+          enc <- getLocaleEncoding
+          h <- mkHandleFromFD fD fd_type filename ReadWriteMode False{-set non-block-} (Just enc)
+
+          return (filename, h)
+
+mkTempFileName :: FilePath -> String -> String -> IO String
+mkTempFileName dir pfx sfx = do
+  let rs = filter isAlphaNum ['0'..'z']
+      maxInd = length rs - 1
+      rchoose = do
+        i <- randomRIO (0, maxInd)
+        return (rs !! i)
+  rnd <- sequence $ replicate 6 rchoose
+  return $ dir </> pfx ++ rnd ++ sfx
+
+data OpenNewFileResult
+  = NewFileCreated CInt
+  | FileExists
+  | OpenNewError Errno
+
+openNewFile :: FilePath -> Bool -> CMode -> IO OpenNewFileResult
+openNewFile filepath binary mode = do
+  let oflags1 = rw_flags .|. o_EXCL
+
+      binary_flags
+        | binary    = o_BINARY
+        | otherwise = 0
+
+      oflags = oflags1 .|. binary_flags
+  fd <- withFilePath filepath $ \ f ->
+          c_open f oflags mode
+  if fd < 0
+    then do
+      errno <- getErrno
+      case errno of
+        _ | errno == eEXIST -> return FileExists
+#ifdef mingw32_HOST_OS
+        -- If c_open throws EACCES on windows, it could mean that filepath is a
+        -- directory. In this case, we want to return FileExists so that the
+        -- enclosing openTempFile can try again instead of failing outright.
+        -- See bug #4968.
+        _ | errno == eACCES -> do
+          withCString filepath $ \path -> do
+            -- There is a race here: the directory might have been moved or
+            -- deleted between the c_open call and the next line, but there
+            -- doesn't seem to be any direct way to detect that the c_open call
+            -- failed because of an existing directory.
+            exists <- c_fileExists path
+            return $ if exists
+              then FileExists
+              else OpenNewError errno
+#endif
+        _ -> return (OpenNewError errno)
+    else return (NewFileCreated fd)
+
+#ifdef mingw32_HOST_OS
+foreign import ccall "file_exists" c_fileExists :: CString -> IO Bool
+#endif
+
+-- XXX Copied from GHC.Handle
+std_flags, output_flags, rw_flags :: CInt
+std_flags    = o_NONBLOCK   .|. o_NOCTTY
+output_flags = std_flags    .|. o_CREAT
+rw_flags     = output_flags .|. o_RDWR
 
 -- ---------------------------------------------------------------------
 -- | create a new temp file, returning name and handle.
@@ -126,10 +237,8 @@ mkTemp = do tmpd  <- catch (getEnv "TMPDIR") (\ (_ :: IOException) -> return tmp
 
 mkTempIn :: String -> IO (String, Handle)
 mkTempIn tmpd = do
- -- XXX    (tmpf,hdl)  <- mkstemps (tmpd++"/MXXXXXXXXX.hs") 3
-
-        (tmpf, hdl) <- openTempFile tmpd "MXXXXX.hs"
-        let modname = mkModid $ dropSuffix tmpf
+        (tmpf, hdl) <- openTempFile tmpd "Hsplugins" ".hs"
+        let modname = mkModid tmpf
         if and $ map (\c -> isAlphaNum c && c /= '_') modname
                 then return (tmpf,hdl)
                 else panic $ "Illegal characters in temp file: `"++tmpf++"'"

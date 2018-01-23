@@ -43,6 +43,7 @@ module System.Plugins.Env (
         union,
         addStaticPkg,
         isStaticPkg,
+        rmStaticPkg,
         grabDefaultPkgConf,
         readPackageConf,
         lookupPkg
@@ -69,7 +70,19 @@ import System.IO.Error          ( catch, ioError, isDoesNotExistError )
 
 import Control.Concurrent.MVar  ( MVar(), newMVar, withMVar )
 
-import Distribution.Package hiding (depends, packageName, PackageName(..)
+import GHC.Paths (libdir)
+import DynFlags (
+#if MIN_VERSION_ghc(7,8,0)
+  Way(WayDyn), dynamicGhc, ways,
+#endif
+  defaultDynFlags, initDynFlags)
+import SysTools (initSysTools)
+
+import Distribution.Package hiding (
+#if MIN_VERSION_ghc(7,6,0)
+                                     Module,
+#endif
+                                     depends, packageName, PackageName(..)
 #if MIN_VERSION_ghc(7,10,0)
                                    , installedPackageId
 #endif
@@ -358,6 +371,12 @@ addStaticPkg pkg = modifyStaticPkgEnv env $ \set -> return $ S.insert pkg set
 isStaticPkg :: PackageName -> IO Bool
 isStaticPkg pkg = withStaticPkgEnv env $ \set -> return $ S.member pkg set
 
+rmStaticPkg :: String -> IO Bool
+rmStaticPkg pkg = do
+  (willRemove, s) <- withStaticPkgEnv env $ \s -> return (S.member pkg s, s)
+  if not willRemove then return False
+    else do modifyStaticPkgEnv env $ \s' -> return $ S.delete pkg s'
+            return True
 --
 -- Package path, given a package name, look it up in the environment and
 -- return the path to all the libraries needed to load this package.
@@ -382,7 +401,9 @@ lookupPkg pn = go [] pn
       go :: [PackageName] -> PackageName -> IO ([FilePath],[FilePath])
       go seen p = do
         (ps, (f, g)) <- lookupPkg' p
-        static <- isStaticPkg p
+        static <- if not (null f) && null g
+                  then addStaticPkg p >> return True
+                  else isStaticPkg p
         (f', g') <- liftM unzip $ mapM (go (nub $ seen ++ ps)) (ps \\ seen)
         return $ (nub $ (concat f') ++ f, if static then [] else nub $ (concat g') ++ g)
 
@@ -444,7 +465,16 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 #endif
                 -- If we're loading dynamic libs we need the cbits to appear before the
                 -- real packages.
-                libs <- mapM (findHSlib libdirs) (cbits ++ hslibs)
+                settings <- initSysTools (Just libdir)
+                dflags <- initDynFlags $ defaultDynFlags settings
+                libs <- mapM (findHSlib
+#if MIN_VERSION_ghc(7,8,0)
+                              (WayDyn `elem` ways dflags || dynamicGhc)
+#else
+                              False
+#endif
+                              libdirs)
+                             (cbits ++ hslibs)
 #if defined(CYGWIN) || defined(__MINGW32__)
                 windowsos <- catch (getEnv "OS")
                            (\e -> if isDoesNotExistError e then return "Windows_98" else ioError e)
@@ -490,23 +520,24 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                   if b then return $ Just l     -- found it!
                        else findHSlib' dirs lib
 
-        findHSslib dirs lib = findHSlib' dirs $ lib ++ sysPkgSuffix
+        findHSslib dirs lib = findHSlib' dirs $ "lib" ++ lib ++ sysPkgSuffix
         findHSdlib dirs lib = findHSlib' dirs $ mkDynPkgName lib
 
-        -- Problem: sysPkgSuffix  is ".o", but extra libraries could be
-        -- ".so"
-        -- Solution: first look for static library, if we don't find it
-        -- look for a dynamic version.
-        findHSlib :: [FilePath] -> String -> IO (Either String HSLib)
-        findHSlib dirs lib = do
-            static <- findHSslib dirs lib
-            case static of
-                Just file -> return $ Right $ Static file
-                Nothing   -> do
-                    dynamic <- findHSdlib dirs lib
-                    case dynamic of
-                        Just file -> return $ Right $ Dynamic file
-                        Nothing   -> return $ Left lib
+        findHSlib :: Bool -> [FilePath] -> String -> IO (Either String HSLib)
+        findHSlib dynonly dirs lib = do
+            -- Problem: sysPkgSuffix  is ".a", but system packages could be dynamic, and
+            -- extra dynamic libraries could be needed even when using normal (static) linkage.
+            -- Solution: look for dynamic libraries only if using -dynamic; otherwise, use static
+            -- and add any other dynamic libraries found.
+            dl <- findHSdlib dirs lib
+            let rdl = case dl of
+                  Just file -> Right $ Dynamic file
+                  Nothing   -> Left lib
+            if dynonly then return rdl else do
+              rsl <- findHSslib dirs lib
+              return $ case rsl of
+                Just file -> Right $ Static file
+                Nothing   -> rdl
 
         findDLL :: [FilePath] -> String -> IO (Either String FilePath)
         findDLL [] lib         = return (Left lib)

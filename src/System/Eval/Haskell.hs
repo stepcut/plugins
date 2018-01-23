@@ -239,7 +239,7 @@ dynwrap expr nm mods =
         x = ident ()
 
 ident () = unsafePerformIO $
-            sequence (take 3 (repeat $ getStdRandom (randomR (97,122)) >>= return . chr))
+            sequence (Prelude.take 3 (repeat $ getStdRandom (randomR (97,122)) >>= return . chr))
 
 -- ---------------------------------------------------------------------
 -- unsafe wrapper
