@@ -58,7 +58,7 @@ module System.Plugins.Utils (
   ) where
 
 
-#include "../../../config.h"
+#include "config.h"
 
 import System.Plugins.Env              ( isLoaded )
 import System.Plugins.Consts           ( objSuf, hiSuf, tmpDir )
@@ -289,7 +289,7 @@ findFile (ext:exts) file
 infixr 6 </>
 infixr 6 <.>
 
-(</>), (<.>), (<+>), (<>) :: FilePath -> FilePath -> FilePath
+(</>), (<.>), (<+>) :: FilePath -> FilePath -> FilePath
 [] </> b = b
 a  </> b = a ++ "/" ++ b
 
@@ -298,9 +298,6 @@ a  <.> b = a ++ "." ++ b
 
 [] <+> b = b
 a  <+> b = a ++ " " ++ b
-
-[] <> b = b
-a  <> b = a ++ b
 
 --
 -- | dirname : return the directory portion of a file path

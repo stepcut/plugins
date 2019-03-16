@@ -50,7 +50,7 @@ module System.Plugins.Env (
 
    ) where
 
-#include "../../../config.h"
+#include "config.h"
 
 import System.Plugins.LoadTypes (Module)
 import System.Plugins.Consts           ( sysPkgSuffix )
@@ -76,7 +76,7 @@ import DynFlags (
   Way(WayDyn), dynamicGhc, ways,
 #endif
   defaultDynFlags, initDynFlags)
-import SysTools (initSysTools)
+import SysTools (initSysTools, initLlvmConfig)
 
 import Distribution.Package hiding (
 #if MIN_VERSION_ghc(7,6,0)
@@ -466,7 +466,8 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                 -- If we're loading dynamic libs we need the cbits to appear before the
                 -- real packages.
                 settings <- initSysTools (Just libdir)
-                dflags <- initDynFlags $ defaultDynFlags settings
+                llvmConfig <- initLlvmConfig (Just libdir)
+                dflags <- initDynFlags $ defaultDynFlags settings llvmConfig
                 libs <- mapM (findHSlib
 #if MIN_VERSION_ghc(7,8,0)
                               (WayDyn `elem` ways dflags || dynamicGhc)

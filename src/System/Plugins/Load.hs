@@ -61,7 +61,7 @@ module System.Plugins.Load (
 
   ) where
 
-#include "../../../config.h"
+#include "config.h"
 
 import System.Plugins.Make             ( build )
 import System.Plugins.Env
@@ -104,7 +104,7 @@ import GHC                      ( defaultCallbacks )
 #else
 import DynFlags                 (defaultDynFlags, initDynFlags)
 import GHC.Paths                (libdir)
-import SysTools                 (initSysTools)
+import SysTools                 (initSysTools, initLlvmConfig)
 #endif
 import GHC.Ptr                  ( Ptr(..), nullPtr )
 #if !MIN_VERSION_ghc(7,4,1)
@@ -127,7 +127,8 @@ readBinIface' hi_path = do
     -- kludgy as hell
 #if MIN_VERSION_ghc(7,2,0)
     mySettings <- initSysTools (Just libdir) -- how should we really set the top dir?
-    dflags <- initDynFlags (defaultDynFlags mySettings)
+    llvmConfig <- initLlvmConfig (Just libdir)
+    dflags <- initDynFlags (defaultDynFlags mySettings llvmConfig)
     e <- newHscEnv dflags
 #else
     e <- newHscEnv defaultCallbacks undefined

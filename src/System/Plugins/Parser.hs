@@ -25,7 +25,7 @@ module System.Plugins.Parser (
         replaceModName
   ) where
 
-#include "../../../config.h"
+#include "config.h"
 
 import Data.List
 import Data.Char
