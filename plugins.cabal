@@ -59,6 +59,7 @@ library
                           filepath,
                           random,
                           process,
+                          split,
                           ghc >= 6.10,
                           ghc-prim
 
