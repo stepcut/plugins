@@ -61,7 +61,7 @@ module System.Plugins.Load (
 
   ) where
 
-#include "../../../config.h"
+#include "config.h"
 
 import System.Plugins.Make             ( build )
 import System.Plugins.Env
@@ -104,7 +104,7 @@ import GHC                      ( defaultCallbacks )
 #else
 import DynFlags                 (defaultDynFlags, initDynFlags)
 import GHC.Paths                (libdir)
-import SysTools                 (initSysTools)
+import SysTools                 (initSysTools, initLlvmConfig)
 #endif
 import GHC.Ptr                  ( Ptr(..), nullPtr )
 #if !MIN_VERSION_ghc(7,4,1)
@@ -127,7 +127,8 @@ readBinIface' hi_path = do
     -- kludgy as hell
 #if MIN_VERSION_ghc(7,2,0)
     mySettings <- initSysTools (Just libdir) -- how should we really set the top dir?
-    dflags <- initDynFlags (defaultDynFlags mySettings)
+    llvmConfig <- initLlvmConfig (Just libdir)
+    dflags <- initDynFlags (defaultDynFlags mySettings llvmConfig)
     e <- newHscEnv dflags
 #else
     e <- newHscEnv defaultCallbacks undefined
@@ -473,10 +474,17 @@ loadFunction__ :: Maybe String
               -> String
               -> IO (Maybe a)
 loadFunction__ pkg m valsym
-   = do let symbol = prefixUnderscore++(maybe "" (\p -> zEncodeString p++"_") pkg)
-                     ++zEncodeString m++"_"++(zEncodeString valsym)++"_closure"
+   = do let encode = zEncodeString
+        p <- case pkg of
+              Just p -> do
+                prefix <- pkgManglingPrefix p
+                return $ encode (maybe p id prefix)++"_"
+              Nothing -> return ""
+        let symbol = prefixUnderscore++p++encode m++"_"++(encode valsym)++"_closure"
+
 #if DEBUG
         putStrLn $ "Looking for <<"++symbol++">>"
+        initLinker
 #endif
         ptr@(Ptr addr) <- withCString symbol c_lookupSymbol
         if (ptr == nullPtr)
@@ -595,10 +603,15 @@ unloadObj (Module { path = p, kind = k, key = ky }) = case k of
 -- Load a .so type object file.
 --
 loadShared :: FilePath -> IO Module
-loadShared str = do
+loadShared str' = do
 #if DEBUG
-    putStrLn $ " shared: " ++ str
+    putStrLn $ " shared: " ++ str'
 #endif
+    let str = case str' of
+          -- TODO My GHC segfaults because libm.so is a linker script
+          "libm.so" -> "/lib/x86_64-linux-gnu/libm.so.6"
+          "libpthread.so" -> "/lib/x86_64-linux-gnu/libpthread.so.0"
+          x -> x
     maybe_errmsg <- withCString str $ \dll -> c_addDLL dll
     if maybe_errmsg == nullPtr
         then return (Module str (mkModid str) Shared undefined (Package (mkModid str)))
@@ -617,6 +630,7 @@ loadShared str = do
 --
 loadPackage :: String -> IO ()
 loadPackage p = do
+        initLinker
 #if DEBUG
         putStr (' ':p) >> hFlush stdout
 #endif

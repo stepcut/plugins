@@ -20,7 +20,7 @@
 
 module System.Plugins.Consts where
 
-#include "../../../config.h"
+#include "config.h"
 
 
 #if __GLASGOW_HASKELL__ >= 604
