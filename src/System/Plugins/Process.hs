@@ -7,25 +7,19 @@
 module System.Plugins.Process (exec, popen) where
 
 import System.Exit
-#if __GLASGOW_HASKELL__ >= 604
 import System.IO
 import System.Process
 import Control.Concurrent       (forkIO)
-#else
-import qualified Posix as P
-#endif
 
 import qualified Control.Exception as E
 
 --
 -- slight wrapper over popen for calls that don't care about stdin to the program
 --
-exec :: String -> [String] -> IO ([String],[String])
+exec :: String -> [String] -> IO ([String],[String],Bool)
 exec f as = do
-        (a,b,_) <- popen f as (Just [])
-        return (lines a, lines b)
-
-#if __GLASGOW_HASKELL__ >= 604
+        (a,b,c,_) <- popen f as (Just [])
+        return (lines a, lines b,c)
 
 type ProcessID = ProcessHandle
 
@@ -37,9 +31,9 @@ type ProcessID = ProcessHandle
 -- Posix.popen doesn't have this problem, so maybe we can reproduce its
 -- pipe handling somehow.
 --
-popen :: FilePath -> [String] -> Maybe String -> IO (String,String,ProcessID)
+popen :: FilePath -> [String] -> Maybe String -> IO (String,String,Bool,ProcessID)
 popen file args minput =
-    E.handle (\e -> return ([],show (e::E.IOException), error (show e))) $ do
+    E.handle (\e -> return ([],show (e::E.IOException), False, error (show e))) $ do
 
     (inp,out,err,pid) <- runInteractiveProcess file args Nothing Nothing
 
@@ -64,27 +58,6 @@ popen file args minput =
     case exitCode of
       ExitFailure code
           | null errput -> let errMsg = file ++ ": failed with error code " ++ show code
-                           in return ([],errMsg,error errMsg)
-      _ -> return (output,errput,pid)
-
-#else
-
---
--- catch so that we can deal with forkProcess failing gracefully.  and
--- getProcessStatus is needed so as not to get a bunch of zombies,
--- leading to forkProcess failing.
---
--- Large amounts of input will cause problems with blocking as we wait
--- on the process to finish. Make sure no lambdabot processes will
--- generate 1000s of lines of output.
---
-popen :: FilePath -> [String] -> Maybe String -> IO (String,String,P.ProcessID)
-popen f s m =
-        E.handle (\e -> return ([], show (e::IOException), error $ show e )) $ do
-            x@(_,_,pid) <- P.popen f s m
-            b <- P.getProcessStatus True False pid  -- wait
-            return $ case b of
-                Nothing -> ([], "process has disappeared", pid)
-                _       -> x
-
-#endif
+                           in return ([],errMsg,False,error errMsg)
+          | otherwise -> return ([],errput,False,error errput)
+      _ -> return (output,errput,True,pid)

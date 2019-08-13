@@ -269,11 +269,11 @@ rawMake src args docheck = do
 #if DEBUG
                 putStr "Compiling object ... " >> hFlush stdout
 #endif
-                err <- build src obj args
+                (err, success) <- build src obj args
 #if DEBUG
                 putStrLn "done"
 #endif
-                return $ if null err
+                return $ if success
                          then MakeSuccess ReComp obj
                          else MakeFailure err
         }
@@ -287,7 +287,7 @@ rawMake src args docheck = do
 build :: FilePath          -- ^ path to .hs source
       -> FilePath          -- ^ path to object file
       -> [String]          -- ^ any extra cmd line flags
-      -> IO [String]
+      -> IO ([String], Bool)
 
 build src obj extra_opts = do
 
@@ -306,12 +306,12 @@ build src obj extra_opts = do
     putStr $ show $ ghc : flags
 #endif
 
-    (_out,err) <- exec ghc flags       -- this is a fork()
+    (_out,err,success) <- exec ghc flags       -- this is a fork()
 
     obj_exists <- doesFileExist obj -- sanity
-    return $ if not obj_exists && null err -- no errors, but no object?
-             then ["Compiled, but didn't create object file `"++obj++"'!"]
-             else err
+    return $ if not obj_exists && success
+             then (["Compiled, but didn't create object file `"++obj++"'!"], success)
+             else (err, success)
 
 -- ---------------------------------------------------------------------
 -- | Merge to source files into a temporary file. If we've tried to
