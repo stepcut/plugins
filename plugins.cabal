@@ -1,5 +1,5 @@
 name:               plugins
-version:            1.5.7
+version:            1.6.0
 homepage:           https://github.com/stepcut/plugins
 synopsis:           Dynamic linking for Haskell and C objects
 description:        Dynamic linking and runtime evaluation of Haskell,
