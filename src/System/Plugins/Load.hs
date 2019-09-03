@@ -260,11 +260,11 @@ pdynload object incpaths pkgconfs ty sym = do
 #if DEBUG
         putStr "Checking types ... " >> hFlush stdout
 #endif
-        errors <- unify object incpaths [] ty sym
+        (errors, success) <- unify object incpaths [] ty sym
 #if DEBUG
         putStrLn "done"
 #endif
-        if null errors
+        if success
                 then load object incpaths pkgconfs sym
                 else return $ LoadFailure errors
 
@@ -284,11 +284,11 @@ pdynload_ object incpaths pkgconfs args ty sym = do
 #if DEBUG
         putStr "Checking types ... " >> hFlush stdout
 #endif
-        errors <- unify object incpaths args ty sym
+        (errors, success) <- unify object incpaths args ty sym
 #if DEBUG
         putStrLn "done"
 #endif
-        if null errors
+        if success
                 then load object incpaths pkgconfs sym
                 else return $ LoadFailure errors
 
@@ -317,9 +317,9 @@ unify obj incs args ty sym = do
 
         hWrite hdl src
 
-        e <- build tmpf tmpf1 (i:is++args++["-fno-code","-c","-ohi "++tmpf1])
+        (e,success) <- build tmpf tmpf1 (i:is++args++["-fno-code","-c","-ohi "++tmpf1])
         mapM_ removeFile [tmpf,tmpf1]
-        return e
+        return (e, success)
 
         where
             -- fix up hierarchical names
