@@ -7,3 +7,4 @@
 /testsuite/makewith/io/TestIO.conf
 /testsuite/makewith/unsafeio/Unsafe.conf
 /.stack-work/
+/dist-newstyle/
