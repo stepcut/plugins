@@ -491,8 +491,8 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 #endif
                 -- If we're loading dynamic libs we need the cbits to appear before the
                 -- real packages.
-                settings <- initSysTools (Just libdir)
-                llvmConfig <- initLlvmConfig (Just libdir)
+                settings <- initSysTools (libdir)
+                llvmConfig <- initLlvmConfig (libdir)
                 dflags <- initDynFlags $ defaultDynFlags settings llvmConfig
                 libs <- mapM (findHSlib
 #if MIN_VERSION_ghc(7,8,0)
