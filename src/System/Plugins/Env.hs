@@ -331,14 +331,14 @@ union ls ps' =
         in foldr addOnePkg fm ps' : ls
     where
       -- we add each package with and without it's version number and with the full installedPackageId
-      addOnePkg p fm' = addToPkgEnvs (addToPkgEnvs (addToPkgEnvs fm' (display $ sourcePackageId p) p) (display $ installedPackageId p) p)
+      addOnePkg p fm' = addToPkgEnvs (addToPkgEnvs (addToPkgEnvs fm' (display $ sourcePackageId p) p) (display $ packageId p) p)
                                      (packageName p) p
 
       -- if no version number specified, pick the higher version
       addToPkgEnvs = addWithFM higherVersion
 
       higherVersion pkgconf1 pkgconf2
-        | installedPackageId pkgconf1 >= installedPackageId pkgconf2 = pkgconf1
+        | packageId pkgconf1 >= packageId pkgconf2 = pkgconf1
         | otherwise                                                  = pkgconf2
 
 --
@@ -350,7 +350,7 @@ union ls ps' =
 
 grabDefaultPkgConf :: IO PkgEnvs
 grabDefaultPkgConf = do
-        pc <- configureAllKnownPrograms silent defaultProgramConfiguration
+        pc <- configureAllKnownPrograms silent defaultProgramDb
 #if MIN_VERSION_Cabal(1,24,0)
         (compiler, _platform, _programConfiguration)
            <- configure silent Nothing Nothing pc
@@ -366,7 +366,7 @@ grabDefaultPkgConf = do
 --
 readPackageConf :: FilePath -> IO [PackageConfig]
 readPackageConf f = do
-    pc <- configureAllKnownPrograms silent defaultProgramConfiguration
+    pc <- configureAllKnownPrograms silent defaultProgramDb
 #if MIN_VERSION_Cabal(1,24,0)
     (compiler, _platform, _programConfiguration)
        <- configure silent Nothing Nothing pc
