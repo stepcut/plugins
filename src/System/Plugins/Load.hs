@@ -126,8 +126,13 @@ readBinIface' :: FilePath -> IO ModIface
 readBinIface' hi_path = do
     -- kludgy as hell
 #if MIN_VERSION_ghc(7,2,0)
+#if MIN_VERSION_ghc(8,8,1)
     mySettings <- initSysTools (libdir) -- how should we really set the top dir?
     llvmConfig <- initLlvmConfig (libdir)
+#else
+    mySettings <- initSysTools (Just libdir) -- how should we really set the top dir?
+    llvmConfig <- initLlvmConfig (Just libdir)
+#endif
     dflags <- initDynFlags (defaultDynFlags mySettings llvmConfig)
     e <- newHscEnv dflags
 #else
