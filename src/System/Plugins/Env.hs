@@ -78,7 +78,13 @@ import DynFlags (
   Way(WayDyn), dynamicGhc, ways,
 #endif
   defaultDynFlags, initDynFlags)
-import SysTools (initSysTools, initLlvmConfig)
+import SysTools ( initSysTools
+#if MIN_VERSION_ghc(8,10,1)
+                , lazyInitLlvmConfig
+#else
+                , initLlvmConfig
+#endif
+  )
 
 import Distribution.Package hiding (
 #if MIN_VERSION_ghc(7,6,0)
@@ -104,6 +110,11 @@ import Data.List.Split
 
 import qualified Data.Map as M
 import qualified Data.Set as S
+
+#if !MIN_VERSION_ghc(8,10,1)
+lazyInitLlvmConfig = initLlvmConfig
+#endif
+
 --
 -- and map Data.Map terms to FiniteMap terms
 --
@@ -493,10 +504,10 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                 -- real packages.
 #if MIN_VERSION_ghc(8,8,1)
                 settings <- initSysTools (libdir)
-                llvmConfig <- initLlvmConfig (libdir)
+                llvmConfig <- lazyInitLlvmConfig (libdir)
 #else
                 settings <- initSysTools (Just libdir)
-                llvmConfig <- initLlvmConfig (Just libdir)
+                llvmConfig <- lazyInitLlvmConfig (Just libdir)
 #endif
                 dflags <- initDynFlags $ defaultDynFlags settings llvmConfig
                 libs <- mapM (findHSlib
