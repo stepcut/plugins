@@ -104,7 +104,13 @@ import GHC                      ( defaultCallbacks )
 #else
 import DynFlags                 (defaultDynFlags, initDynFlags)
 import GHC.Paths                (libdir)
-import SysTools                 (initSysTools, initLlvmConfig)
+import SysTools                 ( initSysTools
+#if MIN_VERSION_ghc(8,10,1)
+                                , lazyInitLlvmConfig
+#else
+                                , initLlvmConfig
+#endif
+                                )
 #endif
 import GHC.Ptr                  ( Ptr(..), nullPtr )
 #if !MIN_VERSION_ghc(7,4,1)
@@ -120,6 +126,10 @@ import System.IO                ( hFlush, stdout )
 #endif
 import System.IO                ( hClose )
 
+#if !MIN_VERSION_ghc(8,10,1)
+lazyInitLlvmConfig = initLlvmConfig
+#endif
+
 ifaceModuleName = moduleNameString . moduleName . mi_module
 
 readBinIface' :: FilePath -> IO ModIface
@@ -128,10 +138,10 @@ readBinIface' hi_path = do
 #if MIN_VERSION_ghc(7,2,0)
 #if MIN_VERSION_ghc(8,8,1)
     mySettings <- initSysTools (libdir) -- how should we really set the top dir?
-    llvmConfig <- initLlvmConfig (libdir)
+    llvmConfig <- lazyInitLlvmConfig (libdir)
 #else
     mySettings <- initSysTools (Just libdir) -- how should we really set the top dir?
-    llvmConfig <- initLlvmConfig (Just libdir)
+    llvmConfig <- lazyInitLlvmConfig (Just libdir)
 #endif
     dflags <- initDynFlags (defaultDynFlags mySettings llvmConfig)
     e <- newHscEnv dflags
