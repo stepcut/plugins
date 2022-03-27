@@ -426,7 +426,7 @@ replaceSuffix f suf =
 --
 -- This code checks if "-o foo" or "-odir foodir" are supplied as args
 -- to make(), and if so returns a modified file path, otherwise it
--- uses the source file to determing the path to where the object and
+-- uses the source file to determine the path to where the object and
 -- .hi file will be put.
 --
 outFilePath :: FilePath -> [Arg] -> (FilePath,FilePath)
@@ -470,7 +470,7 @@ outFilePath src args =
 -- fileExist still seems to throw exceptions on some platforms: ia64 in
 -- particular.
 --
--- invarient : we already assume the first file, 'a', exists
+-- invariant : we already assume the first file, 'a', exists
 --
 newer :: FilePath -> FilePath -> IO Bool
 newer a b = do

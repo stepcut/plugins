@@ -260,7 +260,7 @@ dynload obj incpaths pkgconfs sym = do
 --
 -- Use GHC at runtime so we get staged type inference, providing full
 -- power dynamics, *on module interfaces only*. This is quite suitable
--- for plugins, of coures :)
+-- for plugins, of course :)
 --
 -- TODO where does the .hc file go in the call to build() ?
 --

@@ -190,7 +190,7 @@ type Env = (MVar (),
 
 --
 -- our environment, contains a set of loaded objects, and a map of known
--- packages and their informations. Initially all we know is the default
+-- packages and their information. Initially all we know is the default
 -- package.conf information.
 --
 env = unsafePerformIO $ do
