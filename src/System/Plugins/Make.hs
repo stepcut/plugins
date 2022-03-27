@@ -113,7 +113,7 @@ data MergeStatus
 --
 -- | Merging may be avoided if the source files are older than an
 -- existing merged result. The @MergeCode@ type indicates whether
--- merging was performed, or whether it was unneccessary.
+-- merging was performed, or whether it was unnecessary.
 --
 type MergeCode = MakeCode
 

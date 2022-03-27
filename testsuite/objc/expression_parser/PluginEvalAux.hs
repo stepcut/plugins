@@ -17,7 +17,7 @@ evalWithStringResult :: FilePath -> String -> IO String
 evalWithStringResult srcFile s = do
   status <- make srcFile ["-O0"]
   case status of
-      MakeFailure err   -> putStrLn "error occured" >> return (show err)
+      MakeFailure err   -> putStrLn "error occurred" >> return (show err)
       MakeSuccess _ obj -> load' obj
   where
     load' obj = do

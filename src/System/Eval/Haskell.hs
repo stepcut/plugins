@@ -254,7 +254,7 @@ wrap expr nm mods =
         x = ident ()
 
 -- what is this big variable name?
--- its a random value, so that it won't clash if  the accidently mistype
+-- its a random value, so that it won't clash if  the accidentally mistype
 -- an unbound 'x' or 'v' in their code.. it won't reveal the internal
 -- structure of the wrapper, which is annoying in irc use by lambdabot
 
@@ -267,7 +267,7 @@ wrap expr nm mods =
 --
 
 --
--- return NULL pointer if an error occured.
+-- return NULL pointer if an error occurred.
 --
 
 foreign export ccall hs_eval_b  :: CString -> IO (Ptr CInt)
