@@ -70,25 +70,7 @@ import System.Plugins.Consts           ( sysPkgSuffix, hiSuf, prefixUnderscore )
 import System.Plugins.LoadTypes
 
 -- import Language.Hi.Parser
-import Encoding (zEncodeString)
-import BinIface
-import HscTypes
 
-import Module (moduleName, moduleNameString)
-#if MIN_VERSION_ghc(8,0,0)
-#if MIN_VERSION_Cabal(2,0,0)
-import Module (installedUnitIdString)
-#else
-import Module (unitIdString)
-#endif
-#elif MIN_VERSION_ghc(7,10,0)
-import Module (packageKeyString)
-#else
-import Module (packageIdString)
-#endif
-
-import HscMain (newHscEnv)
-import TcRnMonad (initTcRnIf)
 
 import Data.Dynamic          ( fromDynamic, Dynamic )
 import Data.Typeable         ( Typeable )
@@ -98,57 +80,31 @@ import Control.Monad            ( when, filterM, liftM )
 import System.Directory         ( doesFileExist, removeFile )
 import Foreign.C                ( CInt(..) )
 import Foreign.C.String         ( CString, withCString, peekCString )
-
-#if !MIN_VERSION_ghc(7,2,0)
-import GHC                      ( defaultCallbacks )
-#else
-import DynFlags                 (defaultDynFlags, initDynFlags)
-import GHC.Paths                (libdir)
-import SysTools                 ( initSysTools
-#if MIN_VERSION_ghc(8,10,1)
-                                , lazyInitLlvmConfig
-#else
-                                , initLlvmConfig
-#endif
-                                )
-#endif
-import GHC.Ptr                  ( Ptr(..), nullPtr )
-#if !MIN_VERSION_ghc(7,4,1)
-import GHC.Exts                 ( addrToHValue# )
-#else
-import GHC.Exts                 ( addrToAny# )
-#endif
-
-import GHC.Prim                 ( unsafeCoerce# )
-
-#if DEBUG
-import System.IO                ( hFlush, stdout )
-#endif
-import System.IO                ( hClose )
-
-#if !MIN_VERSION_ghc(8,10,1)
-lazyInitLlvmConfig = initLlvmConfig
-#endif
+import GHC (ModIface, ModIface_ (..), moduleName)
+import GHC.Ptr
+import GHC.Plugins (moduleNameString, defaultDynFlags, initDynFlags, GenWithIsBoot (..))
+import GHC.SysTools (initSysTools, lazyInitLlvmConfig)
+import GHC.Paths (libdir)
+import GHC.Driver.Main (newHscEnv)
+import GHC.Tc.Utils.Monad (initTcRnIf)
+import GHC.Iface.Binary (readBinIface, CheckHiWay (..), TraceBinIFace (..))
+import Unsafe.Coerce (unsafeCoerce#)
+import System.IO
+import GHC.Data.FastString (zEncodeFS, mkFastString, zString)
+import Data.Maybe (fromMaybe)
+import GHC.Prim (addrToAny#)
+import GHC.Unit.Module.Deps (Dependencies(..))
+import GHC.Unit (unitIdString)
 
 ifaceModuleName = moduleNameString . moduleName . mi_module
 
 readBinIface' :: FilePath -> IO ModIface
 readBinIface' hi_path = do
-    -- kludgy as hell
-#if MIN_VERSION_ghc(7,2,0)
-#if MIN_VERSION_ghc(8,8,1)
     mySettings <- initSysTools (libdir) -- how should we really set the top dir?
     llvmConfig <- lazyInitLlvmConfig (libdir)
-#else
-    mySettings <- initSysTools (Just libdir) -- how should we really set the top dir?
-    llvmConfig <- lazyInitLlvmConfig (Just libdir)
-#endif
     dflags <- initDynFlags (defaultDynFlags mySettings llvmConfig)
     e <- newHscEnv dflags
-#else
-    e <- newHscEnv defaultCallbacks undefined
-#endif
-    initTcRnIf 'r' e undefined undefined (readBinIface IgnoreHiWay QuietBinIFaceReading hi_path)
+    initTcRnIf 'r' e undefined undefined (readBinIface IgnoreHiWay QuietBinIFace hi_path)
 
 -- TODO need a loadPackage p package.conf :: IO () primitive
 
@@ -195,7 +151,7 @@ load :: FilePath                -- ^ object file
      -> IO (LoadStatus a)
 
 load obj incpaths pkgconfs sym = do
-    initLinker_ $ fromIntegral 0
+    initLinker_ 0
 
     -- load extra package information
     mapM_ addPkgConf pkgconfs
@@ -466,7 +422,7 @@ reload m@(Module{path = p, iface = hi}) sym = do
 -- functions in this module - otherwise you\'ll get unresolved symbols.
 
 initLinker :: IO ()
-initLinker = initLinker_ $ fromIntegral 0
+initLinker = initLinker_ 0
 -- our initLinker transparently calls the one in GHC
 
 --
@@ -489,13 +445,13 @@ loadFunction__ :: Maybe String
               -> String
               -> IO (Maybe a)
 loadFunction__ pkg m valsym
-   = do let encode = zEncodeString
+   = do let zencode = zString . zEncodeFS . mkFastString
         p <- case pkg of
               Just p -> do
                 prefix <- pkgManglingPrefix p
-                return $ encode (maybe p id prefix)++"_"
+                pure $ zencode (fromMaybe p prefix) <> "_"
               Nothing -> return ""
-        let symbol = prefixUnderscore++p++encode m++"_"++(encode valsym)++"_closure"
+        let symbol = prefixUnderscore <> p <> zencode m <> "_" <> zencode valsym <> "_closure"
 
 #if DEBUG
         putStrLn $ "Looking for <<"++symbol++">>"
@@ -730,7 +686,7 @@ loadDepends obj incpaths = do
                 let ds = mi_deps hiface
 
                 -- remove ones that we've already loaded
-                ds' <- filterM loaded . map (moduleNameString . fst) . dep_mods $ ds
+                ds' <- filterM loaded . map (moduleNameString . gwib_mod) . dep_mods $ ds
 
                 -- now, try to generate a path to the actual .o file
                 -- fix up hierachical names
@@ -750,20 +706,7 @@ loadDepends obj incpaths = do
 
                 -- and find some packages to load, as well.
                 let ps = dep_pkgs ds
-#if MIN_VERSION_ghc(8,0,0)
-#if MIN_VERSION_Cabal(2,0,0)
-                ps' <- filterM loaded . map installedUnitIdString . nub $ map fst ps
-#else
                 ps' <- filterM loaded . map unitIdString . nub $ map fst ps
-#endif
-#elif MIN_VERSION_ghc(7,10,0)
-                ps' <- filterM loaded . map packageKeyString . nub $ map fst ps
-#elif MIN_VERSION_ghc(7,2,0)
-                ps' <- filterM loaded . map packageIdString . nub $ map fst ps
-#else
-                ps' <- filterM loaded . map packageIdString . nub $ ps
-#endif
-
 #if DEBUG
                 when (not (null ps')) $
                         putStr "Loading package" >> hFlush stdout
@@ -788,7 +731,7 @@ loadDepends obj incpaths = do
 getImports :: String -> IO [String]
 getImports m = do
         hi <- readBinIface' (m ++ hiSuf)
-        return . map (moduleNameString . fst) . dep_mods . mi_deps $ hi
+        return . map (moduleNameString . gwib_mod) . dep_mods . mi_deps $ hi
 
 -- ---------------------------------------------------------------------
 -- C interface

@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE PackageImports #-}
 --
 -- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 --
@@ -31,13 +32,9 @@ import Data.List
 import Data.Char
 import Data.Either ( )
 
-#if defined(WITH_HSX)
-import Language.Haskell.Hsx
-#else
-import Language.Haskell.Parser
-import Language.Haskell.Syntax
-import Language.Haskell.Pretty
-#endif
+import "haskell-src" Language.Haskell.Parser
+import "haskell-src" Language.Haskell.Syntax
+import "haskell-src" Language.Haskell.Pretty
 
 --
 -- | parse a file (as a string) as Haskell src

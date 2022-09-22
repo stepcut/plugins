@@ -1,3 +1,4 @@
+cabal-version:      3.0
 name:               plugins
 version:            1.6.2
 homepage:           https://github.com/stepcut/plugins
@@ -14,11 +15,10 @@ description:        Dynamic linking and runtime evaluation of Haskell,
                      * /Dynamic Extension of Typed Functional Languages/.
 
 category:           System
-license:            BSD3
+license:            BSD-3-Clause
 License-file:       LICENSE
 author:             Don Stewart 2004..2010
 maintainer:         Jeremy Shaw <jeremy@seereason.com>
-cabal-version:      >= 1.10
 build-type:         Configure
 Tested-with:        GHC == 7.4.2
                   , GHC == 7.6.3
@@ -55,8 +55,7 @@ library
     ghc-options:          -Wall -funbox-strict-fields -fno-warn-missing-signatures
     hs-source-dirs:       src
     build-depends:        base  >= 4 && < 5,
-                          Cabal >= 1.6,
-                          haskell-src,
+                          Cabal ^>= 3.8,
                           containers,
                           array,
                           directory,
