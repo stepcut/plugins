@@ -675,7 +675,7 @@ loadDepends :: FilePath -> [FilePath] -> IO (ModIface,[Module])
 loadDepends obj incpaths = do
     let hifile = replaceSuffix obj hiSuf
     exists <- doesFileExist hifile
-    if (not exists)
+    if not exists
         then do
 #if DEBUG
                 putStrLn "No .hi file found." >> hFlush stdout
