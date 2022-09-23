@@ -53,8 +53,11 @@ module System.Plugins.Utils (
     decode,
     EncodedString,
 
-    panic
-
+    panic,
+    openBinaryFile,
+    openTempFileWithDefaultPermissions,
+    openBinaryTempFileWithDefaultPermissions,
+    openBinaryTempFile
   ) where
 
 
@@ -63,7 +66,7 @@ module System.Plugins.Utils (
 import System.Plugins.Env              ( isLoaded )
 import System.Plugins.Consts           ( objSuf, hiSuf, tmpDir )
 
-import Foreign.C (CInt(..), CString, withCString)
+import Foreign.C (CInt(..))
 import Foreign.C.Error (Errno, eEXIST, getErrno, errnoToIOError)
 import System.Posix.Internals
 import System.Posix.Types (CMode)
@@ -72,13 +75,13 @@ import Control.Exception               (IOException, catch)
 import Data.Bits
 import Data.Char
 import Data.List
-import Prelude hiding (catch)
+import Prelude
 
-import System.IO hiding (openBinaryTempFile, openTempFile)
+import System.IO hiding (openTempFileWithDefaultPermissions, openBinaryTempFileWithDefaultPermissions, openBinaryTempFile, openTempFile)
 import System.Random (randomRIO)
 
 import GHC.IO.Encoding (getLocaleEncoding)
-import GHC.IO.Handle.FD
+import GHC.IO.Handle.FD (mkHandleFromFD)
 import qualified GHC.IO.FD as FD
 import System.Environment           ( getEnv )
 import System.Directory             ( doesFileExist, getModificationTime, removeFile )

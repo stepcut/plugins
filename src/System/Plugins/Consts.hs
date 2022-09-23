@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-type-defaults#-}
 {-# LANGUAGE CPP #-}
 --
 -- Copyright (C) 2004 Don Stewart - http://www.cse.unsw.edu.au/~dons
@@ -22,23 +23,24 @@ module System.Plugins.Consts where
 
 #include "config.h"
 
-
-#if __GLASGOW_HASKELL__ >= 604
 import System.Directory          ( getTemporaryDirectory )
 import System.IO.Unsafe          ( unsafePerformIO )
-#endif
 
 
 -- | path to *build* dir, used by eval() for testing the examples
+top :: String
 top             = TOP
 
 -- | what is ghc called?
+ghc :: String
 ghc             = WITH_GHC
 
 -- | path to standard ghc libraries
+ghcLibraryPath :: String
 ghcLibraryPath  = GHC_LIB_PATH
 
 -- | name of the system package.conf file
+sysPkgConf :: String
 sysPkgConf = "package.conf"
 
 -- | This code is from runtime_loader:

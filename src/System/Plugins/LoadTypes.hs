@@ -28,9 +28,7 @@ module System.Plugins.LoadTypes
     , ObjType (..)
     ) where
 
--- import Language.Hi.Parser
-
-import HscTypes
+import GHC.Unit.Module.ModIface
 
 data Key = Object String | Package String
 
