@@ -32,9 +32,9 @@ import Data.List
 import Data.Char
 import Data.Either ( )
 
-import "haskell-src" Language.Haskell.Parser
-import "haskell-src" Language.Haskell.Syntax
-import "haskell-src" Language.Haskell.Pretty
+import "haskell-src" Language.Haskell.Parser (ParseResult (ParseOk, ParseFailed), ParseMode (ParseMode), parseModuleWithMode)
+import "haskell-src" Language.Haskell.Syntax (HsModule(HsModule), HsImportDecl, HsDecl(HsTypeSig, HsFunBind, HsPatBind), HsPat(HsPVar), HsImportDecl(HsImportDecl), srcLine, srcColumn, Module(..))
+import "haskell-src" Language.Haskell.Pretty (PPHsMode (linePragmas), prettyPrintWithMode, defaultMode)
 
 --
 -- | parse a file (as a string) as Haskell src
