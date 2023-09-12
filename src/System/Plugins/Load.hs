@@ -74,7 +74,7 @@ import System.Plugins.LoadTypes
 
 import Data.Dynamic          ( fromDynamic, Dynamic )
 import Data.Typeable         ( Typeable )
-
+import qualified Data.Set as Set
 import Data.List                ( isSuffixOf, nub, nubBy )
 import Control.Monad            ( when, filterM, liftM )
 import System.Directory         ( doesFileExist, removeFile )
@@ -82,8 +82,8 @@ import Foreign.C                ( CInt(..) )
 import Foreign.C.String         ( CString, withCString, peekCString )
 import GHC (ModIface, ModIface_ (..), moduleName)
 import GHC.Ptr
-import GHC.Plugins (moduleNameString, defaultDynFlags, initDynFlags, GenWithIsBoot (..))
-import GHC.SysTools (initSysTools, lazyInitLlvmConfig)
+import GHC.Plugins (moduleNameString, defaultDynFlags, initDynFlags, GenWithIsBoot (..),hsc_NC,targetProfile)
+import GHC.SysTools (initSysTools)
 import GHC.Paths (libdir)
 import GHC.Driver.Main (newHscEnv)
 import GHC.Tc.Utils.Monad (initTcRnIf)
@@ -101,10 +101,12 @@ ifaceModuleName = moduleNameString . moduleName . mi_module
 readBinIface' :: FilePath -> IO ModIface
 readBinIface' hi_path = do
     mySettings <- initSysTools (libdir) -- how should we really set the top dir?
-    llvmConfig <- lazyInitLlvmConfig (libdir)
-    dflags <- initDynFlags (defaultDynFlags mySettings llvmConfig)
-    e <- newHscEnv dflags
-    initTcRnIf 'r' e undefined undefined (readBinIface IgnoreHiWay QuietBinIFace hi_path)
+--    llvmConfig <- lazyInitLlvmConfig (libdir)
+    dflags <- initDynFlags (defaultDynFlags mySettings)
+    e <- newHscEnv "" dflags
+    let biface = readBinIface (targetProfile dflags) (hsc_NC e) IgnoreHiWay QuietBinIFace hi_path
+    biface
+--    initTcRnIf 'r' e undefined undefined biface
 
 -- TODO need a loadPackage p package.conf :: IO () primitive
 
@@ -686,8 +688,8 @@ loadDepends obj incpaths = do
                 let ds = mi_deps hiface
 
                 -- remove ones that we've already loaded
-                ds' <- filterM loaded . map (moduleNameString . gwib_mod) . dep_mods $ ds
-
+                ds' <- filterM loaded . map (moduleNameString . gwib_mod . snd) . Set.elems . dep_direct_mods $ ds
+                
                 -- now, try to generate a path to the actual .o file
                 -- fix up hierachical names
                 let mods_ = map (\s -> (s, map (\c ->
@@ -705,8 +707,8 @@ loadDepends obj incpaths = do
                 let mods'' = nubBy (\v u -> fst v == fst u)  mods'
 
                 -- and find some packages to load, as well.
-                let ps = dep_pkgs ds
-                ps' <- filterM loaded . map unitIdString . nub $ map fst ps
+                let ps = dep_direct_pkgs ds
+                ps' <- filterM loaded . map unitIdString . nub $ Set.elems ps
 #if DEBUG
                 when (not (null ps')) $
                         putStr "Loading package" >> hFlush stdout
@@ -731,7 +733,7 @@ loadDepends obj incpaths = do
 getImports :: String -> IO [String]
 getImports m = do
         hi <- readBinIface' (m ++ hiSuf)
-        return . map (moduleNameString . gwib_mod) . dep_mods . mi_deps $ hi
+        return . map (moduleNameString . gwib_mod . snd) . Set.elems . dep_direct_mods . mi_deps $ hi
 
 -- ---------------------------------------------------------------------
 -- C interface

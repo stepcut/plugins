@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE PackageImports #-}
 --
 -- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 --
@@ -88,14 +89,15 @@ import Data.List.Split
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Distribution.Package (packageId, getHSLibraryName, pkgName)
-import GHC.SysTools (initSysTools, lazyInitLlvmConfig)
+import "ghc" GHC.SysTools (initSysTools)
+import GHC.CmmToLlvm.Config(initLlvmConfig)
 import GHC.Plugins (defaultDynFlags, initDynFlags, ways)
 import GHC.Platform.Ways (Way(..), hostIsDynamic)
 import qualified Data.List as List
 
-#if !MIN_VERSION_ghc(8,10,1)
+
 lazyInitLlvmConfig = initLlvmConfig
-#endif
+
 
 --
 -- and map Data.Map terms to FiniteMap terms
@@ -486,7 +488,7 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
                 -- real packages.
                 settings <- initSysTools (libdir)
                 llvmConfig <- lazyInitLlvmConfig (libdir)
-                dflags <- initDynFlags $ defaultDynFlags settings llvmConfig
+                dflags <- initDynFlags $ defaultDynFlags settings
                 libs <- mapM (findHSlib
                               (WayDyn `elem` ways dflags || hostIsDynamic)
                               libdirs)
