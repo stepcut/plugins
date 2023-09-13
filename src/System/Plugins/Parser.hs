@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE PackageImports #-}
 --
 -- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 --
@@ -31,13 +32,9 @@ import Data.List
 import Data.Char
 import Data.Either ( )
 
-#if defined(WITH_HSX)
-import Language.Haskell.Hsx
-#else
-import Language.Haskell.Parser
-import Language.Haskell.Syntax
-import Language.Haskell.Pretty
-#endif
+import "haskell-src" Language.Haskell.Parser (ParseResult (ParseOk, ParseFailed), ParseMode (ParseMode), parseModuleWithMode)
+import "haskell-src" Language.Haskell.Syntax (HsModule(HsModule), HsImportDecl, HsDecl(HsTypeSig, HsFunBind, HsPatBind), HsPat(HsPVar), HsImportDecl(HsImportDecl), srcLine, srcColumn, Module(..))
+import "haskell-src" Language.Haskell.Pretty (PPHsMode (linePragmas), prettyPrintWithMode, defaultMode)
 
 --
 -- | parse a file (as a string) as Haskell src

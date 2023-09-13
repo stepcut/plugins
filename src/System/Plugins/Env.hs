@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE PackageImports #-}
 --
 -- Copyright (C) 2004-5 Don Stewart - http://www.cse.unsw.edu.au/~dons
 --
@@ -73,32 +74,9 @@ import System.IO.Error          ( catch, ioError, isDoesNotExistError )
 import Control.Concurrent.MVar  ( MVar(), newMVar, withMVar )
 
 import GHC.Paths (libdir)
-import DynFlags (
-#if MIN_VERSION_ghc(7,8,0)
-  Way(WayDyn), dynamicGhc, ways,
-#endif
-  defaultDynFlags, initDynFlags)
-import SysTools ( initSysTools
-#if MIN_VERSION_ghc(8,10,1)
-                , lazyInitLlvmConfig
-#else
-                , initLlvmConfig
-#endif
-  )
-
-import Distribution.Package hiding (
-#if MIN_VERSION_ghc(7,6,0)
-                                     Module,
-#endif
-                                     depends, packageName, PackageName(..)
-                                   , installedUnitId
-#if MIN_VERSION_ghc(7,10,0)
-                                   , installedPackageId
-#endif
-  )
 import Distribution.Text
 
-import Distribution.InstalledPackageInfo
+import Distribution.InstalledPackageInfo (InstalledPackageInfo(..))
 import Distribution.Simple.Compiler
 import Distribution.Simple.GHC
 import Distribution.Simple.PackageIndex
@@ -110,10 +88,16 @@ import Data.List.Split
 
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Distribution.Package (packageId, getHSLibraryName, pkgName)
+import "ghc" GHC.SysTools (initSysTools)
+import GHC.CmmToLlvm.Config(initLlvmConfig)
+import GHC.Plugins (defaultDynFlags, initDynFlags, ways)
+import GHC.Platform.Ways (Way(..), hostIsDynamic)
+import qualified Data.List as List
 
-#if !MIN_VERSION_ghc(8,10,1)
+
 lazyInitLlvmConfig = initLlvmConfig
-#endif
+
 
 --
 -- and map Data.Map terms to FiniteMap terms
@@ -399,7 +383,7 @@ isStaticPkg pkg = withStaticPkgEnv env $ \set -> return $ S.member pkg set
 
 rmStaticPkg :: String -> IO Bool
 rmStaticPkg pkg = do
-  (willRemove, s) <- withStaticPkgEnv env $ \s -> return (S.member pkg s, s)
+  (willRemove, _) <- withStaticPkgEnv env $ \s -> return (S.member pkg s, s)
   if not willRemove then return False
     else do modifyStaticPkgEnv env $ \s' -> return $ S.delete pkg s'
             return True
@@ -487,7 +471,7 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
             Just pkg -> do
                 let    hslibs  = hsLibraries pkg
                        extras' = extraLibraries pkg
-                       cbits   = filter (\e -> reverse (take (length "_cbits") (reverse e)) == "_cbits") extras'
+                       cbits   = filter (\e -> reverse (take (List.length ("_cbits" :: String)) (reverse e)) == "_cbits") extras'
                        extras  = filter (flip notElem cbits) extras'
                        ldopts  = ldOptions pkg
                        deppkgs = packageDeps pkg
@@ -502,20 +486,11 @@ lookupPkg' p = withPkgEnvs env $ \fms -> go fms p
 #endif
                 -- If we're loading dynamic libs we need the cbits to appear before the
                 -- real packages.
-#if MIN_VERSION_ghc(8,8,1)
                 settings <- initSysTools (libdir)
                 llvmConfig <- lazyInitLlvmConfig (libdir)
-#else
-                settings <- initSysTools (Just libdir)
-                llvmConfig <- lazyInitLlvmConfig (Just libdir)
-#endif
-                dflags <- initDynFlags $ defaultDynFlags settings llvmConfig
+                dflags <- initDynFlags $ defaultDynFlags settings
                 libs <- mapM (findHSlib
-#if MIN_VERSION_ghc(7,8,0)
-                              (WayDyn `elem` ways dflags || dynamicGhc)
-#else
-                              False
-#endif
+                              (WayDyn `elem` ways dflags || hostIsDynamic)
                               libdirs)
                              (cbits ++ hslibs)
 #if defined(CYGWIN) || defined(__MINGW32__)

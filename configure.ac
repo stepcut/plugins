@@ -8,13 +8,14 @@
 # only AC_DEFINES are visible in Haskell src
 
 # sanity test
-AC_INIT(src/System/Plugins.hs)
+AC_INIT
+AC_CONFIG_SRCDIR([src/System/Plugins.hs])
 
 # Prepare to generate the config.h.in file
 AC_CONFIG_HEADERS([config.h])
 
 # untested on earlier than 2.52, but it won't work anyway
-AC_PREREQ(2.53)
+AC_PREREQ([2.71])
 
 # Find out what type of system we're running on
 AC_CANONICAL_BUILD
@@ -72,7 +73,7 @@ AC_SUBST(TOP)
 
 # allow user supplied haskell compiler
 AC_ARG_WITH(ghc,
-  AC_HELP_STRING([--with-ghc=<ghc>],[use a specific Haskell compiler]),
+  AS_HELP_STRING([--with-ghc=<ghc>],[use a specific Haskell compiler]),
   [ GHC="$withval" 
     if test ! -f "$GHC" ; then
        AC_MSG_ERROR([$GHC not found. You need GHC to build this project])
